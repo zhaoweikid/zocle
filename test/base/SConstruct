@@ -1,0 +1,21 @@
+import os, sys
+
+includes = ['../../include']
+sourcedirs = ['.']
+files = Glob("*.c")
+for d in sourcedirs:
+	files += Glob(d + '/*.c')
+libs = []
+#libs = ['zocle2']
+defs = ['_REENTRANT', '_GNU_SOURCE']
+libpath = ['../../']
+if sys.platform == 'linux2':
+	ldflags = '-Wl,-R../../'
+else:
+	ldflags = ''
+
+env = Environment(CCFLAGS='-ggdb -Wall', CPPDEFINES=defs, CPPPATH=includes, 
+				  LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
+
+for fn in files:
+	env.Program([fn, '../../libzocle2.a'])

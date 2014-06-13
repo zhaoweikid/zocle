@@ -1,0 +1,24 @@
+import os, sys, glob, copy
+
+includes = ['../../include', '/usr/local/include']
+sourcedirs = ['.']
+files = glob.glob("*.c")
+for d in sourcedirs:
+	files += glob.glob(d + '/*.c')
+libs = ['pcre', 'crypto', 'ssl', 'm', 'iconv', 'event']
+defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_LIBEV', 'ASYNC_ONE_WATCHER']
+libpath = ['../../', '/usr/local/lib']
+if sys.platform == 'linux2':
+	ldflags = '-Wl,-R../../'
+else:
+	ldflags = ''
+
+env = Environment(CCFLAGS='-ggdb -Wall', CPPDEFINES=defs, CPPPATH=includes, 
+				  LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
+for fn in files:
+	bin = fn[:-2]
+	if not bin.find('lib') >= 0:
+		env.Program(bin, [fn,'/usr/local/lib/libev.a', '../../libzocle2.a'])
+	#elif bin.startswith('libevent'):
+	#	env.Program(bin, [[fn,'/usr/local/lib/libevent.a'], '../../libzocle2.a'])
+

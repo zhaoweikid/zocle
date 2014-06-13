@@ -1,0 +1,29 @@
+import os, sys
+
+includes = ['../../include']
+sourcedirs = ['.']
+files = Glob("*.c")
+for d in sourcedirs:
+	files += Glob(d + '/*.c')
+libs = ['zocle2', 'pcre']
+defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_MYSQL']
+libpath = ['../../']
+if sys.platform == 'linux2':
+	ldflags = '-Wl,-R../../'
+else:
+	ldflags = ''
+
+if 'ZOCLE_WITH_MYSQL' in defs:
+    libs.append('mysqlclient')
+    if os.path.isdir('/usr/local/mysql'):
+        includes.append('/usr/local/mysql/include')
+        libpath.append('/usr/local/mysql/lib')
+    elif os.path.isdir('/opt/mysql'):
+        includes.append('/opt/mysql/include')
+        libpath.append('/opt/mysql/lib')
+
+env = Environment(CCFLAGS='-ggdb -Wall', CPPDEFINES=defs, CPPPATH=includes, 
+				  LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
+
+for fn in files:
+	env.Program(fn)

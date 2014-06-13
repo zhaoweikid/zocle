@@ -1,0 +1,42 @@
+#SConscript(['str/SConstruct'])
+#SConscript(['ds/SConstruct'])
+#Conscript(['mem/SConstruct'])
+#SConscript(['base/SConstruct'])
+#SConscript(['net/SConstruct'])
+#SConscript(['log/SConstruct'])
+#SConscript(['utils/SConstruct'])
+#SConscript(['dns/SConstruct'])
+#SConscript(['http/SConstruct'])
+
+import os, sys, glob
+
+Import('defs', 'includes', 'libpath', 'libs')
+includes += ['../include']
+
+files = []
+
+sourcedirs = os.listdir('.')
+sourcedirs.remove('dns')
+for d in sourcedirs:
+	if not os.path.isdir(d):
+		continue
+	files += glob.glob(d + '/*.c')
+
+libs += ['zocle2']
+if sys.platform.startswith('win'):
+	libs += ['gdi32']
+
+libpath += ['../']
+
+ldflags = ''
+#if sys.platform == 'linux2':
+#	ldflags = '-Wl,-R' + os.path.dirname(os.getcwd())
+
+env = Environment(CCFLAGS='-ggdb -Wall -std=gnu99', CPPDEFINES=defs, CPPPATH=includes, 
+				  LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
+
+for fn in files:
+	if fn in ['http/httpasync_test.c', 'server/asynconn_test.c', 'server/libevent_test.c', 'server/libev_test.c']:
+		continue
+	env.Program(fn)
+	#env.Program([fn, '../libzocle2.a'])
