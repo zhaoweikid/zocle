@@ -9,7 +9,7 @@ zcDBRec*
 zc_sqliterec_new(void *stmt)
 {
     zcSQLiteRec *rec = (zcSQLiteRec*)zc_malloc(sizeof(zcSQLiteRec));
-    memset(rec, 0, sizeof(rec));
+    memset(rec, 0, sizeof(zcSQLiteRec));
 
     rec->stmt = stmt;
     rec->fields = rec->rows = 0;

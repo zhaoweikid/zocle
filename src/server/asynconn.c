@@ -4,6 +4,7 @@
 #include <zocle/log/logfile.h>
 #include <zocle/base/defines.h>
 #include <zocle/mem/alloc.h>
+#include <zocle/str/buffer.h>
 #include <errno.h>
 #include <unistd.h>
 

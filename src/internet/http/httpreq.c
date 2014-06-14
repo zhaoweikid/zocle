@@ -233,7 +233,7 @@ zc_httpreq_new(const char *urlstr)
     if (NULL == urlstr)
         return NULL;
     zcHttpReq *req = zc_malloc(sizeof(zcHttpReq));
-    memset(req, 0, sizeof(req));
+    memset(req, 0, sizeof(zcHttpReq));
     
     req->method = ZC_HTTP_GET;
     req->protocol = ZC_HTTP_P11;

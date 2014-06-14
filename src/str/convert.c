@@ -16,7 +16,7 @@
 int
 zc_iconv_convert(const char *from, const char *to, const char *src, int srclen, char* save, int savelen)
 {
-    iconv_t cd; 
+    iconv_t cd = (iconv_t)-1; 
     char *inbuf  = (char*)src;
     char *outbuf = save;
     size_t outbufsize = savelen;
@@ -232,7 +232,7 @@ zc_ucs2_to_utf8(const char *f, int flen, char *t, int tlen)
 {
     uint16_t v;
     char *vc = (char *)&v;
-    int i;
+    int i = 0;
     int out = 0;
 
     while (i<flen) {

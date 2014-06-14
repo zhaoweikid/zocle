@@ -1629,7 +1629,7 @@ zc_socket_local_addr(zcSocket *s)
                     //printf("\tDOWN\n");
                 }
             }*/
-            zc_list_append(addrs, zc_listnode_new_data(sockaddr));
+            zc_list_append(addrs, sockaddr);
         }
 
         // 这段代码来自 qmail 的 ipme.c, 在 FreeBSD 上实测中没有出现过 len 小的情况

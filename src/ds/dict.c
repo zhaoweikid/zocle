@@ -5,6 +5,8 @@
 #include <zocle/str/string.h>
 #include <zocle/utils/funcs.h>
 
+const char *ZC_KEY_DUMMY = "<DUMMY>";
+
 zcDictNode* 
 zc_dict_node_init(zcDictNode *htn, char *key, int keylen, void *value)
 {

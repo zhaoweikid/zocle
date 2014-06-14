@@ -10,7 +10,7 @@ zcHashSetNode*
 zc_hashset_node_new(char *key, int keylen)
 {
     zcHashSetNode *node = (zcHashSetNode*)zc_malloc(sizeof(zcHashSetNode));  
-    memset(node, 0, sizeof(node));
+    memset(node, 0, sizeof(zcHashSetNode));
     node->key = zc_strdup(key, 0);
     return node;
 }

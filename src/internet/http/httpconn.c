@@ -83,7 +83,7 @@ zc_httpconn_send(zcHttpConn *c, zcHttpReq *req)
     int64_t starttm;
 
     if (c->stat) {
-        memset(c->stat, 0, sizeof(c->stat));
+        memset(c->stat, 0, sizeof(zcHttpConnStat));
         c->stat->start = zc_timenow();
     }
 

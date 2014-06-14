@@ -11,7 +11,7 @@ zcConfDict*
 zc_confdict_new(const char *filename)
 {
     zcConfDict *cd = (zcConfDict*)zc_malloc(sizeof(zcConfDict));
-    memset(cd, 0, sizeof(cd));    
+    memset(cd, 0, sizeof(zcConfDict));
     strcpy(cd->filename, filename);
     cd->groups = zc_dict_new(256, 0);
     if (NULL == cd->groups) {

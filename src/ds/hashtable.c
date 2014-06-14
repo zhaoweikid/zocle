@@ -12,7 +12,7 @@ zc_hashtable_node_new(char *key, int klen, void *value)
 {
     zcHashTableNode   *node;
     node = (zcHashTableNode*)zc_malloc(sizeof(zcHashTableNode));  
-    memset(node, 0, sizeof(node));
+    memset(node, 0, sizeof(zcHashTableNode));
     node->key   = zc_strdup(key, klen);
     node->value = value;
     return node;

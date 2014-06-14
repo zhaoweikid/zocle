@@ -28,7 +28,7 @@ typedef struct zc_httpinfo_t
 	bool     header:1;
 	bool	 longconn:1;
 	bool	 websocket:1;
-	bool	 websocket_close:2; // 0 not close, 1 recv close, 2 send close
+	char	 websocket_close:3; // 0 not close, 1 recv close, 2 send close
 	bool	 bodyfirst;
 	int		 chunklen;
 	int64_t  readlen;
