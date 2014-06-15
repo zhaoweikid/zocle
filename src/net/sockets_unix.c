@@ -354,7 +354,7 @@ void
 zc_socket_close(zcSocket  *s)
 {
 #ifdef ZOCLE_WITH_SSL
-    if (s->sslobj) {
+    if (s->sslobj && s->sslobj->peer_cert) {
         X509_free(s->sslobj->peer_cert);
         SSL_shutdown(s->sslobj->ssl);
     }
@@ -372,8 +372,10 @@ zc_socket_close(zcSocket  *s)
     }   
 #ifdef ZOCLE_WITH_SSL
     if (s->sslobj) {
-        SSL_free(s->sslobj->ssl);
-        SSL_CTX_free(s->sslobj->ctx);
+        if (s->sslobj->ssl)
+            SSL_free(s->sslobj->ssl);
+        if (s->sslobj->ctx)
+            SSL_CTX_free(s->sslobj->ctx);
     }
 #endif
 }
@@ -1109,14 +1111,81 @@ zc_socket_recvfrom_self(zcSocket *s, char *buf, int len, int flags)
 }
 #ifdef ZOCLE_WITH_SSL
 
-int 
-zc_socket_client_ssl(zcSocket *s, char *key_file, char *cert_file, 
-        zcSSLCertRequire certreq, zcSSLVer ver, char *cacerts_file)
+static int
+zc_socket_do_handshake(zcSocket *s)
 {
-    char *errstr = NULL;
     int ret;
     int err;
     int sockstate;
+
+    /* just in case the blocking state of the socket has been changed */
+    //nonblocking = s->blocked * -1; //(self->Socket->sock_timeout >= 0.0);
+    if (s->blocked) {
+        BIO_set_nbio(SSL_get_rbio(s->sslobj->ssl), 0);
+        BIO_set_nbio(SSL_get_wbio(s->sslobj->ssl), 0);
+    }else{
+        BIO_set_nbio(SSL_get_rbio(s->sslobj->ssl), 1);
+        BIO_set_nbio(SSL_get_wbio(s->sslobj->ssl), 1);
+    }
+
+    char *errstr = "";
+    /* Actually negotiate SSL connection */
+    /* XXX If SSL_do_handshake() returns 0, it's also a failure. */
+    do {
+        ret = SSL_do_handshake(s->sslobj->ssl);
+        err = SSL_get_error(s->sslobj->ssl, ret);
+        
+        /*if(PyErr_CheckSignals()) {
+            return NULL;
+        }*/
+        if (err == SSL_ERROR_WANT_READ) {
+            sockstate = zc_socket_select(s, ZC_SOCKET_READ);
+        } else if (err == SSL_ERROR_WANT_WRITE) {
+            sockstate = zc_socket_select(s, ZC_SOCKET_WRITE);
+        } else {
+            sockstate = ZC_SSL_SOCKET_OPERATION_OK;
+        }
+        if (sockstate == ZC_SSL_SOCKET_HAS_TIMED_OUT) {
+            errstr = "The handshake operation timed out";
+            goto handshake_error;
+        } else if (sockstate == ZC_SSL_SOCKET_HAS_BEEN_CLOSED) {
+            errstr = "Underlying socket has been closed.";
+            goto handshake_error;
+        } else if (sockstate == ZC_SSL_SOCKET_TOO_LARGE_FOR_SELECT) {
+            errstr = "Underlying socket too large for select().";
+            goto handshake_error;
+        } else if (sockstate == ZC_SSL_SOCKET_IS_NONBLOCKING) {
+            break;
+        }
+    } while (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE);
+    if (ret < 1) {
+        //return PySSL_SetError(self, ret, __FILE__, __LINE__);
+        ZCWARN("ssl handshake error: %d\n", ret);
+        goto handshake_error;
+    }
+
+    if (s->sslobj->peer_cert)
+        X509_free (s->sslobj->peer_cert);
+    if ((s->sslobj->peer_cert = SSL_get_peer_certificate(s->sslobj->ssl))) {
+        X509_NAME_oneline(X509_get_subject_name(s->sslobj->peer_cert),
+                          s->sslobj->server, X509_NAME_MAXLEN);
+        X509_NAME_oneline(X509_get_issuer_name(s->sslobj->peer_cert),
+                          s->sslobj->issuer, X509_NAME_MAXLEN);
+    }
+    return ZC_OK;
+handshake_error:
+    ZCWARN("ssl error: %s\n", errstr); 
+    return ZC_ERR;
+}
+
+static int 
+zc_socket_ssl(zcSocket *s, char *key_file, char *cert_file, 
+        zcSSLCertRequire certreq, zcSSLVer ver, char *cacerts_file, int type)
+{
+    char *errstr = NULL;
+    int ret;
+    //int err;
+    //int sockstate;
     
     if (s->sslobj) {
         memset(s->sslobj, 0, sizeof(zcSSL));
@@ -1124,22 +1193,30 @@ zc_socket_client_ssl(zcSocket *s, char *key_file, char *cert_file,
         s->sslobj = zc_calloct(zcSSL);
     }
 
-    /*memset(s->sslobj->server, '\0', sizeof(char) * X509_NAME_MAXLEN);
-    memset(s->sslobj->issuer, '\0', sizeof(char) * X509_NAME_MAXLEN);
-    s->sslobj->peer_cert = NULL;
-    s->sslobj->ssl = NULL;
-    s->sslobj->ctx = NULL;*/
-    //s->Socket = NULL;
-
     if ((key_file && !cert_file) || (!key_file && cert_file)) {
         errstr = "Both the key & certificate files must be specified";
         goto zc_socket_ssl_fail;
     }
+   
+    (void) ERR_get_state();
+    ERR_clear_error();
     
-    SSL_load_error_strings();
-    SSLeay_add_ssl_algorithms();
+    if (ver == ZC_SSL_VER_TLS1)
+        s->sslobj->ctx = SSL_CTX_new(TLSv1_method()); /* Set up context */
+    else if (ver == ZC_SSL_VER_SSL3)
+        s->sslobj->ctx = SSL_CTX_new(SSLv3_method()); /* Set up context */
+#ifndef OPENSSL_NO_SSL2
+    else if (ver == ZC_SSL_VER_SSL2)
+        s->sslobj->ctx = SSL_CTX_new(SSLv2_method()); /* Set up context */
+#endif
+    else if (ver == ZC_SSL_VER_SSL23)
+        s->sslobj->ctx = SSL_CTX_new(SSLv23_method()); /* Set up context */ 
+
+
+    //SSL_load_error_strings();
+    //SSLeay_add_ssl_algorithms();
     //s->ctx = SSL_CTX_new(SSLv23_server_method()); /* Set up context */
-    s->sslobj->ctx = SSL_CTX_new(SSLv23_method()); /* Set up context */
+    //s->sslobj->ctx = SSL_CTX_new(SSLv23_method()); /* Set up context */
     if (s->sslobj->ctx == NULL) {
         errstr = "SSL_CTX_new error";
         goto zc_socket_ssl_fail;
@@ -1172,202 +1249,69 @@ zc_socket_client_ssl(zcSocket *s, char *key_file, char *cert_file,
             goto zc_socket_ssl_fail;
         }
     }
+    /* ssl compatibility */
+    SSL_CTX_set_options(s->sslobj->ctx, SSL_OP_ALL & ~SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS);
 
-    SSL_CTX_set_verify(s->sslobj->ctx, SSL_VERIFY_NONE, NULL); /* set verify lvl */
+
+    zcSSLCertRequire verification_mode = SSL_VERIFY_NONE;
+    if (certreq == ZC_SSL_CERT_OPTIONAL)
+        verification_mode = SSL_VERIFY_PEER;
+    else if (certreq == ZC_SSL_CERT_REQUIRED)
+        verification_mode = (SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT);
+    SSL_CTX_set_verify(s->sslobj->ctx, verification_mode, NULL); /* set verify lvl */
+
     s->sslobj->ssl = SSL_new(s->sslobj->ctx); /* New ssl struct */
     SSL_set_fd(s->sslobj->ssl, s->fd);   /* Set the socket for SSL */
 
     /* If the socket is in non-blocking mode or timeout mode, set the BIO
      * to non-blocking mode (blocking is the default)
      */
-    if (s->timeout >= 0) {
+    if (!s->blocked) {
         /* Set both the read and write BIO's to non-blocking mode */
         BIO_set_nbio(SSL_get_rbio(s->sslobj->ssl), 1);
         BIO_set_nbio(SSL_get_wbio(s->sslobj->ssl), 1);
     }
 
-    SSL_set_connect_state(s->sslobj->ssl);
-
-    /* Actually negotiate SSL connection */
-    /* XXX If SSL_connect() returns 0, it's also a failure. */
-    sockstate = 0;
-    do {
-        ret = SSL_connect(s->sslobj->ssl);
-        err = SSL_get_error(s->sslobj->ssl, ret);
-        /*if(PyErr_CheckSignals()) {
-            goto zc_socket_ssl_fail;
-        }*/
-        if (err == SSL_ERROR_WANT_READ) {
-            sockstate = zc_socket_select(s, ZC_SOCKET_READ);
-        } else if (err == SSL_ERROR_WANT_WRITE) {
-            sockstate = zc_socket_select(s, ZC_SOCKET_WRITE);
-        } else {
-            sockstate = ZC_SSL_SOCKET_OPERATION_OK;
-        }
-        
-        if (sockstate == ZC_SSL_SOCKET_HAS_TIMED_OUT) {
-            errstr =  "The connect operation timed out";
-            goto zc_socket_ssl_fail;
-        } else if (sockstate == ZC_SSL_SOCKET_HAS_BEEN_CLOSED) {
-            errstr = "Underlying socket has been closed.";
-            goto zc_socket_ssl_fail;
-        } else if (sockstate == ZC_SSL_SOCKET_TOO_LARGE_FOR_SELECT) {
-            errstr = "Underlying socket too large for select().";
-            goto zc_socket_ssl_fail;
-        } else if (sockstate == ZC_SSL_SOCKET_IS_NONBLOCKING) {
-            break;
-        }
-    } while (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE);
-    
-    if (ret <= 0) {
-        //ZCINFO("ssl error! %s\n", errbuf);
-        goto zc_socket_ssl_fail;
+    if (type == ZC_SSL_CLIENT) {
+        SSL_set_connect_state(s->sslobj->ssl);
+    }else{
+        SSL_set_accept_state(s->sslobj->ssl);
     }
-    //s->ssl->debug = 1;
 
-    if ((s->sslobj->peer_cert = SSL_get_peer_certificate(s->sslobj->ssl))) {
-        X509_NAME_oneline(X509_get_subject_name(s->sslobj->peer_cert), s->sslobj->server, X509_NAME_MAXLEN);
-        X509_NAME_oneline(X509_get_issuer_name(s->sslobj->peer_cert), s->sslobj->issuer, X509_NAME_MAXLEN);
+    ret = zc_socket_do_handshake(s);
+    if (ret != ZC_OK) {
+        return ZC_ERR;
     }
-    
-    return 0;
+    return ZC_OK;
 
 zc_socket_ssl_fail:
-    if (errstr) {
-        ZCERROR("ssl error: %s\n", errstr);
+    ZCWARN("ssl error:%s\n", errstr);    
+    if (s->sslobj->ctx) {
+        SSL_CTX_free(s->sslobj->ctx);
     }
+    if (s->sslobj->ssl) {
+        SSL_free(s->sslobj->ssl);
+    }
+    if (s->sslobj) {
+        zc_free(s->sslobj);
+    }
+    s->sslobj = NULL;
+    return ZC_ERR;
+}
 
-    return -1;
+int 
+zc_socket_client_ssl(zcSocket *s, char *key_file, char *cert_file, 
+        zcSSLCertRequire certreq, zcSSLVer ver, char *cacerts_file)
+{
+    return zc_socket_ssl(s, key_file, cert_file, certreq, ver, cacerts_file, ZC_SSL_CLIENT);
 }
 
 int 
 zc_socket_server_ssl(zcSocket *s, char *key_file, char *cert_file, 
         zcSSLCertRequire certreq, zcSSLVer ver, char *cacerts_file)
 {
-    char *errstr = NULL;
-    int ret;
-    int err;
-    int sockstate;
+    return zc_socket_ssl(s, key_file, cert_file, certreq, ver, cacerts_file, ZC_SSL_SERVER);
 
-    if (s->sslobj) {
-        memset(s->sslobj, 0, sizeof(zcSSL));
-    }else{
-        s->sslobj = zc_calloct(zcSSL);
-    }
-
-    /*memset(s->server, '\0', sizeof(char) * X509_NAME_MAXLEN);
-    memset(s->issuer, '\0', sizeof(char) * X509_NAME_MAXLEN);
-    s->peer_cert = NULL;
-    s->ssl = NULL;
-    s->ctx = NULL;*/
-    //s->Socket = NULL;
-
-    if ((key_file && !cert_file) || (!key_file && cert_file)) {
-        errstr = "Both the key & certificate files must be specified";
-        goto zc_socket_ssl_fail;
-    }
-    
-    SSL_load_error_strings();
-    SSLeay_add_ssl_algorithms();
-    s->sslobj->ctx = SSL_CTX_new(SSLv23_server_method()); // Set up context
-    //s->ctx = SSL_CTX_new(SSLv23_method()); // Set up context
-    if (s->sslobj->ctx == NULL) {
-        errstr = "SSL_CTX_new error";
-        goto zc_socket_ssl_fail;
-    }
-
-    if (key_file) {
-        ret = SSL_CTX_use_PrivateKey_file(s->sslobj->ctx, key_file, SSL_FILETYPE_PEM);
-        if (ret <= 0) {
-            errstr = "SSL_CTX_use_PrivateKey_file error";
-            goto zc_socket_ssl_fail;
-        }
-
-        /*ret = SSL_CTX_use_certificate_chain_file(s->ctx, cert_file);
-        SSL_CTX_set_options(s->ctx, SSL_OP_ALL); // ssl compatibility
-        if (ret <= 0) {
-            errstr = "SSL_CTX_use_certificate_chain_file error";
-            goto zc_socket_ssl_fail;
-        }*/
-
-        ret = SSL_CTX_use_certificate_file(s->sslobj->ctx, cert_file, SSL_FILETYPE_PEM);
-        if (ret <= 0) {
-            char errbuf[128];
-            ERR_error_string_n(ERR_get_error(), errbuf, sizeof(errbuf));
-            ZCWARN("cert error:%s", errbuf);  
-            goto zc_socket_ssl_fail;
-        }
-
-        if (!SSL_CTX_check_private_key(s->sslobj->ctx)) {
-            errstr = "Private key does not match the certificate public key\n";
-            goto zc_socket_ssl_fail;
-        }
-    }
-
-    //SSL_CTX_set_verify(s->ctx, SSL_VERIFY_NONE, NULL); // set verify lvl
-    s->sslobj->ssl = SSL_new(s->sslobj->ctx); /* New ssl struct */
-    SSL_set_fd(s->sslobj->ssl, s->fd);   /* Set the socket for SSL */
-
-    /* If the socket is in non-blocking mode or timeout mode, set the BIO
-     * to non-blocking mode (blocking is the default)
-     */
-    if (s->timeout >= 0) {
-        /* Set both the read and write BIO's to non-blocking mode */
-        BIO_set_nbio(SSL_get_rbio(s->sslobj->ssl), 1);
-        BIO_set_nbio(SSL_get_wbio(s->sslobj->ssl), 1);
-    }
-
-    //SSL_set_connect_state(s->ssl);
-
-    /* Actually negotiate SSL connection */
-    /* XXX If SSL_connect() returns 0, it's also a failure. */
-    sockstate = 0;
-    do {
-        //ret = SSL_connect(s->ssl);
-        ret = SSL_accept(s->sslobj->ssl);
-        err = SSL_get_error(s->sslobj->ssl, ret);
-
-        if (err == SSL_ERROR_WANT_READ) {
-            sockstate = zc_socket_select(s, ZC_SOCKET_READ);
-        } else if (err == SSL_ERROR_WANT_WRITE) {
-            sockstate = zc_socket_select(s, ZC_SOCKET_WRITE);
-        } else {
-            sockstate = ZC_SSL_SOCKET_OPERATION_OK;
-        }
-        
-        if (sockstate == ZC_SSL_SOCKET_HAS_TIMED_OUT) {
-            errstr =  "The connect operation timed out";
-            goto zc_socket_ssl_fail;
-        } else if (sockstate == ZC_SSL_SOCKET_HAS_BEEN_CLOSED) {
-            errstr = "Underlying socket has been closed.";
-            goto zc_socket_ssl_fail;
-        } else if (sockstate == ZC_SSL_SOCKET_TOO_LARGE_FOR_SELECT) {
-            errstr = "Underlying socket too large for select().";
-            goto zc_socket_ssl_fail;
-        } else if (sockstate == ZC_SSL_SOCKET_IS_NONBLOCKING) {
-            break;
-        }
-    } while (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE);
-    
-    if (ret <= 0) {
-        //ZCINFO("ssl error! %s\n", errbuf);
-        goto zc_socket_ssl_fail;
-    }
-    //s->ssl->debug = 1;
-
-    if ((s->sslobj->peer_cert = SSL_get_peer_certificate(s->sslobj->ssl))) {
-        X509_NAME_oneline(X509_get_subject_name(s->sslobj->peer_cert), s->sslobj->server, X509_NAME_MAXLEN);
-        X509_NAME_oneline(X509_get_issuer_name(s->sslobj->peer_cert), s->sslobj->issuer, X509_NAME_MAXLEN);
-    }
-    
-    return 0;
-
-zc_socket_ssl_fail:
-    if (errstr) {
-        ZCERROR("ssl error: %s\n", errstr);
-    }
-
-    return -1;
 }
 
 #endif

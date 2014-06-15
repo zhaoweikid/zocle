@@ -4,7 +4,7 @@ name		= 'zocle'
 includes	= ['include']
 libs		= ['z']
 libpath		= ['.', '/usr/local/lib']
-ldflags		= '-pg'
+ldflags		= ''
 msys_home	= os.environ.get('MINGW_HOME', '')
 
 defs = ['_REENTRANT', 
@@ -14,7 +14,7 @@ defs = ['_REENTRANT',
 		'ZOCLE_WITH_LIBEV', 
 		'ZOCLE_WITH_SSL', 
 		'ZOCLE_WITH_SQLITE', 
-		#'ZOCLE_WITH_MYSQL',
+		'ZOCLE_WITH_MYSQL',
 		#'ASYNC_ONE_WATCHER',
 		#'ZOCLE_WITH_TCMALLOC',
 		]
@@ -41,6 +41,8 @@ if 'ZOCLE_WITH_SSL' in defs:
 		else:
 			includes.append('/usr/local/ssl/include')
 			libpath.append('/usr/local/ssl/lib')
+	else:
+		print 'no ssl dir, use system'
 	libs.append('ssl')
 libs.append('crypto')
 
@@ -76,11 +78,11 @@ if 'ZOCLE_WITH_GC' in defs:
 env = None
 if sys.platform == 'win32':
 	libs += ['ws2_32', 'pthreadGC2', 'msvcrt', 'gdi32']
-	env = Environment(tools=['mingw'], CCFLAGS='-ggdb -std=gnu99 -Wall -pg', 
+	env = Environment(tools=['mingw'], CCFLAGS='-ggdb -std=gnu99 -Wall',
 				CPPDEFINES=defs, CPPPATH=includes, 
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 else:
-	env = Environment(CCFLAGS='-ggdb -pg -std=gnu99 -Wall', 
+	env = Environment(CCFLAGS='-ggdb -std=gnu99 -Wall', 
 				CPPDEFINES=defs, CPPPATH=includes, 
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 

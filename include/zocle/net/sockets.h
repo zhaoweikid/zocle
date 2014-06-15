@@ -69,10 +69,27 @@ typedef enum  {
     ZC_SSL_SOCKET_OPERATION_OK
 }zcSSLTimeoutState;
 
+typedef enum zc_ssl_error {
+    /* these mirror ssl.h */
+    ZC_SSL_ERROR_NONE,
+    ZC_SSL_ERROR_SSL,
+    ZC_SSL_ERROR_WANT_READ,
+    ZC_SSL_ERROR_WANT_WRITE,
+    ZC_SSL_ERROR_WANT_X509_LOOKUP,
+    ZC_SSL_ERROR_SYSCALL,     /* look at error stack/return value/errno */
+    ZC_SSL_ERROR_ZERO_RETURN,
+    ZC_SSL_ERROR_WANT_CONNECT,
+    /* start of non ssl.h errorcodes */
+    ZC_SSL_ERROR_EOF,         /* special case of SSL_ERROR_SYSCALL */
+    ZC_SSL_ERROR_INVALID_ERROR_CODE
+}zcSSLError;
+
 typedef enum  {
     ZC_SSL_VER_TLS1,
     ZC_SSL_VER_SSL3,
+#ifndef OPENSSL_NO_SSL2
     ZC_SSL_VER_SSL2,
+#endif
     ZC_SSL_VER_SSL23
 }zcSSLVer;
 
@@ -88,6 +105,9 @@ typedef enum  {
 
 #define ZC_SOCKET_WRITE 1
 #define ZC_SOCKET_READ  0
+
+#define ZC_SSL_CLIENT	1
+#define ZC_SSL_SERVER	2
 
 
 typedef struct zc_sockaddr_t
