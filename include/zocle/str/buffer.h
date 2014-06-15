@@ -7,7 +7,7 @@
 
 typedef struct zc_buffer_t
 {
-    struct zc_buffer_t *next;
+    //struct zc_buffer_t *next;
     uint32_t size;
     uint32_t end;
     uint32_t pos;
@@ -36,24 +36,5 @@ zcBuffer*   zc_buffer_resize(zcBuffer *, uint32_t size);
 #define     zc_buffer_idle(buf)		buf->ring? (buf->end-buf->pos>=0? buf->pos+buf->size-buf->end: buf->pos-buf->end):buf->size-buf->end
 #define		zc_buffer_data(buf)		&buf->data[buf->pos]
 #define     zc_buffer_delete_null(x) do{zc_buffer_delete(x);x=NULL;}while(0)
-
-/*inline int
-zc_buffer_len(zcBuffer *buf)
-{
-    int ret = buf->end - buf->pos;
-	if (ret < 0)
-		return buf->size + ret;
-	return ret;
-}
-
-inline int
-zc_buffer_idle(zcBuffer *buf)
-{
-    if (buf->ring) {
-        return buf->end-buf->pos? buf->size-buf->end+buf->pos: buf->pos-buf->end;
-    }
-    return buf->size - buf->end;
-}*/
-
 
 #endif
