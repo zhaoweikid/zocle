@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <zocle/ds/list.h>
 #include <zocle/str/string.h>
-#include <zocle/str/cstrlist.h>
 #include <zocle/server/asynconn.h>
 
 #define ZC_DNS_EBASE -(('d' << 24) | ('n' << 16) | ('s' << 8) | 64)

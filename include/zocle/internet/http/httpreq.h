@@ -3,7 +3,6 @@
 
 #include <zocle/ds/dict.h>
 #include <zocle/str/string.h>
-#include <zocle/str/cstrlist.h>
 #include <stdint.h>
 
 typedef struct _zc_url
@@ -25,7 +24,7 @@ void   zc_url_clear(zcURL *);
 int    zc_url_init(zcURL *, const char *urlstr);
 void   zc_url_destroy(void *x);
 int    zc_url_parse(zcURL *, const char *urlstr);
-int    zc_url_domain2ip(zcURL *, zcCStrList *);
+int    zc_url_domain2ip(zcURL *, zcList *);
 void   zc_url_print(zcURL*);
 bool   zc_url_domain_isip(zcURL*);
 bool   zc_host_isip(const char *);

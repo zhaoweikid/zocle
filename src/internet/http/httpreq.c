@@ -4,7 +4,6 @@
 #include <zocle/internet/http/httpheader.h>
 #include <zocle/enc/url.h>
 #include <zocle/str/string.h>
-#include <zocle/str/cstrlist.h>
 #ifndef _WIN32
 #include <netdb.h>
 #include <arpa/inet.h>

@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <zocle/ds/list.h>
-#include <zocle/str/cstrlist.h>
 
 #ifdef __hpux
     #define _XOPEN_SOURCE_EXTENDED

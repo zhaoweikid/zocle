@@ -94,22 +94,32 @@ zc_httpconn_send(zcHttpConn *c, zcHttpReq *req)
             isssl = true;
             port = 443;
         }
-        zcCStrList ips;
+        /*zcCStrList ips;
         char buf[16*10+100];
         zc_cstrlist_init_stack(&ips, buf, sizeof(buf), 10);
+        */
+        zcList *ips = zc_list_new();
         starttm = zc_timenow();
-        zc_socket_gethostbyname(req->url.domain.data, &ips);
+        zc_socket_gethostbyname(req->url.domain.data, ips);
         if (c->stat) {
             c->stat->dns_time = zc_timenow() - starttm;
         }
-        if (ips.n == 0) {
+        //if (ips.n == 0) {
+        if (ips->size == 0) {
             ZCWARN("dns error: %s", req->url.domain.data);
+            zc_list_delete(ips);
             return ZC_ERR;
         }
-        ZCINFO("try open %s:%d", zc_cstrlist_get(&ips, 0), port);
-        ret = zc_httpconn_open(c, zc_cstrlist_get(&ips, 0), port, isssl);
-        if (ret < 0)
+        char *ip = zc_list_at(ips, 0, NULL);
+        ZCINFO("try open %s:%d", ip, port);
+        //ZCINFO("try open %s:%d", zc_cstrlist_get(&ips, 0), port);
+        ret = zc_httpconn_open(c, ip, port, isssl);
+        if (ret < 0) {
+            zc_list_delete(ips);
             return ret;
+        }
+
+        zc_list_delete(ips);
     }
 
     zcString s;
