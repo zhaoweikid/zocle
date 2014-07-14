@@ -249,7 +249,7 @@ int         zc_socket_set_recv_buffer_size(zcSocket*, int sz);
 int         zc_socket_error_string(int err, char *buf, int buflen);
 int         zc_socket_last_error_string(char *buf, int buflen);
 zcList*     zc_socket_local_addr();
-int			zc_socket_gethostbyname(const char *name, zcCStrList *);
+int			zc_socket_gethostbyname(const char *name, zcList *);
 
 #define     zc_socket_delete4(x) do{zc_socket_delete4_(x,NULL,__FILE__,__LINE__);x=NULL;}while(0)
 
