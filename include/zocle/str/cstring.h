@@ -76,11 +76,11 @@ int			zc_cstr_quote(zcCString *sstr, zcCString *);
 #ifdef ZOCLE_WITH_ICONV
 int			zc_cstr_convert(zcCString *sstr, zcCString *, char *fenc, char *tenc);
 #endif
-int         zc_cstr_startswith(zcCString *sstr, char *startstr);
+/*int         zc_cstr_startswith(zcCString *sstr, char *startstr);
 int         zc_cstr_startswith_case(zcCString *sstr, char *startstr);
 int         zc_cstr_endswith(zcCString *sstr, char *endstr);
 int         zc_cstr_endswith_case(zcCString *sstr, char *endstr);
-
+*/
 //#define     zc_cstr_print(s) zc_cstr_print_(s, __FILE__, __LINE__)
 #define     zc_cstr_delete_null(s) do{zc_cstr_delete(s);s=NULL;}while(0)
 

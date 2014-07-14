@@ -251,7 +251,6 @@ zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
     uint64_t datalen;
     uint32_t mask;
     uint8_t  opcode = 0;
-    int64_t  pos = 0;
     int      headerlen = 2;
     uint8_t  fin = 1;
 
@@ -319,7 +318,7 @@ zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
         return headerlen+datalen;
     }
 
-    pos = headerlen;
+    //int64_t pos = headerlen;
     if (havemask) {
         uint8_t *maskarray = (uint8_t*)&mask;
         char *finaldata = zc_malloc(datalen);

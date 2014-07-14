@@ -9,14 +9,14 @@ msys_home	= os.environ.get('MINGW_HOME', '')
 
 defs = ['_REENTRANT', 
 		'_GNU_SOURCE', 
-		'ZOCLE_WITH_ICONV', 
+		#'ZOCLE_WITH_ICONV', 
 		'ZOCLE_WITH_PCRE', 
 		'ZOCLE_WITH_LIBEV', 
 		'ZOCLE_WITH_SSL', 
 		'ZOCLE_WITH_SQLITE', 
 		'ZOCLE_WITH_MYSQL',
 		#'ASYNC_ONE_WATCHER',
-		#'ZOCLE_WITH_TCMALLOC',
+		'ZOCLE_WITH_TCMALLOC',
 		]
 
 files = []
@@ -63,6 +63,10 @@ if 'ZOCLE_WITH_MYSQL' in defs:
 	elif os.path.isdir('/opt/mysql'):
 		includes.append('/opt/mysql/include')
 		libpath.append('/opt/mysql/lib')
+	elif os.path.isdir('/usr/include/mysql'):
+		includes.append('/usr/include/mysql')
+		libpath.append('/usr/lib')
+		libpath.append('/lib/x86_64-linux-gnu/')
 
 if 'ZOCLE_WITH_SQLITE' in defs:
 	includes.append('/usr/local/include')
@@ -87,7 +91,7 @@ else:
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 env.StaticLibrary(name, files)
-env.SharedLibrary(name, files)
+#env.SharedLibrary(name, files)
 
 #SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
 
