@@ -3,6 +3,7 @@
 #include <zocle/log/logfile.h>
 #include <zocle/mem/alloc.h>
 #include <zocle/ds/list.h>
+#include <zocle/str/string.h>
 
 #if defined(__linux) || defined(__APPLE__) || defined(__FreeBSD__)
 //#include <ifaddrs.h>
@@ -1607,7 +1608,7 @@ zc_socket_local_addr(zcSocket *s)
 }
 
 int	
-zc_socket_gethostbyname(const char *name, zcCStrList *ip)
+zc_socket_gethostbyname(const char *name, zcList *ip)
 {
     struct hostent *h = gethostbyname(name);
     char buf[16];
@@ -1615,9 +1616,10 @@ zc_socket_gethostbyname(const char *name, zcCStrList *ip)
     for (p=h->h_addr_list; *p!=NULL; p++) {
         inet_ntop(h->h_addrtype, *p, buf, sizeof(buf));
         //ZCINFO("domain:%s ip:%s", name, buf);
-        zc_cstrlist_append(ip, buf, 0);
+        //zc_cstrlist_append(ip, buf, 0);
+        zc_list_append(ip, zc_strdup(buf, 0));
     }
-    return ip->len;
+    return ip->size;
 }
 
 

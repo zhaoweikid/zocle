@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <zocle/ds/list.h>
 #include <zocle/str/string.h>
-#include <zocle/str/cstrlist.h>
 #include <zocle/server/asynconn.h>
 
 #define ZC_DNS_EBASE -(('d' << 24) | ('n' << 16) | ('s' << 8) | 64)
@@ -148,7 +147,7 @@ int	 zc_dns_unpack_resp(zcDNSHeader *h, zcList *, const char *data, int dlen);
 int	 zc_dns_unpack_resp_simple(zcList *, const char *data, int dlen);
 
 int  zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, zcList *result);
-int  zc_dns_gethostbyname(const char *domain, zcCStrList *result);
+int  zc_dns_gethostbyname(const char *domain, zcList *result);
 
 #ifdef ZOCLE_WITH_LIBEV
 zcAsynConn* zc_asynconn_new_dns_client(const char *dns, int timeout, struct ev_loop *loop, const char *host);

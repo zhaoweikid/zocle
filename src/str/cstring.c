@@ -294,20 +294,6 @@ zc_cstr_append_len (zcCString *sstr, const char *ccstr, int cslen)
     return ZC_OK;
 }
 
-int 
-zc_cstr_append_util(zcCString *sstr, const char *cstr, const char *utilstr)
-{
-    if (cstr == NULL || utilstr == NULL) {
-        return ZC_ERR_NULL;
-    }
-    const char *end = strstr(cstr, utilstr);
-    if (NULL == end) {
-        return ZC_ERR;
-    }
-    return zc_cstr_append_len(sstr, cstr, end-cstr); 
-}
-
-
 
 /**
  * 向字符串结构中追加数据
@@ -329,22 +315,6 @@ zc_cstr_append_c (zcCString *sstr, const char c)
     return ZC_OK;
 }
 
-/*int 
-zc_cstr_append_util(zcCString *sstr, const char *s, const char *utilstr)
-{
-    int i = 0;
-    int k;    
-    while (s[i] != 0) {
-        for (k=0; util[k]!=0; k++) {
-            if (s[i] == util[k])
-                return ZC_OK;
-        }
-        zc_cstr_append_c(sstr, s[i]);
-        i++;
-    }
-    return ZC_OK;
-}*/
-
 /**
  * 向字符串结构中插入数据
  * @param sstr    字符串结构指针
@@ -357,8 +327,6 @@ int
 zc_cstr_insert (zcCString *sstr, int pos, const char *ccstr, int cslen)
 {
     int     isize; 
-    //char    *cat;
-    //char    *ndata;
 
     if (ccstr == NULL) {
         return ZC_ERR_NULL;
@@ -373,7 +341,6 @@ zc_cstr_insert (zcCString *sstr, int pos, const char *ccstr, int cslen)
         pos = sstr->len;
 
     isize = sstr->len + cslen + 1;
-    //zc_cstr_print(sstr);
     if (isize > sstr->size) {
         return ZC_ERR;
     }else{
@@ -1130,37 +1097,37 @@ zc_cstr_split(zcCString* sstr, char *smstr, int maxnum)
 int           
 zc_cstr_wc_gb18030 (zcCString *sstr)
 {
-    long   lRe = 0;
-    char   *pNow, *pSrc;
+    long   ret = 0;
+    char   *psrc;
     unsigned char ch;
 
-    pSrc = sstr->data;
-    pNow = pSrc;
-    while (*pSrc) {
-		ch = *pSrc;
+    psrc = sstr->data;
+    //char *pnow = psrc;
+    while (*psrc) {
+		ch = *psrc;
         //if ((ch >= 0x00) && (ch <= 0x7f)) // 单字节
         if (ch <= 0x7f) { // 单字节
-            lRe++;
-	    	pSrc++;
+            ret++;
+	    	psrc++;
 	    	continue;
         }else{
-	    	pSrc++;
-	    	ch = *pSrc;
+	    	psrc++;
+	    	ch = *psrc;
 	    	if ((ch >= 0x81) && (ch <= 0xfe)) { // 可能是双字节或者四字节
 				if (((ch >= 0x40) && (ch <= 0x7e)) ||((ch >= 0x80) && (ch <= 0xfe))) {// 是双字节
-		    		lRe++;
-		    		pSrc++;
+		    		ret++;
+		    		psrc++;
 		    		continue;
 				}else{
 		    		if ((ch >= 0x30) && (ch <= 0x39)) { // 是四字节，第二字节
-						pSrc++;
-						ch = *pSrc;
+						psrc++;
+						ch = *psrc;
 		        		if ((ch >= 0x81) && (ch <= 0xfe)) { // 四字节第三字节
-			    			pSrc++;
-			    			ch = *pSrc;
+			    			psrc++;
+			    			ch = *psrc;
 			    			if ((ch >= 0x30) && (ch <= 0x39)) { // 四字节第四字节
-								lRe++;
-								pSrc++;
+								ret++;
+								psrc++;
 								continue;
 			    			}else{
 			        			// 第四字节错误
@@ -1180,9 +1147,9 @@ zc_cstr_wc_gb18030 (zcCString *sstr)
 				return ZC_ERR_ENC;
 	    	}
 		}
-		pSrc++;
+		psrc++;
     }
-    return lRe;
+    return ret;
 }
 
 /**
@@ -1272,12 +1239,12 @@ zc_cstr_convert(zcCString *sstr, zcCString *newstr, char *fenc, char *tenc)
 int   
 zc_cstr_convert(zcCString *sstr, zcCString *newstr, char *fenc, char *tenc)
 {
-    return NULL;
+    return zc_cstr_append_len(newstr, sstr->data, sstr->len);
 }
 #endif
 
 
-int zc_cstr_startswith (zcCString *sstr, char *startstr)
+/*int zc_cstr_startswith (zcCString *sstr, char *startstr)
 {
     if (zc_cstr_find_str(sstr, 0, 0, startstr, ZC_STR_CASE) == 0)
         return ZC_TRUE;
@@ -1306,14 +1273,14 @@ int zc_cstr_endswith (zcCString *sstr, char *endstr)
 
 int zc_cstr_endswith_case (zcCString *sstr, char *endstr)
 {
-    int len = strlen(endstr);
-    if (len > sstr->len)
-        return ZC_FALSE;
+    //int len = strlen(endstr);
+    //if (len > sstr->len)
+    //    return ZC_FALSE;
 
     if (strncasecmp(sstr->data+sstr->len-len, endstr, len) == 0) {
         return ZC_TRUE;
     }
     return ZC_FALSE;
-}
+}*/
 
 

@@ -26,7 +26,7 @@ typedef struct zc_httpinfo_t
 	int32_t  port;
 	bool	 ssl:1;*/
 	bool     header:1;
-	bool	 longconn:1;
+	bool	 longconn:1; 
 	bool	 websocket:1;
 	char	 websocket_close:3; // 0 not close, 1 recv close, 2 send close
 	bool	 bodyfirst;
