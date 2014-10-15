@@ -11,10 +11,10 @@ int main()
 
     zcArray *ar;
     
-    ar = zc_array_new(100, 4);
+    ar = zc_array_new(100);
     assert(ar != NULL);
-    assert(ar->items == 100);
-    assert(ar->itemsize == 4);
+    assert(ar->len == 100);
+    assert(ar->capacity == 100);
     
     int i;
     for (i = 0; i < 100; i++) {
@@ -28,7 +28,7 @@ int main()
     zc_check(ar);    
     zc_array_delete(ar);
 
-    ar = zc_array_new(11, 5);
+    /*ar = zc_array_new(11);
     char buf[6];
     for (i = 0; i < 10; i++) {
         sprintf(buf, "%05d", i);
@@ -52,7 +52,7 @@ int main()
     for (i = 0; i < 10; i++) {
         sprintf(buf, "%05d", i);
         assert(memcmp(zc_array_get(ar, i, (void*)-1), buf, 5) == 0);
-    }
+    }*/
 
     zc_array_delete(ar);
 

@@ -1,6 +1,6 @@
 import os, sys, glob
 
-includes = ['../../include']
+includes = ['../../include', '/usr/local/include']
 sourcedirs = ['.']
 files = glob.glob("*.c")
 for d in sourcedirs:

@@ -6,7 +6,7 @@
 
 typedef struct 
 {
-    ZC_LIST_HEAD
+    struct zc_listhead_t list;
     int v;
 }MyListNode;
 
@@ -18,7 +18,7 @@ int mylistnode_cmp(void *a, void *b, int len)
     //ZCINFO("cmp: %d, %d\n", a1, b1);
     if (a1 == b1)
         return 0;
-    if (a1 > b1);
+    if (a1 > b1)
         return 1;
     return -1;
 }
@@ -30,7 +30,7 @@ int test_listnode()
     MyListNode *root = NULL, *node;
    
     for (i = 0; i < 1000; i++) {
-        node = (MyListNode*)zc_listhead_new(MyListNode); 
+        node = (MyListNode*)zc_malloc_t(MyListNode); 
         node->v = i;
         if (root == NULL) {
             ZCINFO("root NULL prev:NULL next:NULL, node %p prev:%p next:%p, %d\n", 
@@ -92,7 +92,7 @@ int test_listnode()
 
 typedef struct
 {
-    ZC_LIST_HEAD
+    struct zc_listhead_t list;
     char    str[64];
 }MyStrNode;
 

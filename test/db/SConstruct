@@ -6,7 +6,7 @@ files = Glob("*.c")
 for d in sourcedirs:
 	files += Glob(d + '/*.c')
 #libs = []
-libs = ['zocle2', 'sqlite3']
+libs = ['zocle', 'sqlite3']
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_SQLITE', 'ZOCLE_WITH_MYSQL']
 libpath = ['../../', '/usr/local/mysql/lib']
 if sys.platform == 'linux2':

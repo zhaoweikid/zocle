@@ -12,7 +12,7 @@ void check_key(zcHashTable *ht)
         zc_check(k);
         zc_check(v);
     zc_hashtable_foreach_end
-    zc_check(ht->table);
+    //zc_check(ht->table);
     zc_check(ht);
 }
 
@@ -21,7 +21,7 @@ int test_hashtable1()
 {
     zcHashTable   *ht;
 
-    ht = zc_hashtable_new(1000, 0);
+    ht = zc_hashtable_new(1000);
     assert(ht != NULL);
 
     ht->keydel = zc_free_func;
@@ -93,7 +93,7 @@ int test_hashtable1()
     ZCINFO("resize to 10000 ... %d\n", ht->size);
     assert(zc_hashtable_resize(ht, 10000) == ZC_OK);
     zc_check(ht);
-    zc_check(ht->table);
+    //zc_check(ht->table);
     
     check_key(ht);
 

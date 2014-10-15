@@ -1,3 +1,4 @@
+#ifdef ZOCLE_WITH_MSGPACK
 #include <zocle/serial/msgpack.h>
 
 zcString*	zc_msgpack_pack_obj(zcObject *obj)
@@ -41,4 +42,4 @@ zcObject*	zc_msgpack_unpack_obj(zcString *s)
 }
 
 
-
+#endif

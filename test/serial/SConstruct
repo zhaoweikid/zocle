@@ -7,7 +7,8 @@ for d in sourcedirs:
 	files += glob.glob(d + '/*.c')
 #libs = ['zocle2', 'pcre']
 libs = ['iconv', 'pcre']
-defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_PCRE','ZOCLE_WITH_ICONV']
+#defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_PCRE','ZOCLE_WITH_ICONV']
+defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_ICONV']
 libpath = ['../../']
 if sys.platform == 'linux2':
 	ldflags = '-Wl,-R../../ -pg'

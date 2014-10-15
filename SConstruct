@@ -1,7 +1,7 @@
 import os, sys
 
 name		= 'zocle'
-includes	= ['include']
+includes	= ['include', '/usr/local/include']
 libs		= ['z']
 libpath		= ['.', '/usr/local/lib']
 ldflags		= ''
@@ -9,14 +9,15 @@ msys_home	= os.environ.get('MINGW_HOME', '')
 
 defs = ['_REENTRANT', 
 		'_GNU_SOURCE', 
-		#'ZOCLE_WITH_ICONV', 
+		'ZOCLE_WITH_ICONV', 
 		'ZOCLE_WITH_PCRE', 
 		'ZOCLE_WITH_LIBEV', 
 		'ZOCLE_WITH_SSL', 
 		'ZOCLE_WITH_SQLITE', 
 		'ZOCLE_WITH_MYSQL',
+		'ZOCLE_WITH_MSGPACK',
 		#'ASYNC_ONE_WATCHER',
-		'ZOCLE_WITH_TCMALLOC',
+		#'ZOCLE_WITH_TCMALLOC',
 		]
 
 files = []
@@ -91,7 +92,7 @@ else:
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 env.StaticLibrary(name, files)
-#env.SharedLibrary(name, files)
+env.SharedLibrary(name, files)
 
-#SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
+SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
 
