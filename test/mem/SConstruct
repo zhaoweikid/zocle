@@ -5,7 +5,7 @@ sourcedirs = ['.']
 files = Glob("*.c")
 for d in sourcedirs:
 	files += Glob(d + '/*.c')
-libs = ['zocle2']
+libs = ['zocle']
 defs = ['_REENTRANT', '_GNU_SOURCE']
 libpath = ['../../']
 if sys.platform == 'linux2':

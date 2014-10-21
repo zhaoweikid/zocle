@@ -13,6 +13,19 @@ zc_array_new(uint32_t n)
     return v;
 }
 
+zcArray*   
+zc_array_new_tail(uint32_t n)
+{
+    if (n == 0) n = 32;
+    zcArray *v = zc_malloc(sizeof(zcArray) + sizeof(void*)*n);
+    memset(v, 0, sizeof(zcArray)+sizeof(void*)*n);
+    
+    v->data = (void**)((char*)v+sizeof(zcArray));
+    v->cap = n;
+
+    return v;
+}
+
 void
 zc_array_delete(void *v)
 {
@@ -28,7 +41,8 @@ zc_array_init(zcArray *v, uint32_t n)
     if (n == 0) n = 32;
     v->data = (void**)zc_malloc(sizeof(void*)*n);
     memset(v->data, 0, sizeof(void*)*n); 
-    v->capacity = n;
+    v->cap = n;
+    v->data_tail = 1;
 
     return ZC_OK;
 }
@@ -45,7 +59,9 @@ zc_array_destroy(void *x)
             }
         }
     }
-    zc_free(v->data);
+    if (v->data_tail == 0) {
+        zc_free(v->data);
+    }
     v->data = NULL;
 }
 
@@ -84,8 +100,10 @@ zc_array_set(zcArray *v, uint32_t pos, void *val)
 int 
 zc_array_append(zcArray *v, void *val)
 {
-    if (v->len == v->capacity) {
-        zc_array_resize(v, v->capacity*2);
+    if (v->len == v->cap) {
+        if (v->data_tail)
+            return ZC_ERR;
+        zc_array_resize(v, v->cap*2);
     }
 
     v->data[v->len] = val;
@@ -105,7 +123,7 @@ zc_array_pop_back(zcArray *v, void *defv)
 int 
 zc_array_resize(zcArray *v, uint32_t newsize)
 {
-    if (newsize <= v->capacity)
+    if (newsize <= v->cap)
         return ZC_ERR;
     void *newdata = zc_calloc(sizeof(void*)*newsize);
     memcpy(newdata, v->data, v->len*sizeof(void*)); 

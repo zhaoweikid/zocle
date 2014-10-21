@@ -30,38 +30,41 @@ int test_listnode()
     MyListNode *root = NULL, *node;
    
     for (i = 0; i < 1000; i++) {
-        node = (MyListNode*)zc_malloc_t(MyListNode); 
+        node = (MyListNode*)zc_malloct(MyListNode); 
         node->v = i;
         if (root == NULL) {
             ZCINFO("root NULL prev:NULL next:NULL, node %p prev:%p next:%p, %d\n", 
-                    node, node->prev, node->next, node->v);
+                    node, node->list.prev, node->list.next, node->v);
             root = node;
         } else {
             //zc_listhead_add_head(node, root);
             zc_listhead_add_tail((zcListHead*)node, (zcListHead*)root);
             ZCINFO("root %p prev:%p next:%p, node %p prev:%p next:%p, %d\n", 
-                    root, root->prev, root->next, node, node->prev, node->next, node->v);
+                    root, root->list.prev, root->list.next, node, node->list.prev, node->list.next, node->v);
             //root = node;
         }
     }
     ZCINFO("root:%p\n", root);
-    zc_listhead_foreach_safe(root, node) {
-        ZCINFO("v: %p %d next:%p\n", node, node->v, node->next);
+
+    struct zc_listhead_t *tmp, *cursor;
+    //zc_listhead_for_each_safe(&root->list, tmp, node) {
+    zc_listhead_for_each_safe(cursor, tmp, &root->list) {
+        ZCINFO("v: %p %d next:%p\n", node, node->v, node->list.next);
     }
     
     node = root;
-    i = 0;
-    zc_listhead_foreach_self(node) {
+    /*i = 0;
+    zc_list_foreach_self(node) {
         assert(node->v == i);
         i++;
-    }
+    }*/
     
-    node = (MyListNode*)zc_listhead_pos((zcListHead*)root , 10);
-    assert(node != NULL);
+    //node = (MyListNode*)zc_listhead_pos((zcListHead*)root , 10);
+    //assert(node != NULL);
     //ZCINFO("node->v: %d\n", node->v);
-    assert(node->v == 10);
+    //assert(node->v == 10);
     
-    i = zc_listhead_find((zcListHead*)root, (void*)300, mylistnode_cmp, (zcListHead**)&node);
+    /*i = zc_listhead_find((zcListHead*)root, (void*)300, mylistnode_cmp, (zcListHead**)&node);
     assert(i != ZC_ERR_NOT_FOUND);
     ZCINFO("i:%d node->v: %d\n", i, node->v);
     assert(node->v == 300);
@@ -83,7 +86,7 @@ int test_listnode()
     zc_listhead_foreach(root, node) {
         ZCINFO("node: %p %d, next:%p\n", node, node->v, node->next);
     }
-
+    */
     ZCINFO("root->v: %d\n", root->v);
     assert(root->v == 999);
 
@@ -96,7 +99,7 @@ typedef struct
     char    str[64];
 }MyStrNode;
 
-int test_listnode_str()
+/*int test_listnode_str()
 {
     int  i;
     char buf[64];
@@ -147,12 +150,12 @@ int test_listnode_str()
 
 
     return 0;
-}
+}*/
 
 int test_list()
 {
     zcList     *list;
-    zcListNode *node;
+    //zcListNode *node;
     //int ret;
     int oldsize;
 
@@ -171,7 +174,7 @@ int test_list()
 
     long data;
     i = 0;
-    zcListNode *head = list->head, *hnode;
+    zcListNode *hnode;
 
     /*hnode = head;
     for (i=0; i<100; i++) {
@@ -179,18 +182,20 @@ int test_list()
         hnode = (zcListNode*)hnode->next;
     }*/
 
-    zc_listhead_foreach(head, hnode) {
-        ZCINFO("foreach %ld, head:%p data:%ld\n", i, list->head, (long)hnode->data);
+    struct zc_listhead_t *cursor;
+    zc_listhead_for_each(cursor, &list->head) {
+        hnode = zc_listhead_entry(cursor, zcListNode, head);
+        ZCINFO("foreach %ld, head:%p data:%ld\n", i, &list->head, (long)hnode->data);
     }
 
     i = 0;
-    zc_list_foreach(list, data) {
-        ZCINFO("foreach %ld, head:%p data:%ld\n", i, list->head, (long)data);
-        assert(data == i);
+    zc_list_foreach(list, hnode) {
+        ZCINFO("foreach %ld, head:%p data:%ld\n", i, &list->head, (long)hnode->data);
+        assert((long)hnode->data == i);
         i++;
     }
 
-    ZCINFO("count:%ld first:%p\n", i, list->head);
+    ZCINFO("count:%ld first:%p\n", i, &list->head);
 
     for (i = 0; i < 100; i++) {
         //node = zc_list_at(list, i);
@@ -202,7 +207,7 @@ int test_list()
     }
 
     for (i = 0; i < 100; i++) {
-        data = (long)zc_list_pop_front(list);
+        data = (long)zc_list_pop(list, 0, NULL);
         //assert(node != NULL);
         assert(data == i);
         //zc_listnode_delete4(node, list);
@@ -213,12 +218,12 @@ int test_list()
         assert(zc_list_prepend(list, (void*)i) == ZC_OK);
     }
 
-    zc_list_foreach(list,data) {
-        ZCINFO("data:%ld\n", data);
+    zc_list_foreach(list, hnode) {
+        ZCINFO("data:%ld\n", (long)hnode->data);
     }
     
     for (i = 0; i < 100; i++) {
-        data = (long)zc_list_pop_back(list);
+        data = (long)zc_list_pop(list, -1, NULL);
         //assert(node != NULL);
         assert(data == i);
         //zc_listnode_delete4(node, list);
@@ -243,26 +248,26 @@ int test_list()
     //zc_listnode_delete4(node, list); 
     //assert(node == NULL);
 
-    assert(zc_list_set_cmp(list, zc_cmp_int) == ZC_OK);
+    //assert(zc_list_set_cmp(list, zc_cmp_int) == ZC_OK);
     
     v = 1;
     //zc_list_print(list);
     oldsize = list->size;
-    node = zc_list_unlink_data(list, (void*)v);
+    i = zc_list_remove(list, (void*)v);
     //zc_list_print(list);
-    assert(node != NULL);
-    assert(node->data == (void*)1);
+    //assert(node != NULL);
+    //assert(node->data == (void*)1);
     ZCINFO("size: %d\n", list->size);
     assert(list->size == oldsize-1);
     
-    zc_listnode_delete4(node, list);
+    //zc_list_delete_node(list, node);
    
     i = 10; 
     //node = zc_list_get(list, i);
     //assert(node != NULL);
     //assert(node->data == (void*)(i+1));
     oldsize = list->size;
-    data = (long)zc_list_get(list, i, (void*)-1);
+    data = (long)zc_list_pop(list, i, (void*)-1);
     assert(data == i+1);
     assert(list->size == oldsize-1);
     
@@ -281,21 +286,22 @@ int test_list()
     for (i=0; i<3; i++) {
         //zc_list_print(list);
         //ZCINFO("find %ld, size:%d\n", vx[i], list->size);
-        assert(zc_list_find(list, (void*)vx[i]) != NULL);
+        assert(zc_list_index(list, (void*)vx[i]) >= 0);
         if (i == 0) {
-            assert(zc_list_remove_pos(list, 0) == ZC_OK);
+            assert(zc_list_pop(list, 0, NULL) != NULL);
         }else if (i == 1) {
             assert(zc_list_remove(list, (void*)vx[i]) == ZC_OK);
         }else{
-            zcListNode *node2 = zc_list_find(list, (void*)vx[i]);
-            assert(node2 != NULL);
+            i = zc_list_index(list, (void*)vx[i]);
+            assert(i >= 0);
+            //assert(node2 != NULL);
             //ZCINFO("1 pos:%d\n", list->size);
-            assert(zc_list_remove_node(list, node2) == ZC_OK);
+            //assert(zc_list_delete_node(list, node2) == ZC_OK);
             //ZCINFO("2 pos:%d\n", list->size);
         }
         //ZCINFO("i:%ld size:%d thesize:%d\n", i, list->size, thesize);
         assert(list->size == thesize-i-1);
-        assert(zc_list_find(list, (void*)vx[i]) == NULL);
+        assert(zc_list_index(list, (void*)vx[i]) >= 0);
     }
 
     oldsize = list->size;
@@ -313,7 +319,7 @@ int test_list()
     zc_list_delete(list);
 
     list = zc_list_new();
-    assert(zc_list_set_cmp(list, zc_cmp_str) == ZC_OK);
+    //assert(zc_list_set_cmp(list, zc_cmp_str) == ZC_OK);
 
     char buf[64];
     for (i = 0; i < 100; i++) {
@@ -322,7 +328,7 @@ int test_list()
     }
     //ZCINFO("buf: %p, %p, %s\n", &buf, buf, buf); 
     //char *b = buf;
-    assert(zc_list_find(list, buf) != NULL);
+    assert(zc_list_index(list, buf) >= 0);
     
     zc_list_delete(list);
 
@@ -342,7 +348,7 @@ int test_list2()
         //node = zc_listnode_new_data((void*)i);
         ret = zc_list_insert(list, (void*)i, -1);
         assert(ret == ZC_OK);
-        zc_check(list->head->prev);
+        zc_check(list->head.prev);
     }
 
     assert(list->size == 100);
@@ -377,8 +383,8 @@ int main()
 
     ZCINFO("==== test mynode ====\n");
     test_listnode();
-    ZCINFO("==== test strnode ====\n");
-    test_listnode_str();
+    //ZCINFO("==== test strnode ====\n");
+    //test_listnode_str();
     ZCINFO("==== test list ====\n");
     test_list();
     ZCINFO("==== test list2 ====\n");

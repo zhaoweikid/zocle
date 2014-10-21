@@ -8,12 +8,12 @@
 
 typedef struct zc_array_t
 {
-	uint32_t capacity;
-	uint32_t len;
-	void	**data;
-
+	uint32_t cap;
+	uint32_t len:31;
+	uint32_t data_tail:1;
 	zcFuncDel del;
-    zcFuncCmp cmp;
+    //zcFuncCmp cmp;
+	void	**data;
 }zcArray;
 
 zcArray*    zc_array_new(uint32_t);

@@ -6,6 +6,10 @@ libs		= ['z']
 libpath		= ['.', '/usr/local/lib']
 ldflags		= ''
 msys_home	= os.environ.get('MINGW_HOME', '')
+ccflags     = '-ggdb -std=gnu99 -Wall'
+
+if sys.platform.startswith('linux'):
+	ccflags += '-Wl,-soname,lib%s.so.1' % name
 
 defs = ['_REENTRANT', 
 		'_GNU_SOURCE', 
@@ -87,12 +91,12 @@ if sys.platform == 'win32':
 				CPPDEFINES=defs, CPPPATH=includes, 
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 else:
-	env = Environment(CCFLAGS='-ggdb -std=gnu99 -Wall', 
+	env = Environment(CCFLAGS=ccflags, 
 				CPPDEFINES=defs, CPPPATH=includes, 
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 env.StaticLibrary(name, files)
 env.SharedLibrary(name, files)
 
-SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
+#SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
 
