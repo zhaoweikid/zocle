@@ -9,7 +9,7 @@ msys_home	= os.environ.get('MINGW_HOME', '')
 ccflags     = '-ggdb -std=gnu99 -Wall'
 
 if sys.platform.startswith('linux'):
-	ccflags += '-Wl,-soname,lib%s.so.1' % name
+	ccflags += ' -Wl,-soname,lib%s.so.1' % name
 
 defs = ['_REENTRANT', 
 		'_GNU_SOURCE', 

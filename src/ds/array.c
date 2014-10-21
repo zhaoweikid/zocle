@@ -22,6 +22,7 @@ zc_array_new_tail(uint32_t n)
     
     v->data = (void**)((char*)v+sizeof(zcArray));
     v->cap = n;
+    v->data_tail = 1;
 
     return v;
 }
@@ -42,7 +43,7 @@ zc_array_init(zcArray *v, uint32_t n)
     v->data = (void**)zc_malloc(sizeof(void*)*n);
     memset(v->data, 0, sizeof(void*)*n); 
     v->cap = n;
-    v->data_tail = 1;
+    v->data_tail = 0;
 
     return ZC_OK;
 }
@@ -96,6 +97,20 @@ zc_array_set(zcArray *v, uint32_t pos, void *val)
     v->data[pos] = val; 
     return ZC_OK;
 }
+
+int 
+zc_array_set_many(zcArray *v, uint32_t len, void *val)
+{
+    if (v->len + len > v->cap)
+        return ZC_ERR;
+    int i;
+    for (i=0; i<len; i++) {
+        v->data[v->len+i] = val; 
+    }
+    v->len += len;
+    return ZC_OK;
+}
+
 
 int 
 zc_array_append(zcArray *v, void *val)

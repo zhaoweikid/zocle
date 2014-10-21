@@ -76,7 +76,7 @@ int
 zc_list_append(zcList *list, void *data)
 {
     zcListNode *node = zc_listnode_new_data(data);
-    zc_listhead_add(&node->head, &list->head);
+    zc_listhead_add_tail(&node->head, &list->head);
     list->size++;
     return ZC_OK;
 }
@@ -85,7 +85,7 @@ int
 zc_list_prepend(zcList *list, void *data)
 {
     zcListNode *node = zc_listnode_new_data(data);
-    zc_listhead_add_tail(&node->head, &list->head);
+    zc_listhead_add(&node->head, &list->head);
     list->size++;
     return ZC_OK;
 }
@@ -93,8 +93,8 @@ zc_list_prepend(zcList *list, void *data)
 static struct zc_listhead_t*
 zc_list_find_pos(zcList *list, int pos)
 {
-    if (list->size == 0)
-        return NULL;
+    /*if (list->size == 0)
+        return NULL;*/
    
     int i = 0;
     struct zc_listhead_t *cur = NULL;
@@ -141,7 +141,11 @@ zc_list_insert(zcList *list, void *data, int pos)
         return ZC_ERR;
    
     zcListNode *node = zc_listnode_new_data(data);
-    zc_listhead_add_bt(&node->head, cur->prev, cur);
+    if (pos >= 0) {
+        zc_listhead_add_bt(&node->head, cur->prev, cur);
+    }else{
+        zc_listhead_add_bt(&node->head, cur, cur->next);
+    }
     list->size++;
     return ZC_OK;
 }
@@ -177,8 +181,8 @@ zc_list_find_data(zcList *list, void *data, int *pos)
 int 
 zc_list_index(zcList *list, void *data)
 {
-    if (NULL == data)
-        return ZC_ERR_NULL;
+    /*if (NULL == data)
+        return ZC_ERR_NULL;*/
     int i = 0; 
     struct zc_listhead_t *cur = zc_list_find_data(list, data, &i);
     if (NULL == cur)
@@ -199,6 +203,7 @@ zc_list_remove(zcList *list, void *data)
     if (list->del)
         list->del(node->data);
     zc_listhead_del_entry(cur);
+    list->size--;
     zc_free(node);
     return ZC_OK;
 }
@@ -206,8 +211,15 @@ zc_list_remove(zcList *list, void *data)
 int 
 zc_list_reverse(zcList *list)
 {
-    //list->head = (zcListNode*)zc_listhead_reverse((zcListHead*)list->head); 
+    struct zc_listhead_t newroot;
+    zc_listhead_init(&newroot);
 
+    struct zc_listhead_t *cursor, *tmp;
+    zc_listhead_for_each_safe(cursor, tmp, &list->head) {
+        zc_listhead_del_entry(cursor);
+        zc_listhead_add(cursor, &newroot);
+    }
+    zc_listhead_replace(&newroot, &list->head);
     return ZC_OK;
 }
 
@@ -223,7 +235,7 @@ zc_list_print(zcList *list)
     ZCINFO("list size: %d\n", list->size);
     int i=0;
     zc_listhead_for_each_entry(node, &list->head, head) {
-        ZCINFO("%d\t%p | %p\n", i, node, node->data);
+        ZCINFO("%d\t%p | %p(%ld)\n", i, node, node->data, (long)node->data);
         //node = (zcListNode*)node->next;
         i++;
     }
