@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <zocle.h>
+#include <zocle/zocle.h>
 #include <limits.h>
 #include <stdint.h>
 

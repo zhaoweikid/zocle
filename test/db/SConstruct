@@ -1,14 +1,14 @@
 import os, sys
 
-includes = ['../../include', '/usr/local/mysql/include']
+includes = ['../../include', '/usr/local/mysql/include', '/opt/mysql/include']
 sourcedirs = ['.']
 files = Glob("*.c")
 for d in sourcedirs:
 	files += Glob(d + '/*.c')
 #libs = []
-libs = ['zocle', 'sqlite3']
+libs = ['zocle', 'sqlite3', 'mysqlclient']
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_SQLITE', 'ZOCLE_WITH_MYSQL']
-libpath = ['../../', '/usr/local/mysql/lib']
+libpath = ['../../', '/usr/local/mysql/lib', '/opt/mysql/lib']
 if sys.platform == 'linux2':
 	ldflags = '-Wl,-R../../'
 else:

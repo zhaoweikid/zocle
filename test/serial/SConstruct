@@ -5,7 +5,6 @@ sourcedirs = ['.']
 files = glob.glob("*.c")
 for d in sourcedirs:
 	files += glob.glob(d + '/*.c')
-#libs = ['zocle2', 'pcre']
 libs = ['iconv', 'pcre']
 #defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_PCRE','ZOCLE_WITH_ICONV']
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_ICONV']
@@ -21,4 +20,4 @@ env = Environment(CCFLAGS='-Wall -ggdb -std=gnu99', CPPDEFINES=defs, CPPPATH=inc
 for fn in files:
 	#env.Program(fn[:-2], [fn])
 	#env.Program(fn[:-2], [fn, '/usr/local/lib/libtcmalloc_minimal.a'])
-	env.Program(fn[:-2], [fn, '../../libzocle2.a'])
+	env.Program(fn[:-2], [fn, '../../libzocle.a'])

@@ -3,25 +3,25 @@
 
 void pack_test()
 {
-    zcHashTable *ht = zc_hashtable_new(1024, 0);
+    zcDict *ht = zc_dict_new(1024, 0);
     
-    zc_hashtable_add_str(ht, "test", zc_str_new_char("haha", 0));
-    zc_hashtable_add_str(ht, "test2", zc_str_new_char("haha2是什么", 0));
+    zc_dict_add_str(ht, "test", zc_str_new_char("haha", 0));
+    zc_dict_add_str(ht, "test2", zc_str_new_char("haha2是什么", 0));
 
     zcInt8 n8 = ZC_INT8_INIT(10);
-    zc_hashtable_add_str(ht, "test3", &n8);
+    zc_dict_add_str(ht, "test3", &n8);
 
     zcInt64 n64 = ZC_INT64_INIT(1231890238917239817);
-    zc_hashtable_add_str(ht, "test4", &n64);
+    zc_dict_add_str(ht, "test4", &n64);
 
     zcBool nb = ZC_BOOL_INIT(true);
-    zc_hashtable_add_str(ht, "test5", &nb);
+    zc_dict_add_str(ht, "test5", &nb);
 
     zcNull nn = ZC_NULL_INIT();
-    zc_hashtable_add_str(ht, "test6", &nn);
+    zc_dict_add_str(ht, "test6", &nn);
 
     zcDouble nd = ZC_DOUBLE_INIT(12345.4567);
-    zc_hashtable_add_str(ht, "test8", &nd);
+    zc_dict_add_str(ht, "test8", &nd);
 
     zcList *list = zc_list_new();
     zc_list_append(list, zc_str_new_char("gogo我看看", 0));
@@ -31,7 +31,7 @@ void pack_test()
     zc_list_append(list, zc_str_new_char("正斜杠呢/行不", 0));
     zc_list_append(list, zc_str_new_char("Tab呢\t行不", 0));
 
-    zc_hashtable_add_str(ht, "mylist", list);
+    zc_dict_add_str(ht, "mylist", list);
 
     zcString *s = zc_str_new(128);
 
@@ -121,7 +121,9 @@ void unpack_test()
     zcList *list = (zcList*)x;
     ZCINFO("list size:%d", list->size);
     zcString *s;
-    zc_list_foreach(list, s) {
+    zcListNode *node;
+    zc_list_foreach(list, node) {
+        s = (zcString*)node->data;
         ZCINFO("list string:%d, %s", x->__type,  s->data);
     }
 
@@ -149,24 +151,24 @@ void unpack_test()
         ZCERROR("json unpack error:%d", ret);
         return;
     }
-    zcHashTable *ht = (zcHashTable*)x;
+    zcDict *ht = (zcDict*)x;
     ZCINFO("dict size:%d", ht->size);
     assert(ht->len == 2);
 
     const char *key;
     zcString *value;
 
-    value = zc_hashtable_get_str(ht, "aaa", NULL);
+    value = (zcString*)zc_dict_get_str(ht, "aaa", NULL);
     assert(value != NULL);
     assert(strcmp(value->data, "bcb测试cbc") == 0);
 
-    value = zc_hashtable_get_str(ht, "234", NULL);
+    value = (zcString*)zc_dict_get_str(ht, "234", NULL);
     assert(value != NULL);
     assert(strcmp(value->data, "33就是3333333") == 0);
 
-    zc_hashtable_foreach_start(ht, key, value)
+    zc_dict_foreach_start(ht, key, value)
         ZCINFO("list key:%s, value:%s", key,  value->data);
-    zc_hashtable_foreach_end
+    zc_dict_foreach_end
     zc_obj_delete(x);
  
     //unsigned int startid = zc_mem_check_point(0);
@@ -261,16 +263,41 @@ void check_test()
 
 void perf_test()
 {
-    char *jsonstr = "{\"name\":u\"zhaowei测试\",\"age\":18,\"data\":{\"msg\":\"haha\"},\"goods\":[{\"title\":\"test\"},{\"title\":\"test\"},{\"title\":\"test\"}]}";
-    int64_t start = zc_timenow();
-    int i;
+    char *jsonstr = "{\"name\":\"zhaowei测试\",\"age\":18,\"data\":{\"msg\":\"haha\"},\"goods\":[{\"title\":\"test\"},{\"title\":\"test\"},{\"title\":\"test\"}]}";
+    int64_t start, use;
+    int i, ret;
+    int count = 100000;
+    zcString *jstr = zc_str_new_char(jsonstr, 0);
     zcObject *x = NULL;
-    for (i=0; i<100000; i++) {
-        zc_json_unpack(&x, jsonstr);
+    
+    start = zc_timenow();
+    for (i=0; i<count; i++) {
+        ret = zc_json_unpack(&x, jstr);
+        if (ret != ZC_OK) {
+            ZCINFO("unpack error: %d, i:%d %s", ret, i, jstr->data);
+        }
+        assert(ret == ZC_OK);
         zc_obj_delete(x);
     }
-    int64_t use = zc_timenow()-start;
+    use = zc_timenow()-start;
+    ZCINFO("unpack use time:%lld, qps:%.2f", (long long)use, ((float)count)/use * 1000000);
+
+
+    zc_json_unpack(&x, jstr);
+    assert(x != NULL);
+    zcString *retstr = zc_str_new(1000);
+    start = zc_timenow();
+    for (i=0; i<count; i++) {
+        ret = zc_json_pack(retstr, x);
+        if (ret != ZC_OK) {
+            ZCINFO("pack error: %d, i:%d %s", ret, i, jstr->data);
+        }
+        assert(ret == ZC_OK);
+    }
+    use = zc_timenow()-start;
     ZCINFO("pack use time:%lld, qps:%.2f", (long long)use, ((float)count)/use * 1000000);
+
+
     
 } 
 int main()

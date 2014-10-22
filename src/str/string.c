@@ -202,6 +202,7 @@ zc_str_new_char(char *str, int len)
     memcpy(s->data, str, len);
     s->data[len] = 0;
     s->len = len;
+    s->__type = ZC_STRING;
     
     return s;
 }
@@ -1284,7 +1285,6 @@ zcList*
 zc_str_split(zcString* sstr, char *smstr, int maxnum)
 {
     zcList *strlist = NULL;
-    //zcSListNode *node;
     char    *start;
     int     slen, flen;
     int     i;
@@ -1294,7 +1294,6 @@ zc_str_split(zcString* sstr, char *smstr, int maxnum)
     if (0 == sstr->len){
         return NULL;
     }
-
     start = sstr->data;
     slen = strlen(smstr);
     i = 0;
@@ -1306,6 +1305,7 @@ zc_str_split(zcString* sstr, char *smstr, int maxnum)
             flen = xx - (start + i);
         }
         if (flen >= 0) {
+            //ZCINFO("block:%d, flen:%d, %s", block, flen, start+i);
             zcString *ss;
             if (flen == 0) {
                 ss = zc_str_new(0);
@@ -1335,6 +1335,10 @@ zc_str_split(zcString* sstr, char *smstr, int maxnum)
         if (NULL == xx)
             break;
         i += flen + slen;
+        //ZCINFO("i:%d, len:%d", i, sstr->len);
+        if (i == sstr->len) {
+            zc_list_append(strlist, zc_str_new(0));
+        }
     }
     return strlist;
 }

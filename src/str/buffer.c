@@ -13,7 +13,20 @@ zc_buffer_new(uint32_t size)
     zcBuffer *buf;
     if (zc_buffer_new2(&buf, size) != ZC_OK) {
         ZCFATAL("buffer create error!\n");
+        return NULL;
     }
+    return buf;
+}
+
+zcBuffer*   
+zc_buffer_new_ring(uint32_t size)
+{
+    zcBuffer *buf;
+    if (zc_buffer_new2(&buf, size) != ZC_OK) {
+        ZCFATAL("buffer create error!\n");
+        return NULL;
+    }
+    buf->ring = 1;
     return buf;
 }
 

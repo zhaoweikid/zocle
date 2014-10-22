@@ -16,6 +16,7 @@ typedef struct zc_buffer_t
 }zcBuffer;
 
 zcBuffer*   zc_buffer_new(uint32_t size);
+zcBuffer*   zc_buffer_new_ring(uint32_t size);
 void        zc_buffer_delete(void *);
 int         zc_buffer_new2(zcBuffer **, uint32_t size);
 int			zc_buffer_init(zcBuffer*, uint32_t size);

@@ -1,7 +1,8 @@
 #ifdef ZOCLE_WITH_MSGPACK
 #include <zocle/serial/msgpack.h>
 
-zcString*	zc_msgpack_pack_obj(zcObject *obj)
+zcString*	
+zc_msgpack_dumps(zcObject *obj)
 {
     zcObject *tmp = obj;
 
@@ -36,7 +37,8 @@ zcString*	zc_msgpack_pack_obj(zcObject *obj)
     return NULL;
 }
 
-zcObject*	zc_msgpack_unpack_obj(zcString *s)
+zcObject*	
+zc_msgpack_loads(zcString *s)
 {
     return NULL;
 }

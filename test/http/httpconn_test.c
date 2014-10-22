@@ -6,16 +6,14 @@ int test1(const char *myurl)
     zcHttpReq  *r = zc_httpreq_new(myurl);
     zc_url_print(&r->url);
     
-    zcCStrList urls;
-    char buf[1024];
-    zc_cstrlist_init_stack(&urls, buf, sizeof(buf), 10);
-
-    zc_socket_gethostbyname(r->url.domain.data, &urls);
+    zcList *urls = zc_list_new();
+    zc_socket_gethostbyname(r->url.domain.data, urls);
 
     int i;
-    ZCINFO("urls: %d", urls.n);
-    for (i=0; i<urls.n; i++) {
-        ZCINFO("ip: %s", zc_cstrlist_get(&urls, i));
+    ZCINFO("urls: %d", urls->size);
+    zcListNode *node;
+    zc_list_foreach(urls, node) {
+        ZCINFO("ip: %s", (char*)node->data);
     }
     
     //ZCINFO("connect %s:80", zc_cstrlist_get(&urls, 0));
@@ -72,18 +70,16 @@ int test2(const char *myurl)
     zcHttpReq  *r = zc_httpreq_new(myurl);
     zc_url_print(&r->url);
     
-    zcCStrList urls;
-    char buf[1024];
-    zc_cstrlist_init_stack(&urls, buf, sizeof(buf), 10);
-
-    zc_socket_gethostbyname(r->url.domain.data, &urls);
+    zcList *urls = zc_list_new();
+    zc_socket_gethostbyname(r->url.domain.data, urls);
 
     int i;
-    ZCINFO("urls: %d", urls.n);
-    for (i=0; i<urls.n; i++) {
-        ZCINFO("ip: %s", zc_cstrlist_get(&urls, i));
+    ZCINFO("urls: %d", urls->size);
+    zcListNode *node;
+    zc_list_foreach(urls, node) {
+        ZCINFO("ip: %s", (char*)node->data);
     }
-    
+ 
     //ZCINFO("connect %s:80", zc_cstrlist_get(&urls, 0));
     //zcHttpConn *c = zc_httpconn_new(zc_cstrlist_get(&urls, 0), 80); 
     zcHttpConn *c = zc_httpconn_new(); 

@@ -38,7 +38,11 @@ int init_data()
         fwrite(items[i], 1, strlen(items[i]), fp);
         i++;
     }
+    fclose(fp);
 
+    fp = fopen("test2.conf", "w");
+    char *line = "name=zhaowei";
+    fwrite(line, 1, strlen(line), fp);
     fclose(fp);
 
     return 0;
@@ -93,7 +97,7 @@ int main()
     zc_confparser_add(p, cf->name, "name", ZC_CONF_STRING);
 
     zcList *servers = zc_list_new();
-    zc_list_set_del(servers, zc_free_func);
+    servers->del = zc_free_func;
     zc_confparser_add_array(p, servers, "server", ZC_CONF_STRING, 10);
     
     zc_confparser_parse(p);
@@ -101,7 +105,9 @@ int main()
     
     ZCINFO("server count:%d\n", servers->size);
     char *data;
-    zc_list_foreach(servers, data) {
+    zcListNode *node;
+    zc_list_foreach(servers, node) {
+        data = (char*)node->data;
         ZCINFO("server:%s\n", data);
     }
 

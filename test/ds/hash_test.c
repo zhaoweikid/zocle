@@ -72,9 +72,17 @@ int test_hash()
         sprintf(buf, "%d", i);
         assert(zc_hashset_haskey(hs, buf, strlen(buf)) == ZC_TRUE);
     }
+
+    zc_hashset_clear(hs);
     
     zc_hashset_delete(hs);
  
+    return 0;
+}
+
+int test_hash_obj()
+{
+    zcHashSet hs;
     return 0;
 }
 
@@ -85,6 +93,7 @@ int main()
     zc_log_new("stdout", ZC_LOG_ALL);
     
     test_hash();
+    test_hash_obj();
 
     return 0;
 }

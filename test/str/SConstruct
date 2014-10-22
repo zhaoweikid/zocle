@@ -5,10 +5,10 @@ sourcedirs = ['.']
 files = glob.glob("*.c")
 for d in sourcedirs:
 	files += glob.glob(d + '/*.c')
-#libs = ['zocle2', 'pcre']
-libs = ['iconv', 'pcre', 'zocle2']
+libs = ['iconv', 'pcre', 'zocle', 'mysqlclient']
+#libs = []
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_PCRE','ZOCLE_WITH_ICONV']
-libpath = ['../../']
+libpath = ['../../', '/opt/mysql/lib']
 if sys.platform == 'linux2':
 	ldflags = '-Wl,-R../../'
 else:
@@ -18,5 +18,5 @@ env = Environment(CCFLAGS='-ggdb -Wall -std=gnu99', CPPDEFINES=defs, CPPPATH=inc
 				  LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 for fn in files:
-	env.Program(fn[:-2], [fn])
-	#env.Program(fn[:-2], [fn, '../../libzocle2.a'])
+	#env.Program(fn[:-2], [fn])
+	env.Program(fn[:-2], [fn, '../../libzocle.a'])
