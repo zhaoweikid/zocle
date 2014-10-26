@@ -94,8 +94,8 @@ int main(int argc, char *argv[])
     zc_log_new("stdout", ZC_LOG_ALL);
     zc_log_whole(_zc_log, 1);
 
-    //test1(url);
-    test2(url);
+    test1(url);
+    //test2(url);
 
     return 0;
 }

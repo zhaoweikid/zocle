@@ -11,7 +11,7 @@
 void
 zc_httpconnstat_print(zcHttpConnStat *stat)
 {
-    ZCINFO("dns:%lldu, conn:%lldu, ssl:%lldu, send:%lldu, recv_first:%lldu, recv:%lldu, all:%lldu", 
+    ZCINFO("dns:%lld, conn:%lld, ssl:%lld, send:%lld, recv_first:%lld, recv:%lld, all:%lld", 
         (long long)stat->dns_time, (long long)stat->conn_time, (long long)stat->ssl_time, 
         (long long)stat->send_time, (long long)stat->recv_first_time, (long long)stat->recv_time, 
         (long long)stat->all_time);
@@ -118,7 +118,7 @@ zc_httpconn_send(zcHttpConn *c, zcHttpReq *req)
             zc_list_delete(ips);
             return ret;
         }
-
+        ZCINFO("connect ok!");
         zc_list_delete(ips);
     }
 
@@ -148,7 +148,7 @@ zc_httpconn_send(zcHttpConn *c, zcHttpReq *req)
     }else{
         zc_str_append_len(&s, req->body.data, req->body.len);
 
-        ZCINFO("request: %s", s.data); 
+        ZCINFO("request: %d, %s", s.len, s.data); 
         ret = zc_socket_sendn(c->sock, s.data, s.len);
         if (ret != s.len) {
             ZCWARN("request send error: %d", ret);
@@ -256,12 +256,12 @@ zc_httpconn_gzip_check_header(const char *s, int slen)
 int 
 zc_httpconn_gzip_uncompress(zcHttpResp *resp, zcBuffer *buf, zcCompress *cm, bool *first)
 {
-    //ZCINFO("in gzip first:%d, buflen:%d", *first, zc_buffer_len(buf));
+    //ZCINFO("in gzip first:%d, buflen:%d", *first, zc_buffer_used(buf));
     //int inpos = cm->stream.total_in;
-    if (*first && zc_buffer_len(buf) > 10) {
+    if (*first && zc_buffer_used(buf) > 10) {
         //ZCINFO("check header: %x %x %x", buf->data[buf->pos], buf->data[buf->pos+1], buf->data[buf->pos+2]);
-        int gziphead = zc_httpconn_gzip_check_header(zc_buffer_data(buf), zc_buffer_len(buf));
-        int zlen = zc_buffer_len(buf)-gziphead;
+        int gziphead = zc_httpconn_gzip_check_header(zc_buffer_data(buf), zc_buffer_used(buf));
+        int zlen = zc_buffer_used(buf)-gziphead;
         //ZCINFO("first uncompress %d", zlen);
         int err = zc_compress_dec(cm, (uint8_t*)buf->data+buf->pos+gziphead, zlen, &resp->bodydata, false);
         if (err < 0) {
@@ -270,7 +270,7 @@ zc_httpconn_gzip_uncompress(zcHttpResp *resp, zcBuffer *buf, zcCompress *cm, boo
         *first = false;
         buf->pos += gziphead + zlen;
         zc_buffer_compact(buf);
-    }else if (!*first && zc_buffer_len(buf) > 0) {
+    }else if (!*first && zc_buffer_used(buf) > 0) {
         int zlen = buf->end;
         //ZCINFO("uncompress %d", zlen);
         int err = zc_compress_dec(cm, (uint8_t*)buf->data, zlen, &resp->bodydata, false);
@@ -280,7 +280,7 @@ zc_httpconn_gzip_uncompress(zcHttpResp *resp, zcBuffer *buf, zcCompress *cm, boo
         buf->pos += zlen;
         zc_buffer_compact(buf);
     }
-    //ZCINFO("total_in:%d %ld, buf len:%d", inpos, cm->stream.total_in, zc_buffer_len(buf));
+    //ZCINFO("total_in:%d %ld, buf len:%d", inpos, cm->stream.total_in, zc_buffer_used(buf));
 
     return ZC_OK;
 }
@@ -365,13 +365,13 @@ zc_httpconn_recv(zcHttpConn *c)
 
     if (resp->bodylen > 0 || (resp->bodylen==0 && resp->chunked==0)) {
         zcBuffer *rbuf = sockio->rbuf;
-        int64_t readn = zc_buffer_len(rbuf);
-        //ZCINFO("rbuf len:%d", zc_buffer_len(rbuf));
+        int64_t readn = zc_buffer_used(rbuf);
+        //ZCINFO("rbuf len:%d", zc_buffer_used(rbuf));
         if (resp->compress != 0) {
             zc_buffer_reset(buf);
-            zc_buffer_append(buf, zc_buffer_data(rbuf), zc_buffer_len(rbuf));
-        }else if (zc_buffer_len(rbuf) > 0) {
-            zc_str_append_len(&resp->bodydata, zc_buffer_data(rbuf), zc_buffer_len(rbuf));
+            zc_buffer_append(buf, zc_buffer_data(rbuf), zc_buffer_used(rbuf));
+        }else if (zc_buffer_used(rbuf) > 0) {
+            zc_str_append_len(&resp->bodydata, zc_buffer_data(rbuf), zc_buffer_used(rbuf));
         }
         zc_sockio_delete(sockio);
         sockio = NULL;
@@ -395,10 +395,10 @@ zc_httpconn_recv(zcHttpConn *c)
                     }
                     zc_str_clear(&resp->bodydata);
                 }
-                //ZCINFO("break, readn:%lld, buf len:%d", readn, zc_buffer_len(buf));
+                //ZCINFO("break, readn:%lld, buf len:%d", readn, zc_buffer_used(buf));
                 break;
             }
-            /*ZCINFO("buf pos:%d len:%d, read:%d, %x,%x,%x", buf->pos, zc_buffer_len(buf), zc_buffer_idle(buf), 
+            /*ZCINFO("buf pos:%d len:%d, read:%d, %x,%x,%x", buf->pos, zc_buffer_used(buf), zc_buffer_idle(buf), 
                     buf->data[buf->pos], buf->data[buf->pos+1], buf->data[buf->pos+2]);*/
             ret = zc_socket_recv(c->sock, buf->data+buf->end, zc_buffer_idle(buf));
             if (ret < 0) {
@@ -455,10 +455,10 @@ zc_httpconn_recv(zcHttpConn *c)
             chunklen = strtol(linebuf, NULL, 16);
             //ZCINFO("chunklen:%d", chunklen);
             if (chunklen == 0) {
-                //ZCINFO("last chunk, buf len:%d", zc_buffer_len(buf));
+                //ZCINFO("last chunk, buf len:%d", zc_buffer_used(buf));
                 break;
             }
-            int chunkrlen = zc_buffer_len(buf);
+            int chunkrlen = zc_buffer_used(buf);
             int rlen = 0;
             while (chunkrlen < chunklen) {
                 rlen = (chunklen-chunkrlen)>zc_buffer_idle(buf)? zc_buffer_idle(buf): chunklen-chunkrlen;
@@ -469,7 +469,7 @@ zc_httpconn_recv(zcHttpConn *c)
                 }
                 chunkrlen += ret;
                 buf->end += ret;
-                //ZCINFO("read:%d, chunklen:%d, buf len:%d", ret, chunklen, zc_buffer_len(buf));
+                //ZCINFO("read:%d, chunklen:%d, buf len:%d", ret, chunklen, zc_buffer_used(buf));
                 if (resp->compress) {
                     err = zc_httpconn_gzip_uncompress(resp, buf, &cm, &first);
                     if (err < 0) {
@@ -486,13 +486,13 @@ zc_httpconn_recv(zcHttpConn *c)
                     }
                 }else{
                     if (c->readfunc) {
-                        ret = c->readfunc(zc_buffer_data(buf), zc_buffer_len(buf));
+                        ret = c->readfunc(zc_buffer_data(buf), zc_buffer_used(buf));
                         if (ret < 0) {
                             ZCWARN("readfunc error:%d", ret);
                             goto recv_error;
                         }
                     }else{
-                        zc_str_append_len(&resp->bodydata, zc_buffer_data(buf), zc_buffer_len(buf));
+                        zc_str_append_len(&resp->bodydata, zc_buffer_data(buf), zc_buffer_used(buf));
                     }
                     zc_buffer_reset(buf);
                 }

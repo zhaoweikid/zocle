@@ -161,7 +161,7 @@ zc_asynconn_handle_read(zcAsynConn *conn, zcBuffer *buf)
     char *pos = strstr(data, "\r\n");
     if (pos == NULL)
         return 0;
-    if (zc_buffer_len(buf) >= 8192)
+    if (zc_buffer_used(buf) >= 8192)
         return ZC_ERR;
 
     return pos-data+2;
@@ -222,7 +222,7 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
         conn->handle_ready(conn, rbuf->data+rbuf->pos, ret);
         zc_buffer_reset(rbuf);
 
-        if (zc_buffer_len(conn->wbuf) > 0) {
+        if (zc_buffer_used(conn->wbuf) > 0) {
 #ifdef ASYNC_ONE_WATCHER
             zc_asynconn_switch_write(conn);
 #else
@@ -253,8 +253,8 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
             //conn->handle_connlost(conn);
             if (ret == 0) {
                 conn->close = true;
-                if (zc_buffer_len(rbuf) > 0) {
-                    conn->handle_ready(conn, rbuf->data+rbuf->pos, zc_buffer_len(rbuf));
+                if (zc_buffer_used(rbuf) > 0) {
+                    conn->handle_ready(conn, rbuf->data+rbuf->pos, zc_buffer_used(rbuf));
                 }
             }
             conn->handle_close(conn);
@@ -270,10 +270,10 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
         if (rsize >= ZC_ONE_READ_MAX) // read max 8192, then break
             break;
     }
-    while (zc_buffer_len(rbuf) > 0) {
+    while (zc_buffer_used(rbuf) > 0) {
         //ret = conn->handle_read_check(conn, rbuf->data+rbuf->pos, rbuf->len-rbuf->pos);
         ret = conn->handle_read(conn, rbuf);
-        //ZCINFO("read check ret:%d, buffer len:%d\n", ret, zc_buffer_len(rbuf));
+        //ZCINFO("read check ret:%d, buffer len:%d\n", ret, zc_buffer_used(rbuf));
         if (ret <= 0) {
             ZCWARN("handle_read failed, break");
             conn->handle_close(conn);
@@ -286,7 +286,7 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
     }
     zc_buffer_compact(conn->rbuf);
 
-    if (zc_buffer_len(conn->wbuf) > 0) {
+    if (zc_buffer_used(conn->wbuf) > 0) {
 #ifdef ASYNC_ONE_WATCHER
         zc_asynconn_switch_write(conn);
 #else
@@ -307,9 +307,9 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
     zcBuffer *wbuf = conn->wbuf;
     // udp
     if (conn->sock->type == SOCK_DGRAM) {
-        ret = zc_socket_sendto_self(conn->sock, zc_buffer_data(wbuf), zc_buffer_len(wbuf), 0);
-        if (ret != zc_buffer_len(wbuf)) {
-            ZCWARN("sendto error:%d, wbuf:%d, close conn", ret, zc_buffer_len(wbuf));
+        ret = zc_socket_sendto_self(conn->sock, zc_buffer_data(wbuf), zc_buffer_used(wbuf), 0);
+        if (ret != zc_buffer_used(wbuf)) {
+            ZCWARN("sendto error:%d, wbuf:%d, close conn", ret, zc_buffer_used(wbuf));
             conn->handle_close(conn);
             zc_asynconn_delete(conn);
             return;
@@ -318,7 +318,7 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
         conn->handle_wrote(conn);
         zc_buffer_reset(wbuf);
 
-        if (zc_buffer_len(conn->wbuf) == 0) {
+        if (zc_buffer_used(conn->wbuf) == 0) {
 #ifdef ASYNC_ONE_WATCHER
             zc_asynconn_switch_read(conn);
 #else
@@ -342,9 +342,9 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
         return;
     }
 
-    while (zc_buffer_len(wbuf) > 0) {
-        //ZCINFO("write len:%d, pos:%d\n", zc_buffer_len(wbuf), wbuf->pos);
-        ret = zc_socket_send(conn->sock, wbuf->data+wbuf->pos, zc_buffer_len(wbuf)); 
+    while (zc_buffer_used(wbuf) > 0) {
+        //ZCINFO("write len:%d, pos:%d\n", zc_buffer_used(wbuf), wbuf->pos);
+        ret = zc_socket_send(conn->sock, wbuf->data+wbuf->pos, zc_buffer_used(wbuf)); 
         if (ret < 0) {
             ZCWARN("send error:%d\n", ret);
             if (ret == -EAGAIN || ret == -EWOULDBLOCK) {
@@ -358,8 +358,8 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
         }
         wbuf->pos += ret;
     }
-    ZCINFO("after send, wbuf:%d", zc_buffer_len(conn->wbuf));
-    if (zc_buffer_len(conn->wbuf) == 0) {
+    ZCINFO("after send, wbuf:%d", zc_buffer_used(conn->wbuf));
+    if (zc_buffer_used(conn->wbuf) == 0) {
         if (conn->wbuf->next == NULL) {
             zc_buffer_reset(conn->wbuf);
             conn->handle_wrote(conn);

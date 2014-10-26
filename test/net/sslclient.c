@@ -18,7 +18,7 @@ int main()
     
     int ret;
 
-    ret = zc_socket_connect(sock, "127.0.0.1", 9000);
+    ret = zc_socket_connect(sock, "127.0.0.1", 10000);
     if (ret != ZC_OK) {
         ZCINFO("connect 127.0.0.1:9000 error!\n"); 
         return -1;
@@ -39,25 +39,26 @@ int main()
     ZCINFO("socket remote:%s:%d, local:%s:%d\n", 
             sock->remote.ip, sock->remote.port,
             sock->local.ip, sock->local.port);
-
-    while (1) {
+    int i;
+    for (i=0; i<10; i++) {
         char buf[1024];
+        char sendbuf[128];
+        sprintf(sendbuf, "good-%d\r\n", i);
         
-        ret = zc_socket_send(sock, "good!\r\n", 7);
-        if (ret != 7) {
+        ret = zc_socket_send(sock, sendbuf, strlen(sendbuf));
+        if (ret != strlen(sendbuf)) {
             ZCERROR("send error! %d\n", ret);
             break;
         }
         ret = zc_socket_recv(sock, buf, 1024);
-        ZCINFO("recv %d: %s\n", ret, buf);
+        if (ret == 0) {
+            ZCINFO("recv close");
+            break;
+        }
         if (ret > 0) {
             buf[ret] = 0;
         }
-        if (ret == 0) {
-            break;
-        }
-
-        break;
+        ZCINFO("recv %d: %s\n", ret, buf);
     }
     
     zc_socket_delete(sock);

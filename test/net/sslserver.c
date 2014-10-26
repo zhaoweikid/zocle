@@ -10,7 +10,7 @@ int main()
 
     zc_socket_startup();
 
-    sock = zc_socket_server_tcp("127.0.0.1", 9000, 32);
+    sock = zc_socket_server_tcp("127.0.0.1", 10000, 32);
     if (NULL == sock) {
         ZCERROR("tcp server create error!\n");
         return -1;
@@ -33,18 +33,27 @@ int main()
         ZCINFO("new socket remote:%s:%d, local:%s:%d\n", 
                     newsock->remote.ip, newsock->remote.port,
                     newsock->local.ip, newsock->local.port);
-        ret = zc_socket_recv(newsock, buf, 1024);
-        buf[ret] = 0;
+        char sendbuf[128];
+        while (1) {
+            zc_check(newsock);
+            ret = zc_socket_recv(newsock, buf, 1024);
+            if (ret == 0) {
+                ZCINFO("read 0, close conn.\n");
+                //zc_socket_delete(newsock);
+                break;
+            }
+            buf[ret] = 0;
 
-        if (ret == 0) {
-            ZCINFO("read 0, close conn.\n");
-            zc_socket_delete(newsock);
-            continue;
+            ZCINFO("recv %d: %s\n", ret, buf);
+            sprintf(sendbuf, "good!\r\n");
+            ret = zc_socket_send(newsock, sendbuf, strlen(sendbuf));
+            if (ret != strlen(sendbuf)) {
+                ZCINFO("send error:%d", ret);
+                break;
+            }
+            ZCINFO("send:%s", sendbuf);
         }
-
-        ZCINFO("recv %d: %s\n", ret, buf);
-
-        ret = zc_socket_send(newsock, "good!\r\n", 7);
+        zc_check(newsock);
         zc_socket_delete(newsock);
     }
     

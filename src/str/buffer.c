@@ -93,7 +93,7 @@ zc_buffer_set(zcBuffer *buf, void *data, int len)
 int
 zc_buffer_get_tw(zcBuffer *buf, void *data, int len)
 {
-    int leav = zc_buffer_len(buf);
+    int leav = zc_buffer_used(buf);
     if (len > leav)
         len = leav;
 
@@ -181,7 +181,7 @@ zc_buffer_append(zcBuffer *buf, void *data, int len)
 zcBuffer*
 zc_buffer_append_resize_tw(zcBuffer *buf, void *data, int len)
 {
-    int blen = zc_buffer_len(buf);
+    int blen = zc_buffer_used(buf);
     int wantsize = blen+len;
     if (wantsize > buf->size) {
         int newsize = buf->size; 
@@ -226,7 +226,7 @@ zc_buffer_compact_tw(zcBuffer *buf)
 {
     if (buf->pos == 0)
         return ZC_OK;
-    int len = zc_buffer_len(buf);
+    int len = zc_buffer_used(buf);
     if (len == 0) {
         buf->pos = buf->end = 0;
         return ZC_OK;

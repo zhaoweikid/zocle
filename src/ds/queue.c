@@ -8,15 +8,15 @@
 #include <zocle/base/defines.h>
 
 zcQueue*
-zc_queue_new (int size)
+zc_queue_new (int cap)
 {
     zcQueue *q;
-    zc_queue_new_co(&q, size);
+    zc_queue_new_co(&q, cap);
     return q;
 }
 
 int 
-zc_queue_new_co (zcQueue **q, int size)
+zc_queue_new_co (zcQueue **q, int cap)
 {
     zcQueue   *que;
     
@@ -25,13 +25,13 @@ zc_queue_new_co (zcQueue **q, int size)
     que = (zcQueue*)zc_malloc(sizeof(zcQueue));
     memset(que, 0, sizeof(zcQueue));
 
-    que->data = (void**)zc_malloc(size * sizeof(zcQueue));
+    que->data = (void**)zc_malloc(cap * sizeof(zcQueue));
     if (NULL == que->data) {   
         zc_free(que);
         return ZC_ERR_NULL;
     }   
 
-    que->size = size;
+    que->cap = cap;
 
     int ret;
     ret = pthread_mutex_init(&que->_lock, NULL);
@@ -77,13 +77,13 @@ zc_queue_clear (zcQueue *q)
     pthread_mutex_lock(&q->_lock);
 
     int i;
-    for (i = 0; i< q->length; i++) {
+    for (i = 0; i< q->size; i++) {
         // FIXME: not all data will be free
         if (NULL != q->del) {
             q->del(q->data[i]);
         }
     }
-    q->length = 0;
+    q->size = 0;
     q->head = q->tail = 0;
     pthread_mutex_unlock(&q->_lock);
 }
@@ -95,7 +95,7 @@ zc_queue_put (zcQueue *q, void *data, bool block, int timeout)
     //int timetest = timeout;
 
     pthread_mutex_lock(&q->_lock);
-    while (q->length == q->size) {
+    while (q->cap == q->size) {
         if (block) {
             if (0 < timeout) {
                 /*time_t timenow = time(NULL);
@@ -134,9 +134,9 @@ zc_queue_put (zcQueue *q, void *data, bool block, int timeout)
     q->data[q->tail] = data;
     q->tail++;
 
-    if (q->tail >= q->size)
+    if (q->tail >= q->cap)
         q->tail = 0;
-    q->length++;
+    q->size++;
 
     pthread_cond_signal(&q->_empty);
     pthread_mutex_unlock(&q->_lock);
@@ -152,7 +152,7 @@ zc_queue_get(zcQueue *q, bool block, int timeout, void *defval)
     int  ret;
 
     pthread_mutex_lock(&q->_lock);
-    while (0 == q->length) {
+    while (0 == q->size) {
         if (block) {
             if (0 < timeout) {
                 /*time_t  timenow = time(NULL);
@@ -193,9 +193,9 @@ zc_queue_get(zcQueue *q, bool block, int timeout, void *defval)
     retv = q->data[q->head];
     q->head++;
 
-    if (q->head >= q->size)
+    if (q->head >= q->cap)
         q->head = 0;
-    q->length--;
+    q->size--;
     pthread_cond_signal(&q->_full);
     pthread_mutex_unlock(&q->_lock);
 
@@ -205,7 +205,7 @@ zc_queue_get(zcQueue *q, bool block, int timeout, void *defval)
 int 
 zc_queue_isempty (zcQueue *q)
 {
-    if (q->length == 0)
+    if (q->size == 0)
         return ZC_TRUE;
     return ZC_FALSE;
 }
@@ -213,15 +213,15 @@ zc_queue_isempty (zcQueue *q)
 int 
 zc_queue_isfull (zcQueue *q)
 {
-    if (q->length == q->size)
+    if (q->cap == q->size)
         return ZC_TRUE;
     return ZC_FALSE;
 }
 
 int 
-zc_queue_length (zcQueue *q)
+zc_queue_size (zcQueue *q)
 {
-    return q->length;
+    return q->size;
 }
 
 int 
@@ -232,29 +232,29 @@ zc_queue_resize (zcQueue *q, int newsize)
 
     pthread_mutex_lock(&q->_lock);
 
-    if (newsize <= q->length) {
+    if (newsize <= q->size) {
         ret = ZC_ERR_SMALLER;
         goto _resize_over;
     }
 
     newdata = (void**)zc_malloc(newsize * sizeof(void*));
-    if (q->length > 0) {
+    if (q->size > 0) {
         if (q->head >= q->tail) {
             int onesz;
-            onesz = q->size - q->head;
+            onesz = q->cap - q->head;
             memcpy(newdata, &q->data[q->head], onesz*sizeof(void*));
             memcpy(newdata+onesz, &q->data[0], q->tail*sizeof(void*));
         }else{
             memcpy(newdata, &q->data[q->head], (q->tail-q->head)*sizeof(void*));
         }
         q->head = 0;
-        q->tail = q->length;
+        q->tail = q->size;
     }else{
         q->head = q->tail = 0;
     }
     zc_free(q->data);
     q->data = newdata;
-    q->size = newsize;
+    q->cap  = newsize;
 _resize_over:
     pthread_mutex_unlock(&q->_lock);
 
@@ -266,10 +266,10 @@ zc_queue_print (zcQueue *q)
 {
     int  i;
 
-    ZCINFO("queue size:%d, length:%d, head:%d, tail:%d\n", q->size, q->length, q->head, q->tail);
-    if (q->length > 0) {
+    ZCINFO("queue size:%d, cap:%d, head:%d, tail:%d\n", q->size, q->cap, q->head, q->tail);
+    if (q->size > 0) {
         if (q->head >= q->tail) {
-            for (i = q->head; i < q->size; i++) {
+            for (i = q->head; i < q->cap; i++) {
                 ZCINFO("%d | %p | %p\n", i, &q->data[i], q->data[i]);
             }
             for (i = 0; i < q->tail; i++) {

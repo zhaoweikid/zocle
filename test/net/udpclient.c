@@ -16,10 +16,13 @@ int main()
     
     zc_socket_add_remote_addr(sock, "0.0.0.0", 10000);
     int ret;
-    while (1) {
+    int i;
+    for (i=0; i<10; i++) {
         char buf[1024];
-        ret = zc_socket_sendto_self(sock, "ping!\r\n", 7, 0);
-        if (ret != 7) {
+        char sendbuf[128];
+        sprintf(sendbuf, "ping%d", i);
+        ret = zc_socket_sendto_self(sock, sendbuf, strlen(sendbuf), 0);
+        if (ret != strlen(sendbuf)) {
             ZCERROR("send error! %d\n", ret);
             break;
         }
@@ -34,6 +37,7 @@ int main()
         }
         ZCINFO("recv %d: %s", ret, buf);
         //break;
+        sleep(1);
     }
     
     zc_socket_delete(sock);

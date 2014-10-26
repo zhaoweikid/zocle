@@ -210,7 +210,7 @@ zc_threadpool_run(zcThreadPool *tp, zcThreadSetting *ts)
         }
     }else{
         while (share->status == ZC_THREADPOOL_RUN) {
-            int queuelen = zc_queue_length(tp->queue);
+            int queuelen = zc_queue_size(tp->queue);
             if ((0 == queuelen) && (ZC_THREADPOOL_STOP == ts->status)){
                 ZCWARN("%s exit", name);
                 pthread_exit(NULL);

@@ -11,11 +11,12 @@ def test():
                     keyfile=None)
                     #ssl_version=ssl.PROTOCOL_TLSv1)
 
-    sock.connect(('127.0.0.1', 9000))
+    sock.connect(('127.0.0.1', 10000))
 
     s = 'client\r\n'
-    print 'write:', s, sock.send(s)
-    print 'read:', sock.recv(1024)
+    for i in range(0, 10):
+        print 'write:', s, sock.send(s)
+        print 'read:', sock.recv(1024)
 
     sock.close()
 

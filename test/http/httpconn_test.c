@@ -9,7 +9,7 @@ int test1(const char *myurl)
     zcList *urls = zc_list_new();
     zc_socket_gethostbyname(r->url.domain.data, urls);
 
-    int i;
+    //int i;
     ZCINFO("urls: %d", urls->size);
     zcListNode *node;
     zc_list_foreach(urls, node) {
@@ -73,7 +73,7 @@ int test2(const char *myurl)
     zcList *urls = zc_list_new();
     zc_socket_gethostbyname(r->url.domain.data, urls);
 
-    int i;
+    //int i;
     ZCINFO("urls: %d", urls->size);
     zcListNode *node;
     zc_list_foreach(urls, node) {
@@ -85,8 +85,10 @@ int test2(const char *myurl)
     zcHttpConn *c = zc_httpconn_new(); 
     c->readfunc = myrecv;
     c->stat = &stat;
+
+    int ret;
     //ZCINFO("stat:%p", c->stat);
-    int ret = zc_httpconn_send(c, r);
+    ret = zc_httpconn_send(c, r);
     if (ret != ZC_OK) {
         ZCERROR("send error: %d", ret);
         zc_httpconnstat_print(&stat);
@@ -167,8 +169,10 @@ int main(int argc, char *argv[])
         strcpy(url+7, argv[1]);
     }
     zc_socket_startup();
-    //test1(argv[1]);
+
+    test1(url);
     test2(url);
+    //test3(url);
 
     zc_socket_cleanup();
 

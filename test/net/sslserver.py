@@ -13,15 +13,23 @@ def test():
                     keyfile=None,)
                     #ssl_version=ssl.PROTOCOL_TLSv1)
 
-    sock.bind(('127.0.0.1', 9000))
+    sock.bind(('127.0.0.1', 10000))
     sock.listen(32)
 
     while True:
         newsock, addr = sock.accept()
-
-        print 'read:', newsock.recv(1024)
-        s = 'haha\r\n'
-        print 'write:', s, newsock.send(s)
+        
+        while True:
+            ret = newsock.recv(1024)
+            print 'read:', ret
+            if not ret:
+                print 'close'
+                break
+            if ret.startswith('quit'):
+                print 'quit'
+                break
+            s = 'haha\r\n'
+            print 'write:', s, newsock.send(s)
 
         newsock.close()
 

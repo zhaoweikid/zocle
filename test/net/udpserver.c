@@ -28,9 +28,9 @@ int main()
         }
         ZCINFO("recv %d: %s\n", ret, buf);
 
-        char *resp = "pong!\r\n";
+        char *resp = "pong!";
         ret = zc_socket_sendto_self(sock, resp, strlen(resp), 0);
-        if (ret != 7) {
+        if (ret != strlen(resp)) {
             ZCERROR("sendto error! %d\n", ret);
             break;
         }

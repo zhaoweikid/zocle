@@ -39,8 +39,8 @@ zc_sockio_read (zcSocketIO *s, char *buf, int len)
         int newsize = (len/4096 + ((len%4096==0)?1:0)) * 4096;
         s->rbuf = zc_buffer_resize(s->rbuf, newsize);
     }*/
-   
-    if (zc_buffer_len(s->rbuf) == 0) {
+    
+    if (zc_buffer_used(s->rbuf) == 0) {
         zc_buffer_reset(s->rbuf);
         ret = zc_socket_recv(s->sock, s->rbuf->data, s->rbuf->size);
         if (ret <= 0) {
@@ -64,7 +64,7 @@ int zc_sockio_read_nocopy (zcSocketIO *s, int len)
     }
     zcBuffer *rbuf = s->rbuf;
     //ZCINFO("read nocopy len:%d\n", rbuf->end);
-    while (zc_buffer_len(rbuf) < len) {
+    while (zc_buffer_used(rbuf) < len) {
         ret = zc_socket_recv(s->sock, rbuf->data+rbuf->end, len-rbuf->end);
         if (ret < 0) {
             return ret;
@@ -74,7 +74,7 @@ int zc_sockio_read_nocopy (zcSocketIO *s, int len)
             s->rbuf->end += ret;
         }
     }
-    return zc_buffer_len(s->rbuf); 
+    return zc_buffer_used(s->rbuf); 
 }
 
 int

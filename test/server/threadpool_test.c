@@ -5,7 +5,7 @@ void* my_producer(void *x)
     zcThreadParam *param = (zcThreadParam*)x;
     long long i = 0; 
     while (1) {
-        zc_syncqueue_put(param->threadpool->queue, (void*)i, 1, 0);
+        zc_queue_put(param->threadpool->queue, (void*)i, 1, 0);
         usleep(0.5); 
         i++;
     }
@@ -16,7 +16,7 @@ void* my_consumer(void *x)
 {
     zcThreadParam *param = (zcThreadParam*)x;
     
-    ZCINFO("consumer:%lld", (long long)param->task);
+    ZCINFO("consumer:%lld, queue:%d", (long long)param->task, param->threadpool->queue->size);
     sleep(1);
 
     return NULL;

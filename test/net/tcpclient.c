@@ -25,11 +25,14 @@ int main()
             sock->remote.ip, sock->remote.port,
             sock->local.ip, sock->local.port);
 
-    while (1) {
+    int i;
+    for (i=0; i<10; i++) {
+        char sendbuf[1024];
         char buf[1024];
         
-        ret = zc_socket_send(sock, "good!\r\n", 7);
-        if (ret != 7) {
+        snprintf(sendbuf, sizeof(sendbuf), "good %d\r\n", i);
+        ret = zc_socket_send(sock, sendbuf, strlen(sendbuf));
+        if (ret != strlen(sendbuf)) {
             ZCERROR("send error! %d\n", ret);
             break;
         }
@@ -39,19 +42,23 @@ int main()
         }
         if (ret == 0) {
             ZCINFO("read 0, reconn.\n");
-            ret = zc_socket_reconnect(sock);            
-            if (ret < 0) {
-                ZCERROR("reconnect error:%s\n", strerror(-ret));
-                break;
+            while (1) {
+                ret = zc_socket_reconnect(sock);            
+                if (ret < 0) {
+                    ZCERROR("reconnect error:%s\n", strerror(-ret));
+                }else{
+                    ZCINFO("reconnect ok");
+                    break;
+                }
+                sleep(1);
             }
             continue;
-            //break;
         }
 
         ZCINFO("recv %d: %s\n", ret, buf);
-        //break;
-        sleep(3);
+        sleep(1);
     }
+    zc_socket_send(sock, "quit\r\n", 6);
     
     zc_socket_delete(sock);
     zc_socket_cleanup();

@@ -117,7 +117,7 @@ zc_asynhttp_send(zcAsynConn *conn, zcHttpReq *req)
         zc_buffer_append(conn->wbuf, s->data, s->len);
         zc_str_delete(s);
     }
-    ZCINFO("http send:%d %s", zc_buffer_len(conn->wbuf), zc_buffer_data(conn->wbuf));
+    ZCINFO("http send:%d %s", zc_buffer_used(conn->wbuf), zc_buffer_data(conn->wbuf));
     zc_asynconn_start_write(conn);
     if (info->stat) {
         info->stat->start = zc_timenow();
@@ -254,8 +254,8 @@ zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
     int      headerlen = 2;
     uint8_t  fin = 1;
 
-    if (zc_buffer_len(buf) < 2) {
-        ZCINFO("buffer len:%d, return", zc_buffer_len(buf));
+    if (zc_buffer_used(buf) < 2) {
+        ZCINFO("buffer len:%d, return", zc_buffer_used(buf));
         return 0;
     }
 
@@ -290,9 +290,9 @@ zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
     ZCINFO("websocket fin:%d opcode:%d mask:%d headerlen:%d datalen:%llu", 
             fin, opcode, havemask, headerlen, (unsigned long long)datalen);
     
-    if (zc_buffer_len(buf) < headerlen + datalen) {
+    if (zc_buffer_used(buf) < headerlen + datalen) {
         ZCINFO("buffer not have complete package, rbuf->len:%d package len:%llu", 
-                zc_buffer_len(buf), (unsigned long long)(headerlen+datalen));
+                zc_buffer_used(buf), (unsigned long long)(headerlen+datalen));
         return 0;
     }
 
@@ -355,7 +355,7 @@ int
 zc_asynhttp_handle_read_check(zcAsynConn *conn, zcBuffer *buf)
 {
     const char *data = buf->data+buf->pos;
-    int datalen = zc_buffer_len(buf);
+    int datalen = zc_buffer_used(buf);
     zcHttpInfo *info = conn->data; 
     
     if (info->header) { //now, reading header
