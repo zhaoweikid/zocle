@@ -319,7 +319,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
         //ZCINFO("before i:%d", i);
         i = _unpack_string(r->domain, data, i);
         //ZCINFO("after i:%d", i);
-        //ZCINFO("domain: %s", r->domain->data);
+        ZCINFO("domain: %s", r->domain->data);
 
         memcpy(&v, data+i, sizeof(short));
         r->type = ntohs(v);
@@ -513,7 +513,7 @@ zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, z
     zcDNSRR *rr;
     zcListNode *node;
     zc_list_foreach(list, node) {
-        rr = (zcDNSRR*)rr;
+        rr = (zcDNSRR*)node->data;
         zc_dnsrr_print(rr);
     }
 

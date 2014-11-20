@@ -7,8 +7,10 @@ int my_handle_ready(zcAsynConn *conn, char *data, int len)
     int ret = zc_dns_unpack_resp_simple(result, data, len);
     
     ZCINFO("result size:%d, ret:%d", result->size, ret);
+    zcListNode *node;
     zcDNSRR *r;
-    zc_list_foreach(result, r) {
+    zc_list_foreach(result, node) {
+        r = (zcDNSRR*)node->data;
         zc_dnsrr_print(r);
     }
     ZCINFO("====== ok, delete ======");

@@ -50,6 +50,7 @@ typedef int (*zcFuncHttpReady)(zcAsynConn*);
 
 zcHttpInfo*	zc_httpinfo_new();
 void		zc_httpinfo_delete(void *);
+#define     zc_httpinfo_safedel(x) do{zc_httpinfo_delete(x);x=NULL;}while(0)
 
 zcAsynConn* zc_asynconn_new_http(zcHttpInfo *info, int timeout, struct ev_loop *loop, const char *dns, int bufsize);
 zcAsynConn* zc_asynconn_new_http_url(const char *url, int timeout, struct ev_loop *loop, 
@@ -62,9 +63,9 @@ int zc_asynhttp_switch_websocket(zcAsynConn *conn);
 
 int zc_asynhttp_handle_connected(zcAsynConn*);
 int zc_asynhttp_handle_websocket_read(zcAsynConn*, zcBuffer *);
-int zc_asynhttp_handle_read_check(zcAsynConn*, zcBuffer *);
-int zc_asynhttp_handle_ready(zcAsynConn*, char *data, int datalen);
-int zc_asynhttp_handle_ready_dns(zcAsynConn*, char *data, int datalen);
+int zc_asynhttp_handle_read(zcAsynConn*, zcBuffer *);
+//int zc_asynhttp_handle_ready(zcAsynConn*, char *data, int datalen);
+int zc_asynhttp_handle_read_dns(zcAsynConn*, char *data, int datalen);
 int zc_asynhttp_handle_wrote(zcAsynConn*);
 
 /*int zc_asynhttp_handle_read_timeout(zcAsynConn*);

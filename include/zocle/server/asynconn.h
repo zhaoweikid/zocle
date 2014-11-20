@@ -38,6 +38,7 @@ int			 zc_callchain_append(zcCallChain*, zcFuncCallBack f, zcFuncCallBack errf, 
 int			 zc_callchain_prepend(zcCallChain*, zcFuncCallBack f, zcFuncCallBack errf, void *data);
 int			 zc_callchain_call(zcCallChain*, zcAsynConn*, int);
 #define		 zc_callchain_reset(x) x->cur=x->items
+#define      zc_callchain_safedel(x)    do{zc_callchain_delete(x);x=NULL;}while(0)
 
 struct zc_asynconn_t
 {
@@ -79,7 +80,7 @@ struct zc_asynconn_t
 
 zcAsynConn*	zc_asynconn_new(zcSocket *sock, struct ev_loop *loop, int rbufsize, int wbufsize);
 void		zc_asynconn_delete(void*);
-
+#define     zc_asynconn_safedel(x)  do{zc_asynconn_delete(x);x=NULL;}while(0)
 zcAsynConn* zc_asynconn_new_tcp_client(const char *host, int port, int timeout, 
 				struct ev_loop *loop, int rbufsize, int wbufsize);
 zcAsynConn* zc_asynconn_new_ssl_client(const char *host, int port, int timeout, 

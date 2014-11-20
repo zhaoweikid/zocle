@@ -71,7 +71,7 @@ zc_cookie_init(zcCookie *c, const char *cookiestr)
             }
             while (*s && (*s == ';' || *s == '\r' || *s == '\n')) s++;
         }
-        ZCINFO("cookie key:%s value:%s", keybuf->data, valbuf->data);
+        //ZCINFO("cookie key:%s value:%s", keybuf->data, valbuf->data);
         if (strcasecmp(keybuf->data, "expires") == 0) {
             zcDateTime dt;
             zc_datetime_init_format(&dt, "%a, %d-%b-%Y %H:%M:%S %z", valbuf->data);
