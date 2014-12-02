@@ -40,6 +40,11 @@ int			 zc_callchain_call(zcCallChain*, zcAsynConn*, int);
 #define		 zc_callchain_reset(x) x->cur=x->items
 #define      zc_callchain_safedel(x)    do{zc_callchain_delete(x);x=NULL;}while(0)
 
+struct zc_protocol_t
+{
+
+}zcProtocol;
+
 struct zc_asynconn_t
 {
 	zcSocket	*sock;
