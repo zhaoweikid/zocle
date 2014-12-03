@@ -88,6 +88,8 @@ zc_callchain_call(zcCallChain *cc, zcAsynConn *conn, int ret)
     return err;
 }
 
+
+
 zcSocket*
 zc_asynconn_handle_accept_one(zcAsynConn *conn)
 {
@@ -96,7 +98,7 @@ zc_asynconn_handle_accept_one(zcAsynConn *conn)
         return NULL;
     }
     newsock->timeout = conn->sock->timeout;
-    zcAsynConn *newconn = zc_asynconn_new(newsock, conn->loop, conn->rbuf->size, conn->wbuf->size);
+    zcAsynConn *newconn = zc_asynconn_new(newsock, conn->p, conn->loop, conn->rbuf->size, conn->wbuf->size);
     newconn->accepting = ZC_FALSE;
     newconn->connected = ZC_TRUE;
     zc_asynconn_copy(newconn, conn);
@@ -190,8 +192,9 @@ int
 zc_asynconn_handle_read_timeout(zcAsynConn *conn)
 {
     ZCNOTE("read timeout, close conn");
-    conn->handle_close(conn);
-    zc_asynconn_delete(conn);
+    conn->p->handle_close(conn);
+    //zc_asynconn_delete(conn);
+    zc_asynconn_safedel(conn);
     return ZC_OK;
 }
 int
@@ -200,6 +203,37 @@ zc_asynconn_handle_write_timeout(zcAsynConn *conn)
     ZCNOTE("write timeout");
     return ZC_OK;
 }
+
+
+
+zcProtocol* 
+zc_protocol_new()
+{
+    zcProtocol *p = zc_calloct(zcProtocol);
+    if (zc_protocol_init(p) != ZC_OK) {
+        zc_free(p);
+        return NULL;
+    }
+    return p;
+}
+
+int
+zc_protocol_init(zcProtocol *p)
+{
+    p->handle_accept     = zc_asynconn_handle_accept;;
+    p->handle_connected  = zc_asynconn_handle_connected;
+    p->handle_error      = zc_asynconn_handle_error;
+    p->handle_close      = zc_asynconn_handle_close;
+    p->handle_read       = zc_asynconn_handle_read;
+    p->handle_wrote      = zc_asynconn_handle_wrote;
+    p->handle_read_timeout  = zc_asynconn_handle_read_timeout;
+    p->handle_write_timeout = zc_asynconn_handle_write_timeout;
+    return ZC_OK;
+}
+
+
+
+
 
 
 #define ZC_ONE_READ_MAX 8192
@@ -217,13 +251,13 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
         ret = zc_socket_recvfrom_self(conn->sock, zc_buffer_data(rbuf), zc_buffer_idle(rbuf), 0);
         if (ret <= 0) {
             ZCNOTE("recvfrom error:%d, close conn", ret);
-            conn->handle_close(conn);
+            conn->p->handle_close(conn);
             zc_asynconn_safedel(conn);
             return;
         }
         ZCINFO("udp read:%d", ret);
         //conn->handle_ready(conn, rbuf->data+rbuf->pos, ret);
-        conn->handle_read(conn, rbuf);
+        conn->p->handle_read(conn, rbuf);
         zc_buffer_reset(rbuf);
         //ZCINFO("rbuffer reset");
         if (zc_buffer_used(conn->wbuf) > 0) {
@@ -238,12 +272,12 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
 
     // tcp
     if (conn->accepting) {
-        conn->handle_accept(conn);
+        conn->p->handle_accept(conn);
         return;
     }
     if (conn->connected == ZC_FALSE) {
         //ZCINFO("try do connect\n");
-        conn->handle_connected(conn);
+        conn->p->handle_connected(conn);
         conn->connected = ZC_TRUE;
     }
     //ZCINFO("try read data\n");
@@ -259,10 +293,10 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
                 conn->close = true;
                 if (zc_buffer_used(rbuf) > 0) {
                     //conn->handle_ready(conn, rbuf->data+rbuf->pos, zc_buffer_used(rbuf));
-                    conn->handle_read(conn, rbuf);
+                    conn->p->handle_read(conn, rbuf);
                 }
             }
-            conn->handle_close(conn);
+            conn->p->handle_close(conn);
             //zc_socket_close(conn->sock);
             zc_asynconn_safedel(conn);
             return;
@@ -277,11 +311,11 @@ zc_asynconn_ev_read(struct ev_loop *loop, ev_io *r, int events)
     }
     while (zc_buffer_used(rbuf) > 0) {
         //ret = conn->handle_read_check(conn, rbuf->data+rbuf->pos, rbuf->len-rbuf->pos);
-        ret = conn->handle_read(conn, rbuf);
+        ret = conn->p->handle_read(conn, rbuf);
         //ZCINFO("read check ret:%d, buffer len:%d\n", ret, zc_buffer_used(rbuf));
         if (ret < 0) {
             ZCWARN("handle_read failed %d, break", ret);
-            conn->handle_close(conn);
+            conn->p->handle_close(conn);
             zc_asynconn_safedel(conn);
             //break;
             return;
@@ -318,12 +352,12 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
         ret = zc_socket_sendto_self(conn->sock, zc_buffer_data(wbuf), zc_buffer_used(wbuf), 0);
         if (ret != zc_buffer_used(wbuf)) {
             ZCWARN("sendto error:%d, wbuf:%d, close conn", ret, zc_buffer_used(wbuf));
-            conn->handle_close(conn);
+            conn->p->handle_close(conn);
             zc_asynconn_safedel(conn);
             return;
         }
         ZCINFO("udp write:%d", ret);
-        conn->handle_wrote(conn);
+        conn->p->handle_wrote(conn);
         zc_buffer_reset(wbuf);
 
         if (zc_buffer_used(conn->wbuf) == 0) {
@@ -341,10 +375,10 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
     if (ret <= 0 && ret != -EAGAIN) {
         if (zc_socket_conn_lost(-1*ret)) {
             //conn->handle_connlost(conn);
-            conn->handle_error(conn, ret);
+            conn->p->handle_error(conn, ret);
         }
         ZCWARN("peek error:%d\n", ret);
-        conn->handle_close(conn); 
+        conn->p->handle_close(conn); 
         //zc_socket_delete(conn->sock);
         zc_asynconn_safedel(conn);
         return;
@@ -359,7 +393,7 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
                 ZCWARN("write EAGAIN, break");
                 break;
             }
-            conn->handle_close(conn);
+            conn->p->handle_close(conn);
             //zc_socket_delete(conn->sock);
             zc_asynconn_safedel(conn);
             return;
@@ -370,7 +404,7 @@ zc_asynconn_ev_write(struct ev_loop *loop, ev_io *w, int events)
     if (zc_buffer_used(conn->wbuf) == 0) {
         if (conn->wbuf->next == NULL) {
             zc_buffer_reset(conn->wbuf);
-            conn->handle_wrote(conn);
+            conn->p->handle_wrote(conn);
 #ifdef  ASYNC_ONE_WATCHER 
             zc_asynconn_switch_read(conn);
 #else
@@ -392,9 +426,9 @@ zc_asynconn_ev_timeout(struct ev_loop *loop, ev_timer *r, int events)
 {
     zcAsynConn *conn = (zcAsynConn*)r->data; 
     if (conn->watcher.events & EV_READ) {
-        conn->handle_read_timeout(conn);
+        conn->p->handle_read_timeout(conn);
     }else if (conn->watcher.events & EV_WRITE) {
-        conn->handle_write_timeout(conn);
+        conn->p->handle_write_timeout(conn);
     }
 }
 
@@ -403,20 +437,20 @@ static void
 zc_asynconn_read_ev_timeout(struct ev_loop *loop, ev_timer *r, int events)
 {
     zcAsynConn *conn = (zcAsynConn*)r->data; 
-    conn->handle_read_timeout(conn);
+    conn->p->handle_read_timeout(conn);
 }
 
 static void 
 zc_asynconn_write_ev_timeout(struct ev_loop *loop, ev_timer *r, int events)
 {
     zcAsynConn *conn = (zcAsynConn*)r->data; 
-    conn->handle_write_timeout(conn);
+    conn->p->handle_write_timeout(conn);
 }
 
 #endif
 
 zcAsynConn* 
-zc_asynconn_new(zcSocket *sock, struct ev_loop *loop, int rbufsize, int wbufsize)
+zc_asynconn_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize, int wbufsize)
 {
     zcAsynConn *conn = NULL;
     conn = zc_calloct(zcAsynConn);
@@ -431,7 +465,8 @@ zc_asynconn_new(zcSocket *sock, struct ev_loop *loop, int rbufsize, int wbufsize
     conn->sock = sock;
     conn->loop = loop;
 
-    conn->handle_accept     = zc_asynconn_handle_accept;;
+    conn->p = p;
+    /*conn->handle_accept     = zc_asynconn_handle_accept;;
     conn->handle_connected  = zc_asynconn_handle_connected;
     conn->handle_error      = zc_asynconn_handle_error;
     conn->handle_close      = zc_asynconn_handle_close;
@@ -440,6 +475,7 @@ zc_asynconn_new(zcSocket *sock, struct ev_loop *loop, int rbufsize, int wbufsize
     conn->handle_wrote      = zc_asynconn_handle_wrote;
     conn->handle_read_timeout  = zc_asynconn_handle_read_timeout;
     conn->handle_write_timeout = zc_asynconn_handle_write_timeout;
+    */
 
 #ifdef ASYNC_ONE_WATCHER 
     ev_io_init(&conn->watcher, zc_asynconn_ev_read, conn->sock->fd, EV_READ);
@@ -471,14 +507,14 @@ zc_asynconn_new(zcSocket *sock, struct ev_loop *loop, int rbufsize, int wbufsize
 }
 
 zcAsynConn*
-zc_asynconn_new_tcp_client(const char *host, int port, int timeout, struct ev_loop *loop, 
-        int rbufsize, int wbufsize)
+zc_asynconn_new_tcp_client(const char *host, int port, int timeout, zcProtocol *p, 
+        struct ev_loop *loop, int rbufsize, int wbufsize)
 {
     zcSocket *sock = zc_socket_new_tcp(timeout);
     if (NULL == sock)
         return NULL;
     zc_socket_setblock(sock, ZC_FALSE);
-    zcAsynConn *conn = zc_asynconn_new(sock, loop, rbufsize, wbufsize);
+    zcAsynConn *conn = zc_asynconn_new(sock, p, loop, rbufsize, wbufsize);
     if (NULL == conn) {
         zc_socket_delete(sock);
         return NULL;
@@ -495,21 +531,21 @@ zc_asynconn_new_tcp_client(const char *host, int port, int timeout, struct ev_lo
             conn->handle_connfailed(conn);
             zc_asynconn_delete(conn);
         }*/
-        conn->handle_error(conn, ret);
+        conn->p->handle_error(conn, ret);
         zc_asynconn_safedel(conn);
     }
     return conn;
 }
 
 zcAsynConn*
-zc_asynconn_new_ssl_client(const char *host, int port, int timeout, struct ev_loop *loop, 
-        int rbufsize, int wbufsize)
+zc_asynconn_new_ssl_client(const char *host, int port, int timeout, zcProtocol *p,
+        struct ev_loop *loop, int rbufsize, int wbufsize)
 {
     zcSocket *sock = zc_socket_new_tcp(timeout);
     if (NULL == sock)
         return NULL;
     zc_socket_setblock(sock, ZC_FALSE);
-    zcAsynConn *conn = zc_asynconn_new(sock, loop, rbufsize, wbufsize);
+    zcAsynConn *conn = zc_asynconn_new(sock, p, loop, rbufsize, wbufsize);
     if (NULL == conn) {
         zc_socket_delete(sock);
         return NULL;
@@ -526,22 +562,22 @@ zc_asynconn_new_ssl_client(const char *host, int port, int timeout, struct ev_lo
             conn->handle_connfailed(conn);
             zc_asynconn_delete(conn);
         }*/
-        conn->handle_error(conn, ret);
+        conn->p->handle_error(conn, ret);
         zc_asynconn_safedel(conn);
     }
     return conn;
 }
 
 zcAsynConn*
-zc_asynconn_new_udp_client(const char *host, int port, int timeout, struct ev_loop *loop, 
-        int rbufsize, int wbufsize)
+zc_asynconn_new_udp_client(const char *host, int port, int timeout, zcProtocol *p, 
+        struct ev_loop *loop, int rbufsize, int wbufsize)
 {
     zcSocket *sock = zc_socket_new_udp(timeout);
     if (NULL == sock)
         return NULL;
     //zc_socket_setblock(sock, ZC_FALSE);
     zc_socket_add_remote_addr(sock, host, port);
-    zcAsynConn *conn = zc_asynconn_new(sock, loop, rbufsize, wbufsize);
+    zcAsynConn *conn = zc_asynconn_new(sock, p, loop, rbufsize, wbufsize);
     if (NULL == conn) {
         ZCERROR("zc_asynconn_new is NULL");
         zc_socket_delete(sock);
@@ -552,14 +588,14 @@ zc_asynconn_new_udp_client(const char *host, int port, int timeout, struct ev_lo
 
 
 zcAsynConn*
-zc_asynconn_new_tcp_server(const char *host, int port, int timeout, struct ev_loop *loop, 
-        int rbufsize, int wbufsize)
+zc_asynconn_new_tcp_server(const char *host, int port, int timeout, zcProtocol *p,
+        struct ev_loop *loop, int rbufsize, int wbufsize)
 {
     zcSocket *sock = zc_socket_server_tcp((char*)host, port, 256);
     if (NULL == sock)
         return NULL;
     zc_socket_setblock(sock, ZC_FALSE);
-    zcAsynConn *conn = zc_asynconn_new(sock, loop, rbufsize, wbufsize);
+    zcAsynConn *conn = zc_asynconn_new(sock, p, loop, rbufsize, wbufsize);
     if (NULL == conn) {
         zc_socket_delete(sock);
         return NULL;
@@ -573,14 +609,14 @@ zc_asynconn_new_tcp_server(const char *host, int port, int timeout, struct ev_lo
 }
 
 zcAsynConn*
-zc_asynconn_new_udp_server(const char *host, int port, int timeout, struct ev_loop *loop, 
-        int rbufsize, int wbufsize)
+zc_asynconn_new_udp_server(const char *host, int port, int timeout, zcProtocol *p,
+        struct ev_loop *loop, int rbufsize, int wbufsize)
 {
     zcSocket *sock = zc_socket_server_udp((char*)host, port, 256);
     if (NULL == sock)
         return NULL;
     //zc_socket_setblock(sock, ZC_FALSE);
-    zcAsynConn *conn = zc_asynconn_new(sock, loop, rbufsize, wbufsize);
+    zcAsynConn *conn = zc_asynconn_new(sock, p, loop, rbufsize, wbufsize);
     if (NULL == conn) {
         zc_socket_delete(sock);
         return NULL;
@@ -596,7 +632,7 @@ zc_asynconn_new_udp_server(const char *host, int port, int timeout, struct ev_lo
 void
 zc_asynconn_copy(zcAsynConn *conn, zcAsynConn *fromconn)
 {
-    conn->handle_accept     = fromconn->handle_accept;
+    /*conn->handle_accept     = fromconn->handle_accept;
     conn->handle_connected  = fromconn->handle_connected;
     conn->handle_error      = fromconn->handle_error;
     conn->handle_close      = fromconn->handle_close;
@@ -605,6 +641,8 @@ zc_asynconn_copy(zcAsynConn *conn, zcAsynConn *fromconn)
     conn->handle_wrote      = fromconn->handle_wrote;
     conn->handle_read_timeout  = fromconn->handle_read_timeout;
     conn->handle_write_timeout = fromconn->handle_write_timeout;
+    */
+    conn->p = fromconn->p;
     conn->calls = fromconn->calls;
 }
 
@@ -621,7 +659,7 @@ zc_asynconn_connect(zcAsynConn *conn, const char *host, int port)
         /*if (conn->handle_connfailed) {
             conn->handle_connfailed(conn);
         }*/
-        conn->handle_error(conn, ret);
+        conn->p->handle_error(conn, ret);
     }
 
     return ZC_OK; 
@@ -657,7 +695,8 @@ _call_later_ev_timeout(struct ev_loop *loop, ev_timer *t, int events)
 }
 
 int
-zc_asynconn_call_later(zcAsynConn *conn, int after, int repeat, int (*callback)(zcAsynConn*, void *data), void *data)
+zc_asynconn_call_later(zcAsynConn *conn, int after, int repeat, 
+        int (*callback)(zcAsynConn*, void *data), void *data)
 {
     struct zc_asyn_callback_value_t *v = zc_calloct(struct zc_asyn_callback_value_t);
     //ev_timer timer; 
