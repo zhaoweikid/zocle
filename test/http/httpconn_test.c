@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
     zc_socket_startup();
 
     test1(url);
-    test2(url);
+    //test2(url);
     //test3(url);
 
     zc_socket_cleanup();

@@ -3,7 +3,9 @@
 int myhttp_ready(zcAsynConn *conn)
 {
     zcHttpInfo *info = (zcHttpInfo*)conn->data;
-    ZCINFO("ready data:%s", info->resp->bodydata.data);    
+    ZCINFO("final data:%s", info->resp->bodydata.data);    
+
+    zc_asynconn_delete_delay(conn);
 
     return ZC_OK;
 }
@@ -13,7 +15,7 @@ int test1(const char *url)
     struct ev_loop *loop = ev_default_loop (0);
 
     zcHttpInfo *info = zc_httpinfo_new();
-    info->readyfunc = myhttp_ready;
+    info->finalfunc = myhttp_ready;
     zcAsynConn *conn = zc_asynconn_new_http_url(url, 30000, loop, "202.106.0.20", 65535, info);
     if (NULL == conn) {
         ZCERROR("server create error");
@@ -37,7 +39,7 @@ int myhttp_read(const char *data, int datalen, bool finish, void *x)
     zcAsynConn *conn = (zcAsynConn*)x;
     zcHttpInfo *info = (zcHttpInfo*)conn->data;
 
-    ZCINFO("readlen:%lld", info->readlen);
+    ZCINFO("readlen:%ld", info->readlen);
     if (info->readlen == info->resp->bodylen || datalen == 0) {
         ZCINFO("read end!");
     }
@@ -54,7 +56,7 @@ int test2(const char *url)
     struct ev_loop *loop = ev_default_loop (0);
 
     zcHttpInfo *info = zc_httpinfo_new();
-    info->readyfunc = myhttp_ready;
+    info->finalfunc = myhttp_ready;
     info->readfunc  = myhttp_read;
     zcAsynConn *conn = zc_asynconn_new_http_url(url, 30000, loop, "202.106.0.20", 65535, info);
     if (NULL == conn) {

@@ -20,7 +20,8 @@
 #include <zocle/utils/datetime.h>
 #include <zocle/utils/files.h>
 
-static char *_log_level2str[]   = {"NOLOG","FATAL","ERR","WARN","NOTICE","INFO","ALL"};
+//static char *_log_level2str[]   = {"NOLOG","FATAL","ERR","WARN","NOTICE","INFO","ALL"};
+static char *_log_level2str[]   = {"O","F","E","W","N","I","A"};
 static char *_log_level2color[] = {"","\33[31m","\33[35m","\33[33m","\33[36m","",""};
 
 #define _LOG_ERROR(level,format,args...) do{\
@@ -362,6 +363,15 @@ zc_log_whole(zcLog *log, int flag)
     log->logwhole = flag;
 }
 
+void
+zc_log_set_prefix(zcLog *log, char *prefix)
+{
+    if (NULL == prefix) {
+        log->logprefix[0] = 0;
+        return;
+    }
+    snprintf(log->logprefix, sizeof(log->logprefix), prefix);
+}
 
 int
 zc_log_rotate_size(zcLog *log, int logsize, int logcount)
@@ -390,6 +400,15 @@ zc_log_rotate_timeat(zcLog *log, int day, int hour, int min, int logcount)
     log->timeat[2] = min;
     log->count = logcount % 1000;
     log->rotate_type = ZC_LOG_ROTATE_TIMEAT;
+    return ZC_OK;
+}
+
+int    
+zc_log_rotate_watch(zcLog *log)
+{
+    //log->maxtime = logtime;
+    //log->count   = logcount % 1000;
+    log->rotate_type = ZC_LOG_ROTATE_WATCH;
     return ZC_OK;
 }
 
@@ -742,6 +761,8 @@ zc_log_check_rotate(zcLog *log, int loglevel)
             }
         }
         break;
+    case ZC_LOG_ROTATE_WATCH:
+        break;
     case ZC_LOG_ROTATE_REOPEN:
         // 1分钟重新打开文件一次
         if (timenow - item->last_rotate_time >= 60) {
@@ -799,15 +820,15 @@ zc_log_write(zcLog *log, int level, const char *file, int line, const char *form
     }
 
     if (color[0] == 0) {
-        ret = snprintf(buffer, maxlen, "%d%02d%02d %02d:%02d:%02d.%03d %d,%lu %s:%d [%s] ",
+        ret = snprintf(buffer, maxlen, "%d%02d%02d %02d%02d%02d.%03d %d,%lu %s:%d [%s] %s",
                     timestru.tm_year-100, timestru.tm_mon+1, timestru.tm_mday,
                     timestru.tm_hour, timestru.tm_min, timestru.tm_sec, tmb.millitm,
-                    (int)getpid(), _gettid(), file, line, levelstr);
+                    (int)getpid(), _gettid(), file, line, levelstr, log->logprefix);
     }else{
-        ret = snprintf(buffer, maxlen, "%s%d%02d%02d %02d:%02d:%02d.%03d %d,%lu %s:%d [%s] ",
+        ret = snprintf(buffer, maxlen, "%s%d%02d%02d %02d%02d%02d.%03d %d,%lu %s:%d [%s] %s",
                     color, timestru.tm_year-100, timestru.tm_mon+1, timestru.tm_mday,
                     timestru.tm_hour, timestru.tm_min, timestru.tm_sec, tmb.millitm,
-                    (int)getpid(), _gettid(), file, line, levelstr);
+                    (int)getpid(), _gettid(), file, line, levelstr, log->logprefix);
     }
 
     maxlen -= ret;
@@ -885,7 +906,7 @@ zc_log_flush(zcLog *log)
 }
 
 
-static int     
+/*static int     
 zc_log_time_str(char *buffer, int blen)
 {
     time_t      timenow;
@@ -927,7 +948,7 @@ zc_log_prefix_str(int level, const char *file, int line, char *buffer, int blen)
                 (int)getpid(), _gettid(), file, line, levelstr);
 
     return ret;
-}
+}*/
 
 static int     
 zc_log_str(char *color, int logwhole, int level, const char *file, int line, char *buffer, int blen, const char *format, ...)
@@ -955,7 +976,7 @@ zc_log_str(char *color, int logwhole, int level, const char *file, int line, cha
         start = strlen(color);
     }
     unsigned long tid = _gettid();
-    ret = snprintf(buffer+start, blen-start, "%d%02d%02d %02d:%02d:%02d.%03d %d,%lu %s:%d [%s] ",
+    ret = snprintf(buffer+start, blen-start, "%d%02d%02d %02d%02d%02d.%03d %d,%lu %s:%d [%s] ",
                 timestru.tm_year-100, timestru.tm_mon+1, timestru.tm_mday,
                 timestru.tm_hour, timestru.tm_min, timestru.tm_sec, tmb.millitm,
                 (int)getpid(), tid, file, line, _log_level2str[level]);

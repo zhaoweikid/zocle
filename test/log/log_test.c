@@ -90,11 +90,16 @@ int test_info()
     printf("test info ...\n");
     removelogs();
     zc_log_new("test.log", ZC_LOG_INFO);
-   
+
+    //strcpy(_zc_log->logprefix, "127.0.0.1:1100 ");
+
     int i;
     for (i=0; i<10; i++) {
+        zc_log_set_prefix(_zc_log, "127.0.0.1:1100 ");
         ZCINFO("test info %d\n", i);
         ZCNOTICE("test notice %d\n", i);
+
+        zc_log_set_prefix(_zc_log, NULL);
         ZCWARN("test warn %d\n", i);
         ZCERROR("test error %d\n", i);
     }
@@ -364,6 +369,7 @@ int main(int argc, char *argv[])
     system("rm -rf test.log*");
     test_rotate_time();
     test_rotate_time_multi();
+    
 
     return 0;
 }

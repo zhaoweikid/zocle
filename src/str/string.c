@@ -38,6 +38,40 @@ zc_strdup(const char* s, int len)
     return ns;
 }
 
+char*   
+zc_strnstr(const char *s1, const char *s2, int len)
+{
+    size_t l1, l2;
+
+    l2 = strlen(s2);
+    if (!l2)
+        return (char *)s1;
+    l1 = strlen(s1);
+    if (l1 > len)
+        l1 = len;
+    while (l1 >= l2) {
+        l1--;
+        if (!memcmp(s1, s2, l2))
+            return (char *)s1;
+        s1++;
+    }
+
+    return NULL;
+}
+
+char*   
+zc_strnchr(const char *s, const char c, int len)
+{
+    int i;
+    for (i=0; i<len; i++) {
+        if (s[i] == c)
+            return s+i;
+    }
+    return NULL;
+}
+
+
+
 #if defined(__sun)  || defined (__CYGWIN__) || defined (_WIN32)
 
 char *strcasestr(const char *s, const char *find)
@@ -519,7 +553,7 @@ zc_str_append_len_new(zcString *sstr, const char *ccstr, int cslen)
 
 
 int 
-zc_str_append_util(zcString *sstr, const char *cstr, const char *utilstr)
+zc_str_append_until(zcString *sstr, const char *cstr, const char *utilstr)
 {
     if (cstr == NULL || utilstr == NULL) {
         return ZC_ERR_NULL;

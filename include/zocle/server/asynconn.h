@@ -46,15 +46,14 @@ typedef struct zc_protocol_t
     int (*handle_connected)(zcAsynConn*);
     int (*handle_error)(zcAsynConn*, int err);
     int (*handle_close)(zcAsynConn*);
-    int (*handle_read)(zcAsynConn*, zcBuffer *);
-    //int (*handle_ready)(zcAsynConn*, char *data, int datalen);
+    int (*handle_read)(zcAsynConn*);
     int (*handle_wrote)(zcAsynConn*);
     int (*handle_read_timeout)(zcAsynConn*);
     int (*handle_write_timeout)(zcAsynConn*);
 }zcProtocol;
 
 zcProtocol*	zc_protocol_new();
-int			zc_protocol_init();
+int			zc_protocol_init(zcProtocol*);
 
 struct zc_asynconn_t
 {
@@ -66,6 +65,7 @@ struct zc_asynconn_t
     char        accepting:1; // for server
 	char		close:1;
 	char		ssl:1;
+    char        protocol_free:1; // protocol is need free?
 
     int         read_timeout;
     int         write_timeout;
@@ -83,21 +83,14 @@ struct zc_asynconn_t
 	ev_timer	timer;
 	struct ev_loop *loop;
 
-	zcProtocol	*p;
-    /*int (*handle_accept)(zcAsynConn*);
-    int (*handle_connected)(zcAsynConn*);
-    int (*handle_error)(zcAsynConn*, int err);
-    int (*handle_close)(zcAsynConn*);
-    int (*handle_read)(zcAsynConn*, zcBuffer *);
-    int (*handle_ready)(zcAsynConn*, char *data, int datalen);
-    int (*handle_wrote)(zcAsynConn*);
-    int (*handle_read_timeout)(zcAsynConn*);
-    int (*handle_write_timeout)(zcAsynConn*);*/
+	zcProtocol	p;
 };
 
 zcAsynConn*	zc_asynconn_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize, int wbufsize);
 void		zc_asynconn_delete(void*);
+void        zc_asynconn_delete_delay(void*);
 #define     zc_asynconn_safedel(x)  do{zc_asynconn_delete(x);x=NULL;}while(0)
+zcAsynConn*	zc_asynconn_new_accepted(zcSocket *sock, zcAsynConn *pconn);
 zcAsynConn* zc_asynconn_new_tcp_client(const char *host, int port, int timeout, zcProtocol *p,
 				struct ev_loop *loop, int rbufsize, int wbufsize);
 zcAsynConn* zc_asynconn_new_ssl_client(const char *host, int port, int timeout, zcProtocol *p,
@@ -109,7 +102,7 @@ zcAsynConn* zc_asynconn_new_tcp_server(const char *host, int port, int timeout, 
 				struct ev_loop *loop, int rbufsize, int wbufsize);
 zcAsynConn* zc_asynconn_new_udp_server(const char *host, int port, int timeout, zcProtocol *p,
 				struct ev_loop *loop, int rbufsize, int wbufsize);
-
+void        zc_asynconn_set_protocol(zcAsynConn *conn, zcProtocol *p);
 void		zc_asynconn_copy(zcAsynConn *conn, zcAsynConn *fromconn);
 int			zc_asynconn_connect(zcAsynConn *conn, const char *host, int port);
 int			zc_asynconn_call_later(zcAsynConn *conn, int after, int repeat, int (*callback)(zcAsynConn*, void*), void *data);
