@@ -1,6 +1,7 @@
 #include <zocle/base/object.h>
 #include <zocle/mem/alloc.h>
 #include <zocle/base/defines.h>
+#include <zocle/ds/dict.h>
 #include <zocle/ds/hashtable.h>
 #include <zocle/ds/list.h>
 #include <zocle/str/string.h>
@@ -37,7 +38,7 @@ zc_obj_delete(void *obj)
     zcObject *x = (zcObject*)obj;
     switch(x->__type) {
     case ZC_DICT:
-        zc_hashtable_delete(x);
+        zc_dict_delete(x);
         break;
     case ZC_LIST:
         zc_list_delete(x);
@@ -135,12 +136,12 @@ zc_obj_print_internal(zcObject *obj, int level, zcString *s, bool tab)
         break;
     }
     case ZC_DICT: {
-        zcHashTable *ht = (zcHashTable*)obj;
+        zcDict *ht = (zcDict*)obj;
         const char *key;
         zcObject   *value;
         
         zc_str_append_format(s, "{\n");
-        zc_hashtable_foreach_start(ht, key, value)
+        zc_dict_foreach_start(ht, key, value)
             if (tab) {
                 for (i=0; i<level; i++) {
                     zc_str_append_c(s, ' ');
@@ -148,7 +149,7 @@ zc_obj_print_internal(zcObject *obj, int level, zcString *s, bool tab)
             }
             zc_str_append_format(s, "key:%s, value:", key);
             zc_obj_print_internal(value, level+1, s, false);
-        zc_hashtable_foreach_end
+        zc_dict_foreach_end
 
         if (tab) {
             for (i=0; i<level; i++) {

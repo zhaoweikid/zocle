@@ -6,9 +6,9 @@ files = Glob("*.c")
 for d in sourcedirs:
 	files += Glob(d + '/*.c')
 #libs = []
-libs = ['zocle2']
+libs = ['zocle', 'mysqlclient']
 defs = ['_REENTRANT', '_GNU_SOURCE']
-libpath = ['../../']
+libpath = ['../../', '/opt/mysql/lib']
 if sys.platform == 'linux2':
 	ldflags = '-Wl,-R../../'
 else:

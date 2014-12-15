@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <zocle/net/sockets.h>
-#include <zocle/internet/http/httpreq.h>
-#include <zocle/internet/http/httpresp.h>
+#include <zocle/protocol/http/httpreq.h>
+#include <zocle/protocol/http/httpresp.h>
 #include <zocle/str/buffer.h>
 #include <zocle/enc/compress.h>
 

@@ -1,7 +1,7 @@
 #ifdef ZOCLE_WITH_LIBEV
-#include <zocle/internet/http/httpasyconn.h>
-#include <zocle/internet/http/httpheader.h>
-#include <zocle/internet/dns/resolver.h>
+#include <zocle/protocol/http/httpasyconn.h>
+#include <zocle/protocol/http/httpheader.h>
+#include <zocle/protocol/dns/resolver.h>
 #include <zocle/base/defines.h>
 #include <zocle/mem/alloc.h>
 #include <zocle/utils/times.h>
@@ -52,17 +52,20 @@ zc_asynconn_new_http(zcHttpInfo *info, int timeout, struct ev_loop *loop, const 
     /*zcHttpInfo *info = zc_httpinfo_new();
     info->req = req;
     info->http_ready = ready;*/
-
+ 
+    zcProtocol p;
+    zc_protocol_init(&p);
+    zc_asynhttp_assign_protocol(&p);
+   
     bool isip = zc_url_domain_isip(&req->url);
     if (isip) {
-        conn = zc_asynconn_new_tcp_client(req->url.domain.data, req->url.port, timeout, loop, bufsize, bufsize);
+        conn = zc_asynconn_new_tcp_client(req->url.domain.data, req->url.port, timeout, &p, loop, bufsize, bufsize);
         conn->data = info;
-        zc_asynhttp_assign_conn(conn);
         zc_asynhttp_send(conn, req);
     }else{
-        conn = zc_asynconn_new_dns_client(dns, timeout, loop, req->url.domain.data);
+        ZCINFO("query dns:%s, domain:%s", dns, req->url.domain.data);
+        conn = zc_asynconn_new_dns_client(dns, timeout, loop, req->url.domain.data, zc_asynhttp_handle_read_dns);
         conn->data = info;
-        conn->handle_ready = zc_asynhttp_handle_ready_dns;
     }
 
     return conn;
@@ -76,6 +79,7 @@ zc_asynconn_new_http_url(const char *url, int timeout, struct ev_loop *loop, con
         info = zc_httpinfo_new();
     }
     info->req = req;
+
     return zc_asynconn_new_http(info, timeout, loop, dns, bufsize);
 }
 
@@ -83,19 +87,18 @@ void
 zc_asynconn_delete_http(void *x)
 {
     zcAsynConn *conn = (zcAsynConn*)x;
-    
+    ZCINFO("asynconn delete http"); 
     zc_httpinfo_delete(conn->data);
     zc_asynconn_delete(x);
 }
 
 
 int 
-zc_asynhttp_assign_conn(zcAsynConn *conn)
+zc_asynhttp_assign_protocol(zcProtocol *p)
 {
-    conn->handle_connected  = zc_asynhttp_handle_connected;
-    conn->handle_read       = zc_asynhttp_handle_read_check;
-    conn->handle_ready      = zc_asynhttp_handle_ready;
-    conn->handle_wrote      = zc_asynhttp_handle_wrote;
+    p->handle_connected  = zc_asynhttp_handle_connected;
+    p->handle_read       = zc_asynhttp_handle_read;
+    p->handle_wrote      = zc_asynhttp_handle_wrote;
 
     return ZC_OK;
 }
@@ -110,14 +113,17 @@ zc_asynhttp_send(zcAsynConn *conn, zcHttpReq *req)
     zc_str_append(s, "\r\n");
     
     if (s->len > conn->wbuf->size) { // too long
+        ZCINFO("header too long");
+        // FIXME: buf not free
         zcStrBuf *buf = zc_strbuf_new(s);
         zc_buffer_append(conn->wbuf, s->data, conn->wbuf->size);
         buf->pos += conn->wbuf->size;
+        info->data = buf;
     }else{
         zc_buffer_append(conn->wbuf, s->data, s->len);
         zc_str_delete(s);
     }
-    ZCINFO("http send:%d %s", zc_buffer_len(conn->wbuf), zc_buffer_data(conn->wbuf));
+    ZCINFO("http send:%d %s", zc_buffer_used(conn->wbuf), zc_buffer_data(conn->wbuf));
     zc_asynconn_start_write(conn);
     if (info->stat) {
         info->stat->start = zc_timenow();
@@ -199,8 +205,8 @@ int zc_asynhttp_switch_websocket(zcAsynConn *conn)
     zcHttpInfo *info   = conn->data;
     info->websocket    = 1;
     info->websocket_close = 0;
-    conn->handle_read  = zc_asynhttp_handle_websocket_read;
-    conn->handle_ready = NULL;
+    conn->p.handle_read  = zc_asynhttp_handle_websocket_read;
+    //conn->handle_ready = NULL;
     return ZC_OK;
 }
 
@@ -245,17 +251,18 @@ zc_asynhttp_handle_connected(zcAsynConn *conn)
 }
 
 int 
-zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
+zc_asynhttp_handle_websocket_read(zcAsynConn *conn)
 {
     zcHttpInfo *info = conn->data;
+    zcBuffer *buf = conn->rbuf;
     uint64_t datalen;
     uint32_t mask;
     uint8_t  opcode = 0;
     int      headerlen = 2;
     uint8_t  fin = 1;
 
-    if (zc_buffer_len(buf) < 2) {
-        ZCINFO("buffer len:%d, return", zc_buffer_len(buf));
+    if (zc_buffer_used(buf) < 2) {
+        ZCINFO("buffer len:%d, return", zc_buffer_used(buf));
         return 0;
     }
 
@@ -290,9 +297,9 @@ zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
     ZCINFO("websocket fin:%d opcode:%d mask:%d headerlen:%d datalen:%llu", 
             fin, opcode, havemask, headerlen, (unsigned long long)datalen);
     
-    if (zc_buffer_len(buf) < headerlen + datalen) {
+    if (zc_buffer_used(buf) < headerlen + datalen) {
         ZCINFO("buffer not have complete package, rbuf->len:%d package len:%llu", 
-                zc_buffer_len(buf), (unsigned long long)(headerlen+datalen));
+                zc_buffer_used(buf), (unsigned long long)(headerlen+datalen));
         return 0;
     }
 
@@ -350,54 +357,167 @@ zc_asynhttp_handle_websocket_read(zcAsynConn *conn, zcBuffer *buf)
     return headerlen+datalen;
 }
 
-
-int 
-zc_asynhttp_handle_read_check(zcAsynConn *conn, zcBuffer *buf)
+static int
+zc_asynhttp_handle_read_header(zcAsynConn *conn)
 {
-    const char *data = buf->data+buf->pos;
-    int datalen = zc_buffer_len(buf);
+    zcBuffer *rbuf = conn->rbuf;
+    char *data  = zc_buffer_data(rbuf);
+    int datalen = zc_buffer_used(rbuf);
+    int used = 0;
+
     zcHttpInfo *info = conn->data; 
-    
-    if (info->header) { //now, reading header
-        const char *p = strstr(data, "\r\n");
-        if (p != NULL) {
-            return p-data+2;
-        }
-        return 0;
-    }else{
-        if (info->resp->chunked) {
-            if (info->chunklen == 0) {
-                const char *p = strstr(data, "\r\n");
-                if (p == NULL || p-data >= 8)
-                    return 0;
-                char linebuf[32] = {0};
-                ZCINFO("chunk str:%s", linebuf);
-                strncpy(linebuf, data, p-data); 
-                info->chunklen = strtol(linebuf, NULL, 16); 
-                buf->pos += p-data+2;
-                info->readlen += p-data+2;
-                if (info->chunklen == 0 && info->readyfunc) { // chunk end 
-                    info->readyfunc(conn);
+
+    ZCINFO("read header buffer:%d pos:%d %s", datalen, rbuf->pos, data);
+   
+    char *check_data = data;
+    char *p; // = strstr(check_data, "\r\n");
+    //if (p != NULL) { // have header line
+    while ((p = strstr(check_data, "\r\n")) != NULL) {
+        if (p == check_data) { // end of header
+            used += 2;
+            ZCINFO("parse header");
+            info->header = false;
+            zc_httpresp_parse_header(info->resp);
+
+            // try switch to websocket
+            if (strcasecmp(zc_dict_get_str(info->resp->header, "Upgrade",""), "websocket") == 0) {
+                int ret = zc_httpresp_check_websocket(info->resp, info->req); 
+                if (ret != ZC_OK) {
+                    ZCNOTE("websocket response error!");
+                    return ZC_ERR;
                 }
-                /*if (info->chunklen == 0 && info->readfunc) { // chunk end 
-                    info->readfunc(info->resp->bodydata.data, info->resp->bodydata.len, true, info);
-                }*/
-                return 0;
-            }else{
-                if (info->chunklen >= datalen) {
-                    info->chunklen -= datalen;
-                    return datalen;
-                }
-                int ret = info->chunklen;
-                info->chunklen = 0;
-                return ret;
+                zc_asynhttp_switch_websocket(conn);
+                ZCNOTE("websocket switch ok");
+                if (info->finalfunc) 
+                    info->finalfunc(conn);
+                return used;
             }
+
+            if (!info->resp->chunked && info->resp->bodylen == 0) {
+                if (info->finalfunc) 
+                    info->finalfunc(conn);
+            }
+
+            if (info->resp->compress) {
+                if (info->compress)
+                    zc_compress_delete(info->compress);
+                switch (info->resp->compress) {
+                    case ZC_HTTP_GZIP:
+                        info->compress = zc_compress_new(ZC_GZIP_DEC, 0);
+                        break;
+                    default:
+                        ZCERROR("not support compress:%d", info->resp->compress);
+                }
+            }
+            break;
+        }else{
+            used += p - check_data + 2;
+            zc_str_append_len(&info->resp->headdata, check_data, p-check_data+2);
+            check_data = p + 2;
         }
-        return datalen;
     }
+    return used;
+}
+
+static int
+zc_asynhttp_handle_read_body(zcAsynConn *conn)
+{
+    zcBuffer *rbuf = conn->rbuf;
+    const char *data = zc_buffer_data(rbuf);
+    int datalen = zc_buffer_used(rbuf);
+    zcHttpInfo *info = conn->data; 
+    int used = 0;
+
+    ZCINFO("read body buffer:%d, chunklen:%d", datalen, info->chunklen);
+    if (info->resp->chunked) {
+        if (info->chunklen == 0) {
+            // find next chunk len
+            const char *p = zc_strnstr(data, "\r\n", datalen-used);
+            if (p == NULL) { // go ahead
+                return used;
+            } 
+            if (p == data) { // end of response
+                return 2;
+            }
+            char linebuf[32] = {0};
+            strncpy(linebuf, data, p-data); 
+            info->chunklen = strtol(linebuf, NULL, 16); 
+            ZCINFO("chunk str:%ld %s(%d)", p-data, linebuf, info->chunklen);
+            used += p-data+2;
+            //info->readlen += p-data+2;
+            data += p-data+2;
+            if (info->chunklen == 0 && info->finalfunc) { // chunk end 
+                info->finalfunc(conn);
+            }
+            info->readlen += used;
+            return used;
+        }else{
+            if (info->chunklen+2 > datalen-used) {
+                return ZC_AGAIN;
+            }
+            datalen = info->chunklen;
+            info->chunklen = 0;
+        }
+    }
+
+    ZCINFO("chunk datalen:%d", datalen);
+    int ret;
+    if (info->resp->compress) {
+        //ZCINFO("umcompress len:%d data: %x %x %x %x", datalen, data[0], data[1], data[2], data[3]);
+        ret = zc_httpconn_gzip_uncompress_str(info->resp, data, datalen, 
+                    info->compress, &info->bodyfirst);
+        if (ret < 0) {
+            ZCWARN("umcompress error:%d", ret);
+            goto read_body_error;
+        }
+        if (info->readfunc) { // data callback
+            ret = info->readfunc(info->resp->bodydata.data, info->resp->bodydata.len, false, conn);
+            if (ret < 0) {
+                ZCWARN("readfunc error:%d", ret);
+                goto read_body_error;
+            }
+            zc_str_clear(&info->resp->bodydata);
+        }
+    }else{
+        if (info->readfunc) {
+            ret = info->readfunc(data, datalen, false, conn);
+            if (ret < 0) {
+                ZCWARN("readfunc error:%d", ret);
+                goto read_body_error;
+            }
+        }else{
+            zc_str_append_len(&info->resp->bodydata, data, datalen);
+        }
+    }
+    used += datalen;
+    // chunk end have \r\n, so +2
+    if (info->resp->chunked && strncmp(&data[used], "\r\n", 2) == 0) {
+        used += 2;
+    }
+    info->readlen += used;
+
+    if (!info->resp->chunked && info->readlen == info->resp->bodylen && info->finalfunc) {
+        info->finalfunc(conn);
+    }
+    
+    return used;
+
+read_body_error:
+    return ZC_ERR;
 }
 
 int 
+zc_asynhttp_handle_read(zcAsynConn *conn)
+{
+    zcHttpInfo *info = conn->data; 
+    if (info-> header) {
+        return zc_asynhttp_handle_read_header(conn);
+    }else{
+        return zc_asynhttp_handle_read_body(conn);
+    }
+}
+
+/*int 
 zc_asynhttp_handle_ready(zcAsynConn *conn, char *data, int datalen)
 {
     zcHttpInfo *info = conn->data;
@@ -439,7 +559,7 @@ zc_asynhttp_handle_ready(zcAsynConn *conn, char *data, int datalen)
     }
     
     // ready body
-    //ZCINFO("datalen:%d", datalen);
+    ZCINFO("body datalen:%d", datalen);
     info->readlen += datalen;
     int ret;
     if (info->resp->compress) {
@@ -485,15 +605,19 @@ zc_asynhttp_handle_ready(zcAsynConn *conn, char *data, int datalen)
 
     return ZC_OK; 
 ready_error:
-    conn->handle_close(conn);
+    conn->p.handle_close(conn);
     zc_httpinfo_delete(conn->data);
     zc_asynconn_delete(conn);
     return ZC_ERR;
 }
+*/
 
 int 
-zc_asynhttp_handle_ready_dns(zcAsynConn *conn, char *data, int len)
+zc_asynhttp_handle_read_dns(zcAsynConn *conn)
 {
+    zcBuffer *buffer = conn->rbuf;
+    char *data = zc_buffer_data(buffer);
+    int len = zc_buffer_used(buffer);
     zcList *result = zc_list_new();
     result->del = zc_dnsrr_delete;
     int ret = zc_dns_unpack_resp_simple(result, data, len);
@@ -517,17 +641,22 @@ zc_asynhttp_handle_ready_dns(zcAsynConn *conn, char *data, int len)
     }
     zcHttpInfo *info = conn->data;
     ZCINFO("ip:%s %d timeout:%d", ip, info->req->url.port, info->conn_timeout);
+
+    zcProtocol p;
+    zc_protocol_init(&p);
+    zc_asynhttp_assign_protocol(&p);
+ 
     zcAsynConn *newconn = zc_asynconn_new_tcp_client(ip, info->req->url.port, 
-            info->conn_timeout, conn->loop, 16384, 16384);
-    zc_asynhttp_assign_conn(newconn);
+            info->conn_timeout, &p, conn->loop, 65535, 65535);
+    //zc_asynhttp_assign_protocol(newconn);
     newconn->data = info;
     conn->data = NULL;
     zc_asynhttp_send(newconn, info->req);
 
     zc_list_delete(result);
     
-    conn->handle_close(conn);
-    zc_asynconn_delete(conn);
+    conn->p.handle_close(conn);
+    zc_asynconn_delete_delay(conn);
         
     return ZC_OK;
 }

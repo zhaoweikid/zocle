@@ -2,7 +2,7 @@ import os, sys, glob
 
 includes = ['../../include']
 files = glob.glob("*.c")
-libs = ['ssl', 'crypto', 'iconv']
+libs = ['iconv', 'dl']
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_SSL']
 #defs = ['_REENTRANT', '_GNU_SOURCE']
 libpath = ['../../', '/usr/local/lib']
@@ -15,4 +15,4 @@ env = Environment(CCFLAGS='-ggdb -Wall', CPPDEFINES=defs, CPPPATH=includes,
 				  LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 for fn in files:
-	env.Program([fn, '../../libzocle2.a'])
+	env.Program([fn, '../../libzocle.a', '/usr/local/ssl/lib/libssl.a', '/usr/local/ssl/lib/libcrypto.a'])

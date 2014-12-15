@@ -71,6 +71,8 @@ void  zc_nofree_func(void *ptr);
 #define zc_mem_check_point(sid) zc_memdebug_check_point_real(_zc_mem_dbg,sid,__FILE__,__LINE__)
 #define zc_mem_count(sid)      zc_memdebug_count(_zc_mem_dbg,sid)
 
+#define zc_safedel(t,x)     do{zc_##t##_delete(x);x=NULL;}while(0)
+
 #define ZOCLE_EXIT(c)       exit(c)
 #define ZOCLE_ABORT()       abort()
 

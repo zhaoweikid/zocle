@@ -1,11 +1,11 @@
-#include <zocle/internet/http/httpresp.h>
+#include <zocle/protocol/http/httpresp.h>
 #include <zocle/mem/alloc.h>
 #include <zocle/ds/dict.h>
 #include <zocle/str/cstring.h>
 #include <zocle/str/string.h>
 #include <ctype.h>
-#include <zocle/internet/http/httpheader.h>
-#include <zocle/internet/http/httpreq.h>
+#include <zocle/protocol/http/httpheader.h>
+#include <zocle/protocol/http/httpreq.h>
 #include <zocle/enc/sha1.h>
 
 zcHttpResp* 
@@ -108,7 +108,7 @@ zc_httpresp_parse_header(zcHttpResp *resp)
             while (*start && (*start == '\r' || *start == '\n')) start++;
         }
 
-        ZCINFO("key:%s value:%s", key->data, value.data);
+        //ZCINFO("key:%s value:%s", key->data, value.data);
         
         if (strcmp(key->data, "Content-Length") == 0) {
             resp->bodylen = strtoll(value.data, NULL, 10);

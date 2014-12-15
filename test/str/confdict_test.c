@@ -65,7 +65,9 @@ int main()
     zcList *list = zc_confdict_get_list(conf, NULL, "server");
     if (list) {
         char *value;
-        zc_list_foreach(list, value) {
+        zcListNode *node;
+        zc_list_foreach(list, node) {
+            value = (char*)node->data;
             ZCINFO("value:%s", value);
         }
     }

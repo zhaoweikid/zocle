@@ -61,7 +61,7 @@ int test(const char *url)
     struct ev_loop *loop = ev_default_loop (0);
 
     zcHttpInfo *info = zc_httpinfo_new();
-    info->readyfunc = myhttp_ready;
+    info->finalfunc = myhttp_ready;
     info->readfunc  = myhttp_read;
     zcAsynConn *conn = zc_asynconn_new_http_url(url, 3000, loop, "202.106.0.20", 500000, info);
     if (NULL == conn) {

@@ -2,10 +2,10 @@
 #define ZOCLE_HTTP_HTTPCLIEHT_H
 
 #include <stdio.h>
-#include <zocle/internet/http/httpheader.h>
-#include <zocle/internet/http/httpconn.h>
-#include <zocle/internet/http/httpreq.h>
-#include <zocle/internet/http/httpresp.h>
+#include <zocle/protocol/http/httpheader.h>
+#include <zocle/protocol/http/httpconn.h>
+#include <zocle/protocol/http/httpreq.h>
+#include <zocle/protocol/http/httpresp.h>
 
 typedef struct _zc_httpclient
 {

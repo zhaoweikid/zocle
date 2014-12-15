@@ -17,6 +17,8 @@
 #define ZC_STR_NOCASE	0
 
 char*   zc_strdup(const char* s, int len);
+char*   zc_strnstr(const char*, const char*, int);
+char*   zc_strnchr(const char*, const char, int);
 
 /*!
  安全的字符串结构
@@ -52,7 +54,7 @@ int         zc_str_append(zcString *, const char *);
 int         zc_str_append_format(zcString *, char *format, ...);
 int         zc_str_append_escape(zcString *, const char *format);
 int         zc_str_append_len(zcString *, const char *, int);
-int         zc_str_append_util(zcString *, const char *, const char*);
+int         zc_str_append_until(zcString *, const char *, const char*);
 zcString*   zc_str_append_len_new(zcString *sstr, const char *ccstr, int cslen);
 int         zc_str_append_c(zcString *, const char );
 int         zc_str_append_util(zcString *, const char *, const char*);

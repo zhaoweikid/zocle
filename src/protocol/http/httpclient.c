@@ -1,4 +1,4 @@
-#include <zocle/internet/http/httpclient.h>
+#include <zocle/protocol/http/httpclient.h>
 
 zcHttpClient* 
 zc_httpclient_new()

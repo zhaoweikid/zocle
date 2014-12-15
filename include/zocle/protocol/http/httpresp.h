@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <zocle/str/string.h>
 #include <zocle/ds/dict.h>
-#include <zocle/internet/http/cookie.h>
-#include <zocle/internet/http/httpreq.h>
+#include <zocle/protocol/http/cookie.h>
+#include <zocle/protocol/http/httpreq.h>
 
 typedef struct _zc_httpresp
 {

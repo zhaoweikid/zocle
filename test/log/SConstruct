@@ -20,4 +20,4 @@ env = Environment(CCFLAGS='-ggdb -Wall', CPPDEFINES=defs, CPPPATH=includes,
 
 for fn in files:
 	fname = str(fn)[:-2]
-	env.Program(fname, [fn, '../../libzocle2.a'])
+	env.Program(fname, [fn, '../../libzocle.a'])

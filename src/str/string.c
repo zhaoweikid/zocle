@@ -38,6 +38,40 @@ zc_strdup(const char* s, int len)
     return ns;
 }
 
+char*   
+zc_strnstr(const char *s1, const char *s2, int len)
+{
+    size_t l1, l2;
+
+    l2 = strlen(s2);
+    if (!l2)
+        return (char *)s1;
+    l1 = strlen(s1);
+    if (l1 > len)
+        l1 = len;
+    while (l1 >= l2) {
+        l1--;
+        if (!memcmp(s1, s2, l2))
+            return (char *)s1;
+        s1++;
+    }
+
+    return NULL;
+}
+
+char*   
+zc_strnchr(const char *s, const char c, int len)
+{
+    int i;
+    for (i=0; i<len; i++) {
+        if (s[i] == c)
+            return s+i;
+    }
+    return NULL;
+}
+
+
+
 #if defined(__sun)  || defined (__CYGWIN__) || defined (_WIN32)
 
 char *strcasestr(const char *s, const char *find)
@@ -202,6 +236,7 @@ zc_str_new_char(char *str, int len)
     memcpy(s->data, str, len);
     s->data[len] = 0;
     s->len = len;
+    s->__type = ZC_STRING;
     
     return s;
 }
@@ -518,7 +553,7 @@ zc_str_append_len_new(zcString *sstr, const char *ccstr, int cslen)
 
 
 int 
-zc_str_append_util(zcString *sstr, const char *cstr, const char *utilstr)
+zc_str_append_until(zcString *sstr, const char *cstr, const char *utilstr)
 {
     if (cstr == NULL || utilstr == NULL) {
         return ZC_ERR_NULL;
@@ -1284,7 +1319,6 @@ zcList*
 zc_str_split(zcString* sstr, char *smstr, int maxnum)
 {
     zcList *strlist = NULL;
-    //zcSListNode *node;
     char    *start;
     int     slen, flen;
     int     i;
@@ -1294,7 +1328,6 @@ zc_str_split(zcString* sstr, char *smstr, int maxnum)
     if (0 == sstr->len){
         return NULL;
     }
-
     start = sstr->data;
     slen = strlen(smstr);
     i = 0;
@@ -1306,6 +1339,7 @@ zc_str_split(zcString* sstr, char *smstr, int maxnum)
             flen = xx - (start + i);
         }
         if (flen >= 0) {
+            //ZCINFO("block:%d, flen:%d, %s", block, flen, start+i);
             zcString *ss;
             if (flen == 0) {
                 ss = zc_str_new(0);
@@ -1335,6 +1369,10 @@ zc_str_split(zcString* sstr, char *smstr, int maxnum)
         if (NULL == xx)
             break;
         i += flen + slen;
+        //ZCINFO("i:%d, len:%d", i, sstr->len);
+        if (i == sstr->len) {
+            zc_list_append(strlist, zc_str_new(0));
+        }
     }
     return strlist;
 }

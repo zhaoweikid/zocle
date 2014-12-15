@@ -1,5 +1,5 @@
 #ifdef ZOCLE_WITH_ICONV
-#include <zocle/internet/mime/mime.h>
+#include <zocle/protocol/mime/mime.h>
 #include <zocle/enc/base64.h>
 #include <zocle/enc/qp.h>
 #include <zocle/str/convert.h>

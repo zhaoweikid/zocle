@@ -44,11 +44,13 @@ int main()
         zc_regmatch_delete(rm);
     }
     ZCINFO("=====================\n");
-    zcSList *sl = zc_regexp_findall(re2, test3, strlen(test3));
+    zcList *sl = zc_regexp_findall(re2, test3, strlen(test3));
     if (NULL == sl) {
         ZCINFO("not search.\n");
     }else{
-        zc_slist_foreach(sl, rm) {
+        zcListNode *node;
+        zc_list_foreach(sl, node) {
+            rm = (zcRegMatch*)node->data;
             ZCINFO("found! start:%d end:%d group:%d %s\n", rm->start, rm->end, 
                     zc_regmatch_group_num(rm), rm->result);
             if (zc_regmatch_group_num(rm) > 0) {
@@ -57,12 +59,14 @@ int main()
         }
     }
     ZCINFO("=====================\n");
-    zcSList *s2 = zc_regexp_split(re2, test5, strlen(test5));
+    zcList *s2 = zc_regexp_split(re2, test5, strlen(test5));
     if (NULL == sl) {
         ZCINFO("not search.\n");
     }else{
         char *rs;
-        zc_slist_foreach(s2, rs) {
+        zcListNode *node;
+        zc_list_foreach(s2, node) {
+            rs = (char*)node->data;
             ZCINFO("split result:%s\n", rs);
         }
     }

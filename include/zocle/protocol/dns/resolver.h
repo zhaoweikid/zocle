@@ -150,7 +150,8 @@ int  zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t c
 int  zc_dns_gethostbyname(const char *domain, zcList *result);
 
 #ifdef ZOCLE_WITH_LIBEV
-zcAsynConn* zc_asynconn_new_dns_client(const char *dns, int timeout, struct ev_loop *loop, const char *host);
+zcAsynConn* zc_asynconn_new_dns_client(const char *dns, int timeout, struct ev_loop *loop, 
+            const char *host, int (*callback)(zcAsynConn*));
 #endif
 
 #endif

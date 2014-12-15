@@ -1,4 +1,4 @@
-#include <zocle/internet/dns/resolver.h>
+#include <zocle/protocol/dns/resolver.h>
 #include <zocle/net/sockets.h>
 #include <zocle/base/defines.h>
 #include <zocle/mem/alloc.h>
@@ -319,7 +319,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
         //ZCINFO("before i:%d", i);
         i = _unpack_string(r->domain, data, i);
         //ZCINFO("after i:%d", i);
-        //ZCINFO("domain: %s", r->domain->data);
+        ZCINFO("domain:%d %s", r->domain->len, r->domain->data);
 
         memcpy(&v, data+i, sizeof(short));
         r->type = ntohs(v);
@@ -513,7 +513,7 @@ zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, z
     zcDNSRR *rr;
     zcListNode *node;
     zc_list_foreach(list, node) {
-        rr = (zcDNSRR*)rr;
+        rr = (zcDNSRR*)node->data;
         zc_dnsrr_print(rr);
     }
 
@@ -525,10 +525,46 @@ query_over:
 }
 
 #ifdef ZOCLE_WITH_LIBEV
-zcAsynConn* 
-zc_asynconn_new_dns_client(const char *dns, int timeout, struct ev_loop *loop, const char *host)
+
+static int 
+zc_dns_read_callback(zcAsynConn *conn)
 {
-    zcAsynConn *conn = zc_asynconn_new_udp_client(dns, 53, timeout, loop, 1024, 1024);
+    zcBuffer *rbuf = conn->rbuf;
+    char *data = zc_buffer_data(rbuf);
+    int len = zc_buffer_used(rbuf);
+
+    zcList *result = zc_list_new();
+    result->del = zc_dnsrr_delete;
+    int ret = zc_dns_unpack_resp_simple(result, data, len);
+
+    ZCINFO("dns result size:%d, ret:%d", result->size, ret);
+    zcDNSRR *r;
+    const char *ip = NULL;
+    zcListNode *node;
+    zc_list_foreach(result, node) {
+        r = (zcDNSRR*)node->data;
+        if (r->type == ZC_DNS_T_A) {
+            zc_dnsrr_print(r);
+            ip = ((zcDNSA*)r->data)->ip;
+            break;
+        }
+    }
+
+    if (NULL == ip) {
+        zc_list_delete(result);
+        return ZC_ERR;
+    }
+    
+    return len;
+}
+
+zcAsynConn* 
+zc_asynconn_new_dns_client(const char *dns, int timeout, struct ev_loop *loop, const char *host, int (*callback)(zcAsynConn*))
+{
+    zcProtocol p;
+    zc_protocol_init(&p);
+    p.handle_read = callback;
+    zcAsynConn *conn = zc_asynconn_new_udp_client(dns, 53, timeout, &p, loop, 1024, 1024);
     int n = zc_dns_pack_query_simple(host, ZC_DNS_T_A, ZC_DNS_C_IN, 
             conn->wbuf->data, zc_buffer_idle(conn->wbuf));
     //ZCINFO("wbuf len:%d", n); 

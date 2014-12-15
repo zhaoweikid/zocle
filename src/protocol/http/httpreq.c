@@ -1,7 +1,7 @@
-#include <zocle/internet/http/httpreq.h>
+#include <zocle/protocol/http/httpreq.h>
 #include <zocle/mem/alloc.h>
 #include <zocle/utils/funcs.h>
-#include <zocle/internet/http/httpheader.h>
+#include <zocle/protocol/http/httpheader.h>
 #include <zocle/enc/url.h>
 #include <zocle/str/string.h>
 #ifndef _WIN32

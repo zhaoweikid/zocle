@@ -2,14 +2,27 @@
 #include <assert.h>
 #include <ev.h>
 
-int my_handle_ready(zcAsynConn *conn, char *data, int datalen)
+int my_handle_read(zcAsynConn *conn)
 {
-    char buf[1024] = {0};
-    strncpy(buf, data, datalen);
-    ZCNOTE("%d ok, found line len:%d, %s", conn->sock->fd, datalen, buf);
+    zcBuffer *buf = conn->rbuf;
+    const char *data = zc_buffer_data(buf);
+    int len = zc_buffer_used(buf);
+    ZCINFO("used:%d", zc_buffer_used(buf));
+    const char *pos = zc_strnstr(data, "\n", zc_buffer_used(buf));
+    if (pos == NULL) {
+        ZCINFO("not found \\n, again");
+        return ZC_AGAIN;
+    }
+    char input[1024] = {0};
+    strncpy(input, data, pos-data-1);
+    ZCINFO("input:%s", input);
+    
+    char wbuf[1024] = {0};
+    int wlen = snprintf(wbuf, sizeof(wbuf), "ok! %s ~~~\r\n", input);
+    ZCINFO("wlen:%d, %s", wlen, wbuf);
+    zc_buffer_append(conn->wbuf, wbuf, wlen); 
 
-    zc_buffer_append(conn->wbuf, "ok\r\n", 4); 
-    return ZC_OK;
+    return len;
 }
 
 
@@ -22,13 +35,7 @@ my_handle_accept(zcAsynConn *conn)
         return ZC_OK;
     //zc_check(newsock);
     ZCINFO("ok, accept! new:%d", newsock->fd);
-    newsock->timeout    = conn->sock->timeout;
-    zcAsynConn *newconn = zc_asynconn_new(newsock, conn->loop, conn->rbuf->size, conn->wbuf->size);
-    newconn->accepting  = ZC_FALSE;
-    newconn->connected  = ZC_TRUE;
-    //zc_asynconn_copy(newconn, conn);
-    newconn->handle_ready  = my_handle_ready;
-
+    zcAsynConn *newconn = zc_asynconn_new_accepted(newsock, conn);
     zc_socket_linger(newconn->sock, 1, 0);
 
     return ZC_OK;
@@ -38,16 +45,20 @@ int main()
 {
     zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW);
     zc_log_new("stdout", ZC_LOG_ALL);
+
+    zcProtocol p;
+
+    zc_protocol_init(&p);
+    p.handle_accept = my_handle_accept;
+    p.handle_read = my_handle_read;
     
     struct ev_loop *loop = ev_default_loop (0);
 
-    zcAsynConn *conn = zc_asynconn_new_tcp_server("127.0.0.1", 10000, 5000, loop, 1024, 1024);
+    zcAsynConn *conn = zc_asynconn_new_tcp_server("127.0.0.1", 10000, 5000, &p, loop, 1024, 1024);
     if (NULL == conn) {
         ZCERROR("server create error");
         return 0;
     }
-    //conn->handle_ready  = my_handle_ready;
-    conn->handle_accept = my_handle_accept;
 
     zc_check(conn);
     zc_check(conn->sock);

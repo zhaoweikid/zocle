@@ -6,16 +6,14 @@ int test1(const char *myurl)
     zcHttpReq  *r = zc_httpreq_new(myurl);
     zc_url_print(&r->url);
     
-    zcCStrList urls;
-    char buf[1024];
-    zc_cstrlist_init_stack(&urls, buf, sizeof(buf), 10);
+    zcList *urls = zc_list_new();
+    zc_socket_gethostbyname(r->url.domain.data, urls);
 
-    zc_socket_gethostbyname(r->url.domain.data, &urls);
-
-    int i;
-    ZCINFO("urls: %d", urls.n);
-    for (i=0; i<urls.n; i++) {
-        ZCINFO("ip: %s", zc_cstrlist_get(&urls, i));
+    //int i;
+    ZCINFO("urls: %d", urls->size);
+    zcListNode *node;
+    zc_list_foreach(urls, node) {
+        ZCINFO("ip: %s", (char*)node->data);
     }
     
     //ZCINFO("connect %s:80", zc_cstrlist_get(&urls, 0));
@@ -72,25 +70,25 @@ int test2(const char *myurl)
     zcHttpReq  *r = zc_httpreq_new(myurl);
     zc_url_print(&r->url);
     
-    zcCStrList urls;
-    char buf[1024];
-    zc_cstrlist_init_stack(&urls, buf, sizeof(buf), 10);
+    zcList *urls = zc_list_new();
+    zc_socket_gethostbyname(r->url.domain.data, urls);
 
-    zc_socket_gethostbyname(r->url.domain.data, &urls);
-
-    int i;
-    ZCINFO("urls: %d", urls.n);
-    for (i=0; i<urls.n; i++) {
-        ZCINFO("ip: %s", zc_cstrlist_get(&urls, i));
+    //int i;
+    ZCINFO("urls: %d", urls->size);
+    zcListNode *node;
+    zc_list_foreach(urls, node) {
+        ZCINFO("ip: %s", (char*)node->data);
     }
-    
+ 
     //ZCINFO("connect %s:80", zc_cstrlist_get(&urls, 0));
     //zcHttpConn *c = zc_httpconn_new(zc_cstrlist_get(&urls, 0), 80); 
     zcHttpConn *c = zc_httpconn_new(); 
     c->readfunc = myrecv;
     c->stat = &stat;
+
+    int ret;
     //ZCINFO("stat:%p", c->stat);
-    int ret = zc_httpconn_send(c, r);
+    ret = zc_httpconn_send(c, r);
     if (ret != ZC_OK) {
         ZCERROR("send error: %d", ret);
         zc_httpconnstat_print(&stat);
@@ -171,8 +169,10 @@ int main(int argc, char *argv[])
         strcpy(url+7, argv[1]);
     }
     zc_socket_startup();
-    //test1(argv[1]);
-    test2(url);
+
+    test1(url);
+    //test2(url);
+    //test3(url);
 
     zc_socket_cleanup();
 

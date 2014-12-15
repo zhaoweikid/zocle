@@ -22,7 +22,7 @@ void* run_single(void *args)
 {
     TestParam *param = (TestParam*)args;
     param->stime = zc_timenow();
-    zcHashTable *ht = zc_hashtable_new(1024, 0);
+    zcHashTable *ht = zc_hashtable_new(1024);
 
     long i;
     int  ret;

@@ -1184,9 +1184,8 @@ zc_socket_ssl(zcSocket *s, char *key_file, char *cert_file,
         zcSSLCertRequire certreq, zcSSLVer ver, char *cacerts_file, int type)
 {
     char *errstr = NULL;
+    const SSL_METHOD *meth;
     int ret;
-    //int err;
-    //int sockstate;
     
     if (s->sslobj) {
         memset(s->sslobj, 0, sizeof(zcSSL));
@@ -1202,22 +1201,28 @@ zc_socket_ssl(zcSocket *s, char *key_file, char *cert_file,
     (void) ERR_get_state();
     ERR_clear_error();
     
-    if (ver == ZC_SSL_VER_TLS1)
-        s->sslobj->ctx = SSL_CTX_new(TLSv1_method()); /* Set up context */
-    else if (ver == ZC_SSL_VER_SSL3)
-        s->sslobj->ctx = SSL_CTX_new(SSLv3_method()); /* Set up context */
-#ifndef OPENSSL_NO_SSL2
-    else if (ver == ZC_SSL_VER_SSL2)
-        s->sslobj->ctx = SSL_CTX_new(SSLv2_method()); /* Set up context */
-#endif
-    else if (ver == ZC_SSL_VER_SSL23)
-        s->sslobj->ctx = SSL_CTX_new(SSLv23_method()); /* Set up context */ 
+    SSL_load_error_strings();
+    SSLeay_add_ssl_algorithms();
 
+    if (type == ZC_SSL_CLIENT) {
+        if (ver == ZC_SSL_VER_TLS1) {
+            meth = TLSv1_client_method();
+        }else if (ver == ZC_SSL_VER_SSL3) {
+            meth = SSLv3_client_method();
+        }else if (ver == ZC_SSL_VER_SSL23) {
+            meth = SSLv23_client_method();
+        }
+    }else{
+        if (ver == ZC_SSL_VER_TLS1) {
+            meth = TLSv1_server_method();
+        }else if (ver == ZC_SSL_VER_SSL3) {
+            meth = SSLv3_server_method();
+        }else if (ver == ZC_SSL_VER_SSL23) {
+            meth = SSLv23_server_method();
+        }
+    }
 
-    //SSL_load_error_strings();
-    //SSLeay_add_ssl_algorithms();
-    //s->ctx = SSL_CTX_new(SSLv23_server_method()); /* Set up context */
-    //s->sslobj->ctx = SSL_CTX_new(SSLv23_method()); /* Set up context */
+    s->sslobj->ctx = SSL_CTX_new(meth);
     if (s->sslobj->ctx == NULL) {
         errstr = "SSL_CTX_new error";
         goto zc_socket_ssl_fail;

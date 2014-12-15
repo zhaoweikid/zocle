@@ -22,7 +22,7 @@ for d in sourcedirs:
 		continue
 	files += glob.glob(d + '/*.c')
 
-libs += ['zocle2']
+libs += ['zocle']
 if sys.platform.startswith('win'):
 	libs += ['gdi32']
 

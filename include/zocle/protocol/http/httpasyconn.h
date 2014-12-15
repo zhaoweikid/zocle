@@ -3,9 +3,9 @@
 #define ZOCLE_HTTP_HTTPASYCONN_H
 
 #include <stdio.h>
-#include <zocle/internet/http/httpreq.h>
-#include <zocle/internet/http/httpresp.h>
-#include <zocle/internet/http/httpconn.h>
+#include <zocle/protocol/http/httpreq.h>
+#include <zocle/protocol/http/httpresp.h>
+#include <zocle/protocol/http/httpconn.h>
 #include <zocle/server/asynconn.h>
 #include <zocle/enc/compress.h>
 
@@ -37,7 +37,7 @@ typedef struct zc_httpinfo_t
 	int32_t	 write_timeout;
 	int		 (*readfunc)(const char *buf, int len, bool finish, void *);  // for recv body in response
 	int		 (*writefunc)(const char *buf, int len, void *); // for send body in request
-	int		 (*readyfunc)(zcAsynConn*); // for whole package received
+	int		 (*finalfunc)(zcAsynConn*); // for whole package received
 	zcHttpReq      *req;
 	zcHttpResp     *resp;
 	zcHttpConnStat *stat;
@@ -50,21 +50,21 @@ typedef int (*zcFuncHttpReady)(zcAsynConn*);
 
 zcHttpInfo*	zc_httpinfo_new();
 void		zc_httpinfo_delete(void *);
+#define     zc_httpinfo_safedel(x) do{zc_httpinfo_delete(x);x=NULL;}while(0)
 
 zcAsynConn* zc_asynconn_new_http(zcHttpInfo *info, int timeout, struct ev_loop *loop, const char *dns, int bufsize);
 zcAsynConn* zc_asynconn_new_http_url(const char *url, int timeout, struct ev_loop *loop, 
 				const char *dns, int bufsize, zcHttpInfo *info);
 
-int zc_asynhttp_assign_conn(zcAsynConn *);
+int zc_asynhttp_assign_protocol(zcProtocol *);
 int zc_asynhttp_send(zcAsynConn *conn, zcHttpReq *req);
 int zc_asynhttp_websocket_send(zcAsynConn *conn, uint8_t fin, uint8_t opcode, const char *data, int datalen);
 int zc_asynhttp_switch_websocket(zcAsynConn *conn);
 
 int zc_asynhttp_handle_connected(zcAsynConn*);
-int zc_asynhttp_handle_websocket_read(zcAsynConn*, zcBuffer *);
-int zc_asynhttp_handle_read_check(zcAsynConn*, zcBuffer *);
-int zc_asynhttp_handle_ready(zcAsynConn*, char *data, int datalen);
-int zc_asynhttp_handle_ready_dns(zcAsynConn*, char *data, int datalen);
+int zc_asynhttp_handle_websocket_read(zcAsynConn*);
+int zc_asynhttp_handle_read(zcAsynConn*);
+int zc_asynhttp_handle_read_dns(zcAsynConn*);
 int zc_asynhttp_handle_wrote(zcAsynConn*);
 
 /*int zc_asynhttp_handle_read_timeout(zcAsynConn*);

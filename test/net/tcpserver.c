@@ -35,7 +35,13 @@ int main()
                 break;
             }
 
-            //ZCINFO("recv %d: %s\n", ret, buf);
+            ZCINFO("recv %d: %s\n", ret, buf);
+            if (strncmp(buf, "quit", 4) == 0) {
+                ZCINFO("quit");
+                zc_socket_delete(newsock);
+                break;
+            }
+
             ret = zc_socket_sendn(newsock, "ok\r\n", 4);
             if (ret != 4) {
                 ZCERROR("send error:%d\n", ret);

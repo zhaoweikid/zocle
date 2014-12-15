@@ -27,6 +27,7 @@
 #define ZC_LOG_ROTATE_TIME		2
 #define ZC_LOG_ROTATE_TIMEAT	3
 #define ZC_LOG_ROTATE_REOPEN	4
+#define ZC_LOG_ROTATE_WATCH	    5
 
 #define ZC_LOG_SUFFIX_NUM	1
 #define ZC_LOG_SUFFIX_TIME	2
@@ -64,6 +65,7 @@ typedef struct zc_logfile_t
 	int		 logwhole; // write whole log
 	int		 count; // number of log file
 	int		 timeat[3]; //hour,minute,second
+    char     logprefix[128];
     uint32_t maxsize;
 	uint32_t maxtime;
 	uint32_t check_interval;
@@ -80,6 +82,7 @@ int     zc_log_rotate_time(zcLog *log, int logtime, int logcount);
 int     zc_log_rotate_timeat(zcLog *log, int day, int hour, int min, int logcount);
 void    zc_log_rotate_no(zcLog *log);
 void	zc_log_whole(zcLog *log, int flag);
+void    zc_log_set_prefix(zcLog *log, char *prefix);
 int		zc_log_init(zcLog *log, const char *filename, int loglevel);
 void    zc_log_destroy(void *log);
 void	zc_log_flush(zcLog *log);
