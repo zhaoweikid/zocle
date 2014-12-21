@@ -51,7 +51,7 @@ zc_buffer_new2(zcBuffer **buf, uint32_t size)
 
 int zc_buffer_init(zcBuffer *buf, uint32_t size)
 {
-    //buf->next = NULL;
+    buf->next = NULL;
     buf->size = size;
     buf->end  = 0;
     buf->pos  = 0;
@@ -287,7 +287,7 @@ zc_buffer_resize(zcBuffer *buf, uint32_t size)
 }
 
 
-/*void 
+void 
 zc_buffer_delete_all(void *x)
 {
     zcBuffer *buf = (zcBuffer*)x;
@@ -296,5 +296,5 @@ zc_buffer_delete_all(void *x)
         zc_buffer_delete(buf);
         buf = buftmp;
     }
-}*/
+}
 
