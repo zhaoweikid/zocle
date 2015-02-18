@@ -104,7 +104,7 @@ int test2(const char *myurl)
 
     ZCINFO("header:%s", resp->headdata.data);
     //ZCINFO("body:%d", resp->bodydata.len);
-    ZCINFO("body:%d %s", resp->bodydata.len, resp->bodydata.data);
+    //ZCINFO("body:%d %s", resp->bodydata.len, resp->bodydata.data);
     zc_httpconnstat_print(&stat);
     
     

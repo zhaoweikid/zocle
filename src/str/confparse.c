@@ -240,7 +240,6 @@ zc_confparser_parse_file(zcConfParser *parser, const char *fname)
             fgets(bufpos, sizeof(buf)-buflen, f); 
             lineno++;
         } 
-
         while (isblank(*pstart)) pstart++;
         if (pstart[0] == '#' || pstart[0] == '\r' || pstart[0] == '\n') {
             continue;
@@ -320,7 +319,6 @@ zc_confparser_parse_file(zcConfParser *parser, const char *fname)
         }
         clean_end(pstart);
             
-                
         zcConfParam *param = parser->params;
         char *tmp = NULL, *item = NULL;
         while (param) {

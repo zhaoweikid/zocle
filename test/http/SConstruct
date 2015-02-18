@@ -1,16 +1,16 @@
 import os, sys, glob
 
 msys_home = 'E:\\MinGW\\msys\\1.0'
-includes = ['../../include']
+includes = ['../../include', '/usr/local/include']
 sourcedirs = ['.']
 files = glob.glob("*.c")
 for d in sourcedirs:
 	files += glob.glob(d + '/*.c')
 #libs = ['zocle2', 'pcre']
-libs = ['iconv', 'pcre', 'zocle', 'z', 'ev', 'mysqlclient']
+libs = ['iconv', 'pcre', 'zocle', 'z', 'ev']
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_PCRE','ZOCLE_WITH_ICONV', 
 		'ZOCLE_WITH_LIBEV', 'ZOCLE_WITH_SSL']
-libpath = ['../../', '/opt/mysql/lib']
+libpath = ['../../', '/opt/mysql/lib', '/usr/local/lib']
 
 if sys.platform.startswith('win'):
 	includes.append(os.path.join(msys_home, 'local/include'))
