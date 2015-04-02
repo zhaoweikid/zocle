@@ -28,6 +28,6 @@ void		zc_httpresp_delete(void *);
 int			zc_httpresp_parse(zcHttpResp *);
 int			zc_httpresp_parse_header(zcHttpResp *);
 int			zc_httpresp_cookie_toreq(zcHttpResp *resp, zcHttpReq *req);
-int			zc_httpresp_check_websocket(zcHttpResp*, zcHttpReq *);
+int			zc_httpresp_websocket(zcHttpResp*, zcHttpReq *);
 
 #endif

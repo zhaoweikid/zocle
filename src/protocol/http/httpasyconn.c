@@ -381,7 +381,7 @@ zc_asynhttp_handle_read_header(zcAsynConn *conn)
 
             // try switch to websocket
             if (strcasecmp(zc_dict_get_str(info->resp->header, "Upgrade",""), "websocket") == 0) {
-                int ret = zc_httpresp_check_websocket(info->resp, info->req); 
+                int ret = zc_httpresp_websocket(info->resp, info->req); 
                 if (ret != ZC_OK) {
                     ZCNOTE("websocket response error!");
                     return ZC_ERR;

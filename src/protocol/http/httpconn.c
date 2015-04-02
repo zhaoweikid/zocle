@@ -322,7 +322,7 @@ zc_httpconn_recv_header(zcHttpConn *c, zcSocketIO *sockio, zcHttpResp *resp, int
             return ZC_ERR;
         }
         linebuf[ret] = 0;
-        if (count == 0) {
+        if (count == 0) { // first line
             if (c->stat)
                 c->stat->recv_first_time = zc_timenow() - starttm;
         }
@@ -330,7 +330,7 @@ zc_httpconn_recv_header(zcHttpConn *c, zcSocketIO *sockio, zcHttpResp *resp, int
             // found seperator
             break;
         }
-        //ZCINFO("recv line: %s", buf);
+        ZCINFO("recv line: %s", linebuf);
         zc_str_append_len(&resp->headdata, linebuf, ret);
         count++;
     }
@@ -350,6 +350,8 @@ zc_httpconn_recv_body_len_compress(zcHttpConn *c, zcSocketIO *sockio, zcHttpResp
     int64_t rsize = resp->bodylen;
     //int blocksize = (rbuf->size>16384)?16384:rbuf->size;
     int blocksize = rbuf->size;
+
+    ZCINFO("recv body by compress len");
     if (rsize) {
         rsize -= zc_buffer_used(rbuf);
     }
@@ -383,6 +385,7 @@ zc_httpconn_recv_body_len_compress(zcHttpConn *c, zcSocketIO *sockio, zcHttpResp
 int 
 zc_httpconn_recv_body_len(zcHttpConn *c, zcSocketIO *sockio, zcHttpResp *resp)
 {
+    ZCINFO("recv body by len");
     zcBuffer *rbuf = sockio->rbuf;
     int rbuflen = zc_buffer_used(rbuf);
     int rsize = (int)resp->bodylen;
@@ -439,6 +442,7 @@ zc_httpconn_recv_body_chunked(zcHttpConn *c, zcSocketIO *sockio, zcHttpResp *res
     int  chunklen = 0;
     bool first = true;
 
+    ZCINFO("recv body by chunked");
     while (1) {
         ret = zc_sockio_readline(sockio, linebuf, sizeof(linebuf));
         if (ret <= 0) {
@@ -517,6 +521,7 @@ zc_httpconn_recv(zcHttpConn *c)
     int64_t starttm = zc_timenow();
     ret = zc_httpconn_recv_header(c, sockio, resp, starttm);
     if (ret < 0) {
+        ZCWARN("recv header error:%d", ret);
         goto recv_error;
     }
 
@@ -526,6 +531,7 @@ zc_httpconn_recv(zcHttpConn *c)
         case ZC_HTTP_GZIP:
             err = zc_compress_init(&cm, ZC_GZIP_DEC, 0);
             if (err < 0) {
+                ZCWARN("compress init error:%d", err);
                 goto recv_error;
             }
             break;

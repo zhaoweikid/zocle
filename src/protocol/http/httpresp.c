@@ -42,8 +42,10 @@ zc_httpresp_delete(void *x)
 int	
 zc_httpresp_parse_header(zcHttpResp *resp)
 {
-    if (resp->headdata.len == 0)
+    if (resp->headdata.len == 0) {
+        ZCWARN("head data len error, len=%d", resp->headdata.len);
         return ZC_ERR;
+    }
 
     zcCString *key = zc_cstr_alloc_stack(256);
     zc_cstr_init(key, 256);
@@ -91,15 +93,16 @@ zc_httpresp_parse_header(zcHttpResp *resp)
             start++;
         }
         if (*start == ':') start++; // skip :
-        while (*start && isblank(*start)) start++;
+        while (*start && isblank(*start)) start++; // skip blank
 
-        while (*start && *start != '\r') {
+        while (*start && *start != '\r') { // data
             zc_str_append_c(&value, *start);
             start++;
         }
-        while (*start && (*start == '\r' || *start == '\n')) start++;
+        while (*start && (*start == '\r' || *start == '\n')) start++; // skip \r\n
 
-        while (*start && isblank(*(start+1))) { // go ahead
+        //while (*start && isblank(*(start+1))) { // go ahead
+        while (*start && isblank(*start)) { // go ahead
             while (*start && isblank(*start)) start++; // skip blank
             while (*start && *start != '\r') {
                 zc_str_append_c(&value, *start);
@@ -108,7 +111,7 @@ zc_httpresp_parse_header(zcHttpResp *resp)
             while (*start && (*start == '\r' || *start == '\n')) start++;
         }
 
-        //ZCINFO("key:%s value:%s", key->data, value.data);
+        ZCINFO("%s=%s", key->data, value.data);
         
         if (strcmp(key->data, "Content-Length") == 0) {
             resp->bodylen = strtoll(value.data, NULL, 10);
@@ -143,7 +146,6 @@ zc_httpresp_parse_header(zcHttpResp *resp)
         zc_cstr_clear(key);
         zc_str_clear(&value);
     }
-
     zc_str_destroy(&value);
     return ZC_OK;
 }
@@ -172,7 +174,7 @@ zc_httpresp_cookie_toreq(zcHttpResp *resp, zcHttpReq *req)
 }
 
 int
-zc_httpresp_check_websocket(zcHttpResp *resp, zcHttpReq *req)
+zc_httpresp_websocket(zcHttpResp *resp, zcHttpReq *req)
 {
     char *magic = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     

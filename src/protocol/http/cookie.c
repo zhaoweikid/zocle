@@ -54,6 +54,7 @@ zc_cookie_init(zcCookie *c, const char *cookiestr)
         }
         
         if (*s == ';') { // secure
+            s++;
         }else{
             while (*s && (isblank(*s) || *s=='=')) s++;
             if (*s == '"') {

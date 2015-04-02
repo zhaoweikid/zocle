@@ -16,9 +16,14 @@ int test1(const char *myurl)
         ZCINFO("ip: %s", (char*)node->data);
     }
     
+    zcHttpConnStat stat;
+    memset(&stat, 0, sizeof(stat));
+
+
     //ZCINFO("connect %s:80", zc_cstrlist_get(&urls, 0));
     //zcHttpConn *c = zc_httpconn_new(zc_cstrlist_get(&urls, 0), 80); 
     zcHttpConn *c = zc_httpconn_new(); 
+    c->stat = &stat;
     int ret = zc_httpconn_send(c, r);
     if (ret != ZC_OK) {
         ZCERROR("send error: %d", ret);
@@ -38,6 +43,9 @@ int test1(const char *myurl)
     /*for (i=0; i<resp->bodydata.len; i++) {
         printf("%c", resp->bodydata.data[i]);
     }*/
+
+
+    zc_httpconnstat_print(&stat);
 
     ZCINFO("delete httpresp");
     zc_httpresp_delete(resp);
