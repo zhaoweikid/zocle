@@ -46,6 +46,8 @@ int     zc_dict_resize(zcDict *ht, uint32_t minsize);
 int     zc_dict_walk(zcDict *ht, zcDictWalkFunc walkfunc, void *userdata);
 void    zc_dict_print(zcDict *ht);
 
+#define zc_dict_delete_null(ht)   do { zc_dict_delete(ht); ht = NULL; } while (0)
+
 #define zc_dict_add_str(ht,key,value) zc_dict_add(ht,key,0,value)
 #define zc_dict_set_str(ht,key,value) zc_dict_set(ht,key,0,value)
 #define zc_dict_get_str(ht,key,defv)  zc_dict_get(ht,key,0,defv)
