@@ -418,6 +418,9 @@ zc_log_rotate_no(zcLog *log)
     log->rotate_type = ZC_LOG_ROTATE_NO;
 }
 
+/**
+ * 查询大于指定日志级别的所有的日志文件
+ */
 static zcLogItem*
 zc_log_find_item(zcLog *log, int loglevel)
 {
@@ -547,6 +550,18 @@ compare_logfileitem (const void *a, const void *b)
     return a1->id[1] - b1->id[1];
 }
 
+/**
+ * 日志文件滚动
+ * NOTE: 日志文件后缀格式为pid的不会滚动
+ * 首先查找日志文件目录中的所有的日志文件，并判断统计日志文件数和对日志文件排序
+ * 如果日志文件数超过了允许保留的日志文件数，则删除最早创建的日志文件
+ * 切分日志时:
+ * 对于以num为后缀的日志文件，会将所有的日志文件后缀的num+1, 将本次切分的日志文件后缀设置为1.
+ *      num的规则: 按时间，从大到小排序, 创建时间越久，num越大
+ * 按时间切分日志时，会将创建最早的日志文件删除，并将本次切分的日志文件按格式命名
+ *      命令规则: log.yyyymmdd.hhMMSS[.num] 
+ *                如果一秒出现超过1个日志文件，则会出现num，且从1开始递增, 否则不会出现num
+ */
 static int
 zc_log_do_rotate(zcLog *log, int index)
 {
@@ -558,8 +573,11 @@ zc_log_do_rotate(zcLog *log, int index)
     zcLogItem *item = &log->items[index];
 
     if (log->suffix == ZC_LOG_SUFFIX_PID) {
-        zc_log_openfile(log, item);
-        return 0;
+        // 后缀为pid的日志，不判断日志文件数是否超过允许的数量
+        // FIXME: 为什么呢？
+        //zc_log_openfile(log, item);
+        //return 0;
+        goto ROTATE;
     }
 
     int  i;
@@ -604,6 +622,7 @@ zc_log_do_rotate(zcLog *log, int index)
     char *s;
     int  blen;
     // find all logfile
+    // 查找所有的日志文件，并按时间排序，如果超过了可能保留的日志文件数，则删除最早的日志文件
     while ((nodes = readdir(mydir)) != NULL) {
         if (strncmp(nodes->d_name, log_prefix, log_prefix_len) == 0 && \
             isdigit(nodes->d_name[log_prefix_len])){
@@ -669,6 +688,9 @@ zc_log_do_rotate(zcLog *log, int index)
             _LOG_ERROR(item->level, "rename %s to %s error\n", filename, newfile2);
         }
     }else{
+        // 日志后缀是数量
+        // 数量的规则是按时间，从大到小排序，时间越长，num越大
+        // 所以，所有文件的num + 1
         for (;i > 0; i--) {
             sprintf(filename, "%s.%d", item->filename, i);
             if (i >= log->count) {
@@ -684,6 +706,7 @@ zc_log_do_rotate(zcLog *log, int index)
                 }
             }
         }
+        // 新文件num为1
         sprintf(newfilename, "%s.%d", item->filename, 1);
         if (rename(item->filename, newfilename) == -1) {
             _LOG_ERROR(item->level, "rename %s to %s error\n", filename, newfilename);
@@ -691,6 +714,7 @@ zc_log_do_rotate(zcLog *log, int index)
         }
     }
     
+ROTATE:
     if (item->fd > 2)
         close(item->fd);
     zc_log_openfile(log, item);

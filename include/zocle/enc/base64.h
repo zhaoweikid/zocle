@@ -1,5 +1,5 @@
-#ifndef ZOCLE_BASE64_H
-#define ZOCLE_BASE64_H
+#ifndef ZOCLE_ENC_BASE64_H
+#define ZOCLE_ENC_BASE64_H
 
 #include <stdio.h>
 
