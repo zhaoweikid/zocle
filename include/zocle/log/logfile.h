@@ -29,9 +29,17 @@
 #define ZC_LOG_ROTATE_REOPEN	4
 #define ZC_LOG_ROTATE_WATCH	    5
 
-#define ZC_LOG_SUFFIX_NUM	1
-#define ZC_LOG_SUFFIX_TIME	2
-#define ZC_LOG_SUFFIX_PID	3
+// 日志文件格式: xxx.num    
+// 会检查日志保留数, 超过则删除最早的日志
+// num的规则是按时间，从大到小排序，时间越长，num越大
+#define ZC_LOG_SUFFIX_NUM	1   
+// 日志文件格式: xxx.yyyymmdd.hhmmss[.num]    
+// 如果一秒出现超过1个日志文件，则会出现num，且从1开始递增
+// 会检查日志保留数，超过则删除最早的日志
+#define ZC_LOG_SUFFIX_TIME	2   
+// 日志文件格式: xxx.yyyymmdd.hhmmss.pid    
+// 不会检查日志保留数
+#define ZC_LOG_SUFFIX_PID	3   
 
 #define ZC_LOG_FILE		1
 #define ZC_LOG_SYSLOG	2
@@ -46,7 +54,7 @@ typedef struct zc_logitem_t
 	int  port;
 	int  fd;
 	int  level;
-	int  dup;
+	int  dup;   // 是否将高级别日志打到级别的日志文件中 0: 不需要打印 其他值: 需要打印
 	volatile uint32_t last_rotate_time;
     volatile uint32_t last_check_time; // last check time
 	struct sockaddr_in sin;
@@ -62,13 +70,13 @@ typedef struct zc_logfile_t
 	int		 rotate_type;
 	int		 suffix; // end of file
     int      loglevel;
-	int		 logwhole; // write whole log
+	int		 logwhole; // write whole log 是否需要包含日志行的头
 	int		 count; // number of log file
 	int		 timeat[3]; //hour,minute,second
     char     logprefix[128];
     uint32_t maxsize;
 	uint32_t maxtime;
-	uint32_t check_interval;
+	uint32_t check_interval;    // 检查日志是否需要切分的间隔，单位为秒
     pthread_mutex_t lock;
 }zcLog;
 
