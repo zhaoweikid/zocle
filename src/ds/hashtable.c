@@ -19,9 +19,9 @@ zc_hashtable_node_new(char *key, int klen, void *value)
 }
 
 static void
-zc_hashtable_node_delete(void *h)
+zc_hashtable_node_delete(void *h, void *n)
 {
-    /*if (NULL == h) {
+    if (NULL == h) {
         ZCWARN("zc_hashtable_node_delete NULL pointer\n");
     }
     zcHashTable     *ht   = (zcHashTable*)h;
@@ -33,13 +33,16 @@ zc_hashtable_node_delete(void *h)
     if (ht->valdel) {
         ht->valdel(node->value);
     }
-    zc_free(node);*/
+    zc_free(node);
     
+    /*
     zcHashTableNode *node = (zcHashTableNode*)h;
     if (node->key) {
         zc_free(node->key);
     }
+    // FIXME: value 为什么不释放？
     zc_free(node);
+    */
 }
 
 zcHashTable*  
@@ -73,7 +76,7 @@ zc_hashtable_new2(zcHashTable **ht, int size)
     h->hash   = zc_hash_bkdr;
     h->keydel = zc_free_func;
     h->valdel = NULL;
-    //h->nodedel = zc_hashtable_node_delete;
+    h->nodedel = zc_hashtable_node_delete;
  
     h->bunks = (void**)zc_malloc(sizeof(void*) * size);
     memset(h->bunks, 0, sizeof(void*) * size);
@@ -94,7 +97,7 @@ zc_hashtable_new2_full(zcHashTable **ht, int size, zcFuncHash hash, zcFuncCmp cm
     (*ht)->cmp  = cmp;
     (*ht)->keydel = kdel;
     (*ht)->valdel = vdel;
-    //(*ht)->nodedel = ndel;
+    (*ht)->nodedel = ndel;
     
     return ZC_OK;
 }
@@ -150,7 +153,7 @@ zc_hashtable_add(zcHashTable *ht, char *key, int klen, void *value)
     zcHashTableNode *node = zc_hashtable_node_new(key, klen, value);
     int ret = zc_hashset_add_node((zcHashSet*)ht, (zcHashSetNode*)node);
     if (ret != ZC_OK) {
-        zc_hashtable_node_delete(node);
+        zc_hashtable_node_delete(ht, node);
     }
     return ret;
 }

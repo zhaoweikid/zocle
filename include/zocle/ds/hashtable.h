@@ -49,6 +49,8 @@ uint32_t     zc_hashtable_size(zcHashTable *);
 uint32_t     zc_hashtable_len(zcHashTable *);
 void		 zc_hashtable_walk(zcHashTable *, zcHashTableWalkFunc f, void *userdata);
 
+#define      zc_hashtable_delete_null(ht)   do { zc_hashtable_delete(ht); ht = NULL; } while (0)
+
 #define      zc_hashtable_foreach_start(ht,k,v) \
              {int _zc_ht_i; \
 			 zcHashTableNode *_zc_ht_node;\

@@ -64,7 +64,7 @@ zc_hashset_new2(zcHashSet **hash, int size)
     h->cmp   = zc_cmp_str;
     h->hash  = zc_hash_bkdr;
     h->keydel  = zc_free_func;
-    //h->nodedel = zc_hashset_node_delete;
+    h->nodedel = zc_hashset_node_delete;
  
     h->bunks = (void**)zc_malloc(sizeof(void*) * size);
     memset(h->bunks, 0, sizeof(zcHashSetNode*) * size);
@@ -84,7 +84,7 @@ zc_hashset_new2_full(zcHashSet **h, int size, zcFuncHash hash, zcFuncCmp cmp,
     (*h)->hash = hash;
     (*h)->cmp  = cmp;
     (*h)->keydel  = keydel;
-    //(*h)->nodedel = nodedel;
+    (*h)->nodedel = nodedel;
 
     return ZC_OK;
 }
@@ -113,13 +113,16 @@ zc_hashset_clear(zcHashSet *h)
         while (node) {
             tmp  = (zcHashSetNode*)node;
             node = node->next;
-            /*if (h->nodedel) {
-                h->nodedel(tmp, h);
-            }*/
+            if (h->nodedel) {
+                h->nodedel(h, tmp);
+            }
+            /*
             if (h->keydel) {
                 h->keydel(tmp->key);
             }
+            // FIXME: value 没释放
             zc_free(tmp);
+            */
         }
     }
     memset(h->bunks, 0, sizeof(void*) * h->size);
@@ -221,12 +224,15 @@ zc_hashset_rm(zcHashSet *h, char *key, int keylen)
                 h->bunks[hv] = (zcHashSetNode*)root->next;
             }
             //zc_hashset_delete_node(h, root);
-            //h->nodedel(root, h);
+            h->nodedel(h, root);
+            /*
             if (h->keydel) {
                 h->keydel(root->key);
             }
+            // FIXME: value为什么不删除呢？
             zc_free(root);
             h->len--;
+            */
             return ZC_OK;
         }
         prev = root;

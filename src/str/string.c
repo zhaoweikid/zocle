@@ -184,17 +184,21 @@ zc_str_new (int len)
 void
 zc_str_delete(void *x)
 {
-    zc_str_destroy(x);
-    zcString *s = (zcString*)x;
-    zc_free(s);
+    if (x) {
+        zc_str_destroy(x);
+        zcString *s = (zcString*)x;
+        zc_free(s);
+    }
 }
 
 void
 zc_str_delete3(void *x, const char *file, int lineno)
 {
-    zc_str_destroy(x);
-    zcString *s = (zcString*)x;
-    zc_free3(s, file, lineno);
+    if (x) {
+        zc_str_destroy(x);
+        zcString *s = (zcString*)x;
+        zc_free3(s, file, lineno);
+    }
 }
 
 /**
@@ -287,10 +291,11 @@ zc_str_destroy(void *s)
 {
     if (NULL == s) {
         ZCERROR("zc_str_destroy NULL pointer!\n");
-    }
-    zcString  *str = (zcString*)s;
-    if (str->_onstack == 0) {
-        zc_free(str->data);
+    } else {
+        zcString  *str = (zcString*)s;
+        if (str->_onstack == 0) {
+            zc_free(str->data);
+        }
     }
     //zc_free(str);
 }

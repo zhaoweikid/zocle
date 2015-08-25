@@ -43,7 +43,7 @@ int       zc_memdebug_print_real(zcMemDbg*, const char *file, int line);
 uint32_t  zc_memdebug_check_point_real(zcMemDbg*, uint32_t startid, const char *file, int line);
 
 #define   zc_memdebug_print(m)    zc_memdebug_print_(m,__FILE__,__LINE__)
-#define   zc_memdebug_check_point(m,sid)  zc_memdebug_check_point_(m,sid,__FILE__,__LINE__)
+#define   zc_memdebug_check_point(m,sid)  zc_memdebug_check_point_real(m,sid,__FILE__,__LINE__)
 
 extern zcMemDbg    *_zc_mem_dbg;
 

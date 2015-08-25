@@ -25,7 +25,8 @@ typedef struct zc_hashset_node_t
     void		**bunks;\
     zcFuncHash	hash;\
     zcFuncCmp   cmp;\
-	zcFuncDel	keydel;
+	zcFuncDel	keydel;\
+    zcFuncDel2  nodedel;
 
 typedef struct zc_hashset_t
 {
