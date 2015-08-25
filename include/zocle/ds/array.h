@@ -8,8 +8,12 @@
 
 typedef struct zc_array_t
 {
+    // FIXME: 如果cap的长度大于0x80000000，那len就会溢出
 	uint32_t cap;
 	uint32_t len:31;
+    // data数据是否保存在结构体尾
+    // 0: 不保存在结构体尾, data数据另行分配
+    // 1: 保存在结构体尾, data数据与结构体一起分配
 	uint32_t data_tail:1;
 	zcFuncDel del;
     //zcFuncCmp cmp;

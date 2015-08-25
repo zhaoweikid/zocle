@@ -288,9 +288,10 @@ zc_malloc_real(size_t size, const char *file, int line)
             ZCFATAL("malloc return NULL %u %s:%d\n", (unsigned int)size, file, line);
         }
 
-        *((int*)ptr) = size;
-        *((int*)(ptr + 4)) = 0x55555555;
-        *((int*)(ptr + size + 8)) = 0x55555555;
+        // 内存格式: 内存长度(8字节:len + 0x55555555) + 实际内存 + 0x55555555(4字节)
+        *((uint32_t *)ptr) = size;
+        *((uint32_t *)(ptr + 4)) = 0x55555555;
+        *((uint32_t *)(ptr + size + 8)) = 0x55555555;
 
         _zc_mem_dbg->size += size + 12;
         ptr += 8;
@@ -402,15 +403,15 @@ zc_free_real(void *ptr, const char *file, int line)
 int	
 zc_check_real(void *ptr, const char *file, int line)
 {
-    int size = *((int*)(ptr - 8));
-    if (*((int*)(ptr-4)) != 0x55555555) {
+    int size = *((uint32_t *)(ptr - 8));
+    if (*((uint32_t *)(ptr-4)) != 0x55555555) {
         ZCERROR("zc_check start failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d\n", 
-                ptr, size, *((int*)(ptr-4)), *((int*)(ptr+size)), file, line);
+                ptr, size, *((uint32_t *)(ptr-4)), *((uint32_t *)(ptr+size)), file, line);
         return ZC_FAILED;
     }
-    if (*((int*)(ptr + size)) != 0x55555555) {
+    if (*((uint32_t *)(ptr + size)) != 0x55555555) {
         ZCERROR("zc_check end failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d\n", 
-                ptr, size, *((int*)(ptr-4)), *((int*)(ptr+size)), file, line);
+                ptr, size, *((uint32_t *)(ptr-4)), *((uint32_t *)(ptr+size)), file, line);
         return ZC_FAILED;
     }
 
