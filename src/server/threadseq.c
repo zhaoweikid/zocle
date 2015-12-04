@@ -1,4 +1,4 @@
-#include <zocle/server/threadqueue.h>
+#include <zocle/server/threadseq.h>
 #include <zocle/log/logfile.h>
 #include <zocle/base/defines.h>
 #include <zocle/mem/alloc.h>
@@ -6,19 +6,19 @@
 #include <errno.h>
 #include <unistd.h>
 
-zcThreadQueue*   
-zc_threadqueue_new (int th)
-//zc_threadqueue_new (int maxth, int minth, int idle)
+zcThreadSeq*   
+zc_threadseq_new (int th)
+//zc_threadseq_new (int maxth, int minth, int idle)
 {
-    zcThreadQueue    *q; 
+    zcThreadSeq    *q; 
 
-    q = (zcThreadQueue*)zc_malloc(sizeof(zcThreadQueue));
-    memset(q, 0, sizeof(zcThreadQueue));
+    q = (zcThreadSeq*)zc_malloc(sizeof(zcThreadSeq));
+    memset(q, 0, sizeof(zcThreadSeq));
 
     q->max_thread  = th;
     q->min_thread  = th;
     q->idle_thread = 0;
-    q->status      = ZC_THREADQUEUE_RUN;
+    q->status      = ZC_THREADSEQ_RUN;
 
     q->share = (zcThreadInfo*)zc_malloc(sizeof(zcThreadInfo) * q->max_thread);
     if (NULL == q->share) {
@@ -38,31 +38,31 @@ zc_threadqueue_new (int th)
 }
 
 void    
-zc_threadqueue_delete (void *x)
+zc_threadseq_delete (void *x)
 {
-    zcThreadQueue *q = (zcThreadQueue*)x;
+    zcThreadSeq *q = (zcThreadSeq*)x;
     pthread_mutex_destroy(&q->lock);
     zc_free(q->share);
     zc_free(q);
 }
 
 int
-zc_threadqueue_start (zcThreadQueue *q)
+zc_threadseq_start (zcThreadSeq *q)
 {
     if (NULL == q->consume) {
         ZCWARN("consume must not null");
         return ZC_ERR;
     }
 
-    zc_threadqueue_child(q, q->min_thread-1);
-    zc_threadqueue_run(q);
+    zc_threadseq_child(q, q->min_thread-1);
+    zc_threadseq_run(q);
 
     return ZC_OK;
 }
 
 
 int
-zc_threadqueue_child (zcThreadQueue *q, int num)
+zc_threadseq_child (zcThreadSeq *q, int num)
 {
     int i, c;
     int ret;
@@ -80,7 +80,7 @@ zc_threadqueue_child (zcThreadQueue *q, int num)
     for (i=0; i<q->min_thread; i++) {
         share = base + i;
         if (share->tid <= 0) {
-            ret = pthread_create(&tid, NULL, zc_threadqueue_run, q);
+            ret = pthread_create(&tid, NULL, zc_threadseq_run, q);
             if (0 != ret) {
                 ZCERROR("create thread faild. %d, %d\n", i, errno);
                 exit(-1);
@@ -103,9 +103,9 @@ zc_threadqueue_child (zcThreadQueue *q, int num)
 }
 
 void*
-zc_threadqueue_run(void *args)
+zc_threadseq_run(void *args)
 {
-    zcThreadQueue *q = args;
+    zcThreadSeq *q = args;
     zcThreadInfo *base, *share;
     int   threadpos;
     int   i;
@@ -132,7 +132,7 @@ zc_threadqueue_run(void *args)
     share->start_time  = 0;
     share->perform     = 0;
     share->concur      = 0;
-    share->status      = ZC_THREADQUEUE_RUN;
+    share->status      = ZC_THREADSEQ_RUN;
     share->user_data   = NULL;
 
     zcThreadQParam param;
@@ -142,7 +142,7 @@ zc_threadqueue_run(void *args)
 
     void *ret = NULL;
     while (1) {
-        if (q->status == ZC_THREADQUEUE_STOP) {
+        if (q->status == ZC_THREADSEQ_STOP) {
             ZCWARN("thread exit");
             pthread_exit(NULL);
         }

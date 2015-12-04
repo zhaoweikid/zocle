@@ -92,7 +92,6 @@ int
 zc_queue_put (zcQueue *q, void *data, bool block, int timeout)
 {
     int ret;
-    //int timetest = timeout;
 
     pthread_mutex_lock(&q->_lock);
     while (q->cap == q->size) {

@@ -28,7 +28,7 @@ ZOCLE_API int       zc_queue_put (zcQueue*, void*, bool, int);
 ZOCLE_API void*     zc_queue_get (zcQueue*, bool, int, void*);
 ZOCLE_API int       zc_queue_isempty (zcQueue*);
 ZOCLE_API int       zc_queue_isfull (zcQueue*);
-ZOCLE_API int       zc_queue_siz (zcQueue*);
+ZOCLE_API int       zc_queue_size (zcQueue*);
 ZOCLE_API int       zc_queue_resize (zcQueue*, int);
 ZOCLE_API void      zc_queue_print (zcQueue*);
 

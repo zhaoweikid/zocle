@@ -8,19 +8,34 @@
 #include <poll.h>
 
 zcTask* 
-zc_task_new()
+zc_task_new_notify(void *data)
 {
+    zcTask *t = zc_task_new(data);
+    if (NULL == t)
+        return NULL;
+
     int fds[2];
     int ret = pipe(fds); 
     if (ret != 0) {
         ZCWARN("pipe error:%d", ret);
+        zc_task_delete(t);
         return NULL;
     }
 
-    zcTask *t = zc_calloct(zcTask);
     t->readfd = fds[0];
     t->writefd = fds[1];
 
+    return t;
+}
+
+zcTask* 
+zc_task_new(void *data)
+{
+    zcTask *t = zc_calloct(zcTask);
+
+    t->ctime = zc_timenow();
+    t->data = data;
+ 
     return t;
 }
 
@@ -28,13 +43,15 @@ void
 zc_task_delete(void *x)
 {
     zcTask *t = (zcTask*)x;
-    close(t->readfd);
-    close(t->writefd);
+    if (t->readfd > 0) {
+        close(t->readfd);
+        close(t->writefd);
+    }
     zc_free(x);
 }
 
 int		
-zc_task_put(zcTask *t, void *data)
+zc_task_set_data(zcTask *t, void *data)
 {
     t->ctime = zc_timenow();
     t->data = data;
@@ -42,8 +59,11 @@ zc_task_put(zcTask *t, void *data)
 }
 
 int		
-zc_task_wait(zcTask *t, int timeout)
+zc_task_get_result(zcTask *t, int timeout)
 {
+    if (t->readfd <= 0)
+        return ZC_OK;
+
     struct pollfd pollfd;
      
     while (1) {
@@ -72,13 +92,15 @@ zc_task_wait(zcTask *t, int timeout)
 }
 
 int
-zc_task_result(zcTask *t, void *result)
+zc_task_set_result(zcTask *t, void *result)
 {
     t->result = result;
-    int ret = write(t->writefd, "0", 1);
-    if (ret != 1) {
-        ZCWARN("write result error! %d", ret);
-        return ZC_ERR;
+    if (t->readfd > 0) {
+        int ret = write(t->writefd, "1", 1);
+        if (ret != 1) {
+            ZCWARN("write result error! %d", ret);
+            return ZC_ERR;
+        }
     }
     return ZC_OK;
 }

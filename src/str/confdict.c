@@ -342,10 +342,10 @@ static int walk(const char *key, void *value, void *userdata)
 void
 zc_confdict_print(zcConfDict *cd)
 {
-    char *key;
     void *value;
 
     if (cd->groups) {
+        char *key;
         zc_dict_foreach_start(cd->groups, key, value)
             zc_dict_walk((zcDict*)value, walk, NULL);
         zc_dict_foreach_end

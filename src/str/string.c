@@ -65,7 +65,7 @@ zc_strnchr(const char *s, const char c, int len)
     int i;
     for (i=0; i<len; i++) {
         if (s[i] == c)
-            return s+i;
+            return (char*)(s+i);
     }
     return NULL;
 }
