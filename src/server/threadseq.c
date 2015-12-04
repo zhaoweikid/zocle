@@ -107,7 +107,7 @@ zc_threadseq_run(void *args)
 {
     zcThreadSeq *q = args;
     zcThreadInfo *base, *share;
-    int   threadpos;
+    //int   threadpos;
     int   i;
     
     ZCINFO("start");
@@ -117,7 +117,7 @@ zc_threadseq_run(void *args)
         share = base + i;
         if (share->tid <= 0) {
             share->tid = pthread_self();
-            threadpos = i;
+            //threadpos = i;
             break;
         }
     }
@@ -135,10 +135,10 @@ zc_threadseq_run(void *args)
     share->status      = ZC_THREADSEQ_RUN;
     share->user_data   = NULL;
 
-    zcThreadQParam param;
+    /*zcThreadQParam param;
     param.tq   = q;
     param.info = share;
-    param.pos  = threadpos;
+    param.pos  = threadpos;*/
 
     void *ret = NULL;
     while (1) {
@@ -149,14 +149,14 @@ zc_threadseq_run(void *args)
         ret = NULL;
         if (q->produce) {
             pthread_mutex_lock(&q->lock);
-            ret = q->produce(&param);
+            ret = q->produce(q->args);
             pthread_mutex_unlock(&q->lock);
             
             if (NULL != ret) {
-                q->consume(&param);
+                q->consume(ret);
             }
         }else{
-            q->consume(&param);
+            q->consume(q->args);
         }
     }
     

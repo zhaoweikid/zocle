@@ -14,13 +14,13 @@
 struct zc_threadseq_t;
 typedef struct zc_threadseq_t zcThreadSeq;
 
-typedef struct zc_threadqparam_t
+/*typedef struct zc_threadqparam_t
 {
     zcThreadSeq   *tq;
     zcThreadInfo  *info;
     void          *task;  
     int            pos;
-}zcThreadQParam;
+}zcThreadQParam;*/
 
 struct zc_threadseq_t
 {
@@ -32,6 +32,7 @@ struct zc_threadseq_t
     pthread_mutex_t lock;
 
     zcFuncRun produce;
+    void      *args;
     zcFuncRun consume;
 };
 
