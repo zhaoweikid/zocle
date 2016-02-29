@@ -41,12 +41,16 @@ int
 zc_buffer_new2(zcBuffer **buf, uint32_t size)
 {
     zcBuffer *buffer;
-    if (size == 0)
-        size = 32;
     
     buffer = (zcBuffer*)zc_malloc(sizeof(zcBuffer) + size);
     *buf = buffer;
-    return zc_buffer_init(buffer, size);
+    zc_buffer_init(buffer, size);
+
+    if (size > 0) {
+        buffer->data = (char*)buffer + sizeof(zcBuffer);
+    }
+
+    return ZC_OK;
 }
 
 int zc_buffer_init(zcBuffer *buf, uint32_t size)
@@ -63,9 +67,19 @@ int zc_buffer_init(zcBuffer *buf, uint32_t size)
 inline void
 zc_buffer_clear(zcBuffer *buf)
 {
-    memset(buf->data, 0, buf->size);
+    //memset(buf->data, 0, buf->size);
     buf->end = 0;
     buf->pos = 0;
+}
+
+int
+zc_buffer_assign_data(zcBuffer *buf, char *s, int len)
+{
+    buf->data = s;
+    buf->size = len;
+    buf->pos = buf->end = 0;
+
+    return ZC_OK;
 }
 
 void

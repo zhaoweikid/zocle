@@ -5,7 +5,7 @@ sourcedirs = ['.']
 files = glob.glob("*.c")
 for d in sourcedirs:
 	files += glob.glob(d + '/*.c')
-libs = ['pcre', 'crypto', 'ssl', 'm', 'iconv', 'event']
+libs = ['pcre', 'crypto', 'ssl', 'm', 'iconv', 'zocle']
 defs = ['_REENTRANT', '_GNU_SOURCE', 'ZOCLE_WITH_LIBEV', 'ASYNC_ONE_WATCHER']
 libpath = ['../../', '/usr/local/lib']
 if sys.platform == 'linux2':
@@ -18,7 +18,8 @@ env = Environment(CCFLAGS='-ggdb -Wall', CPPDEFINES=defs, CPPPATH=includes,
 for fn in files:
 	bin = fn[:-2]
 	if not bin.find('lib') >= 0:
-		env.Program(bin, [fn,'/usr/local/lib/libev.a', '../../libzocle.a'])
+		#env.Program(bin, [fn,'/usr/local/lib/libev.a', '../../libzocle.a'])
+		env.Program(bin, [fn,'/usr/local/lib/libev.a'])
 	#elif bin.startswith('libevent'):
 	#	env.Program(bin, [[fn,'/usr/local/lib/libevent.a'], '../../libzocle2.a'])
 

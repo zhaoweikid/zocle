@@ -12,10 +12,10 @@ typedef struct zc_buffer_t
     uint32_t end;
     uint32_t pos;
     char     ring;
-    char     data[0];
+    char     *data;
 }zcBuffer;
 
-zcBuffer*   zc_buffer_new(uint32_t size);
+zcBuffer*   zc_buffer_new(uint32_t size); // size == 0, must assign data pointer
 zcBuffer*   zc_buffer_new_ring(uint32_t size);
 void        zc_buffer_delete(void *);
 void        zc_buffer_delete_all(void *);
@@ -23,6 +23,7 @@ int         zc_buffer_new2(zcBuffer **, uint32_t size);
 int			zc_buffer_init(zcBuffer*, uint32_t size);
 void        zc_buffer_destroy(void *);
 void        zc_buffer_clear(zcBuffer *);
+int         zc_buffer_assign_data(zcBuffer *, char *s, int len);
 
 int         zc_buffer_set(zcBuffer *, void *data, int len);
 int         zc_buffer_get(zcBuffer *, void *data, int len);

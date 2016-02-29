@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <ev.h>
 
-int my_handle_read(zcAsynConn *conn)
+int my_handle_read(zcAsynIO *conn)
 {
     zcBuffer *buf = conn->rbuf;
     const char *data = zc_buffer_data(buf);
@@ -27,7 +27,7 @@ int my_handle_read(zcAsynConn *conn)
 
 
 int
-my_handle_accept(zcAsynConn *conn)
+my_handle_accept(zcAsynIO *conn)
 {
     //ZCINFO("try accept");
     zcSocket *newsock = zc_socket_accept(conn->sock);
@@ -35,7 +35,7 @@ my_handle_accept(zcAsynConn *conn)
         return ZC_OK;
     //zc_check(newsock);
     ZCINFO("ok, accept! new:%d", newsock->fd);
-    zcAsynConn *newconn = zc_asynconn_new_accepted(newsock, conn);
+    zcAsynIO *newconn = zc_asynio_new_accepted(newsock, conn);
     zc_socket_linger(newconn->sock, 1, 0);
 
     return ZC_OK;
@@ -54,7 +54,7 @@ int main()
     
     struct ev_loop *loop = ev_default_loop (0);
 
-    zcAsynConn *conn = zc_asynconn_new_tcp_server("127.0.0.1", 10000, 5000, &p, loop, 1024, 1024);
+    zcAsynIO *conn = zc_asynio_new_tcp_server("127.0.0.1", 10000, 5000, &p, loop, 1024, 1024);
     if (NULL == conn) {
         ZCERROR("server create error");
         return 0;
@@ -69,7 +69,7 @@ int main()
     ev_run (loop, 0);
     ZCINFO("stopped");
     
-    zc_asynconn_delete(conn);
+    zc_asynio_delete(conn);
 
     return 0;
 }

@@ -1,6 +1,7 @@
 import os, sys
 
 name		= 'zocle'
+version     = '2.0.1'
 includes	= ['include', '/usr/local/include']
 libs		= ['z']
 libpath		= ['.', '/usr/local/lib']
@@ -8,8 +9,8 @@ ldflags		= ''
 msys_home	= os.environ.get('MINGW_HOME', '')
 ccflags     = '-ggdb -std=gnu99 -Wall'
 
-if sys.platform.startswith('linux'):
-	ccflags += ' -Wl,-soname,lib%s.so.1' % name
+#if sys.platform.startswith('linux'):
+#	ccflags += ' -Wl,-soname,lib%s.so.%s' % (name, version.split('.')[0])
 
 defs = ['_REENTRANT', 
 		'_GNU_SOURCE', 
@@ -28,9 +29,11 @@ defs = ['_REENTRANT',
 files = []
 for root,dirs,fs in os.walk('src'):
 	for d in dirs:
+		if d == 'protocol' or 'protocol' in root:
+			continue
+
 		p = '%s/%s/*.c' % (root, d)
 		files += Glob(p)
-
 
 if sys.platform.startswith('win'):
 	includes.append(os.path.join(msys_home, 'local/include'))
@@ -84,7 +87,7 @@ if 'ZOCLE_WITH_TCMALLOC' in defs:
 if 'ZOCLE_WITH_GC' in defs:
 	libs.append('gc')
 
-
+os.system('rm -rf lib*.so*')
 env = None
 if sys.platform == 'win32':
 	libs += ['ws2_32', 'pthreadGC2', 'msvcrt', 'gdi32']
@@ -96,8 +99,8 @@ else:
 				CPPDEFINES=defs, CPPPATH=includes, 
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
-env.StaticLibrary(name, files)
-env.SharedLibrary(name, files)
+#env.StaticLibrary(name, files)
+env.SharedLibrary(name, files, SHLIBVERSION=version)
 
 #SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
 
