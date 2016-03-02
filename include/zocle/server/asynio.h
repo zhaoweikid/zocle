@@ -67,6 +67,7 @@ struct zc_asynio_t
 	char		close:1;
 	char		ssl:1;
     char        protocol_free:1; // protocol is need free?
+	char		w_init:1; // write event init complete
 
     int         read_timeout;
     int         write_timeout;
@@ -107,9 +108,9 @@ zcAsynIO*   zc_asynio_new_udp_client(const char *host, int port, int timeout, zc
 
 zcAsynIO*   zc_asynio_new_tcp_server(const char *host, int port, int timeout, zcProtocol *p,
 				struct ev_loop *loop, int rbufsize, int wbufsize);
+#define		zc_asynio_new_tcp_server_simple(host,port,timeout,loop,rbufsize,wbufsize)	zc_asynio_new_tcp_server(host,port,timeout,NULL,loop,rbufsize,wbufsize)
 zcAsynIO*   zc_asynio_new_udp_server(const char *host, int port, int timeout, zcProtocol *p,
 				struct ev_loop *loop, int rbufsize, int wbufsize);
-void		zc_asynio_start_write(zcAsynIO *);
 void        zc_asynio_set_protocol(zcAsynIO *conn, zcProtocol *p);
 void		zc_asynio_copy(zcAsynIO *conn, zcAsynIO *fromconn);
 int			zc_asynio_connect(zcAsynIO *conn, const char *host, int port);

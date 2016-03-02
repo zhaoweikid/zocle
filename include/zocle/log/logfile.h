@@ -20,6 +20,7 @@
 #define ZC_LOG_WARN     3
 #define ZC_LOG_NOTICE   4
 #define ZC_LOG_INFO     5
+#define ZC_LOG_DEBUG    5
 #define ZC_LOG_ALL      6
 
 #define ZC_LOG_ROTATE_NO		0
@@ -159,6 +160,8 @@ int		zc_log_check_rotate(zcLog *log, int loglevel);
             }\
         }\
     }while(0)
+
+#define ZCDEBUG	ZCINFO
 
 #define ZCPRINT(level,file,line,format,args...) \
     do{\

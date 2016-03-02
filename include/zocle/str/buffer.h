@@ -24,6 +24,7 @@ int			zc_buffer_init(zcBuffer*, uint32_t size);
 void        zc_buffer_destroy(void *);
 void        zc_buffer_clear(zcBuffer *);
 int         zc_buffer_assign_data(zcBuffer *, char *s, int len);
+int         zc_buffer_reset_data(zcBuffer *, int size);
 
 int         zc_buffer_set(zcBuffer *, void *data, int len);
 int         zc_buffer_get(zcBuffer *, void *data, int len);

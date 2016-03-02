@@ -41,15 +41,23 @@ my_handle_accept(zcAsynIO *conn)
     return ZC_OK;
 }
 
+int
+my_handle_connected(zcAsynIO *conn) 
+{
+    zc_socket_linger(conn->sock, 1, 0);
+
+    return ZC_OK;
+}
+
 int main()
 {
     zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW);
     zc_log_new("stdout", ZC_LOG_ALL);
-
     zcProtocol p;
 
     zc_protocol_init(&p);
-    p.handle_accept = my_handle_accept;
+    //p.handle_accept = my_handle_accept;
+    p.handle_connected = my_handle_connected;
     p.handle_read = my_handle_read;
     
     struct ev_loop *loop = ev_default_loop (0);

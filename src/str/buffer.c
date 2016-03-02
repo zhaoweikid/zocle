@@ -82,6 +82,15 @@ zc_buffer_assign_data(zcBuffer *buf, char *s, int len)
     return ZC_OK;
 }
 
+int
+zc_buffer_reset_data(zcBuffer *buf, int size)
+{
+    buf->size = size;
+    buf->data = buf->data + sizeof(void*);
+
+    return ZC_OK;
+}
+
 void
 zc_buffer_destroy(void *b)
 {

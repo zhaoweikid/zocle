@@ -21,7 +21,7 @@
 #include <zocle/utils/files.h>
 
 //static char *_log_level2str[]   = {"NOLOG","FATAL","ERR","WARN","NOTICE","INFO","ALL"};
-static char *_log_level2str[]   = {"O","F","E","W","N","I","A"};
+static char *_log_level2str[]   = {"O","F","E","W","N","D","A"};
 static char *_log_level2color[] = {"","\33[31m","\33[35m","\33[33m","\33[36m","",""};
 
 #define _LOG_ERROR(level,format,args...) do{\
@@ -246,6 +246,7 @@ zc_log_init(zcLog *log, const char *filename, int loglevel)
         exit(EXIT_FAILURE);
     } 
     _zc_log = log;
+
     return ZC_OK;
 }
 

@@ -151,7 +151,7 @@ zc_socket_setblock(zcSocket *s, int block)
 int
 zc_socket_reuse(zcSocket *s)
 {
-    int n;
+    int n = 1;
     if (setsockopt(s->fd, SOL_SOCKET, SO_REUSEADDR, (const void*)&n, sizeof(int)) == -1) {
         ZCWARN("set socket addr %d reuse error! %s\n", s->fd, strerror(errno));
         return ZC_FAILED;
