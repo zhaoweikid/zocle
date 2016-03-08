@@ -195,7 +195,6 @@ zc_asynio_handle_read(zcAsynIO *conn)
                 //conn->_read_until = NULL;
             }
         }else{
-            //ZCINFO("check until:%s", conn->_read_until);
             char *pos = strstr(data, conn->_read_until);
             if (NULL != pos) { // found
                 rlen = pos-data+strlen(conn->_read_until);
