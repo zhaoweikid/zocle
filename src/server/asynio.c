@@ -107,7 +107,7 @@ zc_asynio_handle_accept_one(zcAsynIO *conn)
     newsock->timeout = conn->sock->timeout;
     zcAsynIO *newconn = zc_asynio_new(newsock, &conn->p, conn->loop, conn->rbuf->size, conn->wbuf->size);
     newconn->accepting = ZC_FALSE;
-    newconn->connected = ZC_TRUE;
+    newconn->connected = ZC_FALSE;
     zc_asynio_copy(newconn, conn);
 
     //ev_io_init(&newconn->w, zc_asynio_ev_write, newconn->sock->fd, EV_WRITE);
@@ -177,27 +177,38 @@ int
 zc_asynio_handle_read(zcAsynIO *conn)
 {
     zcBuffer *buf = conn->rbuf;
+    int rlen = 0;
+
+    
+    //ZCINFO("read_bytes:%d, read_until:%s", conn->_read_bytes, conn->_read_until);
 
     char *data = zc_buffer_data(buf);
     if (conn->_read_bytes > 0 && zc_buffer_used(buf) >= conn->_read_bytes) { // read_bytes
-        conn->_read_callback(conn, data, conn->_read_bytes);
-        conn->_read_bytes = 0;
+        rlen = conn->_read_bytes;
+        conn->_read_callback(conn, data, rlen);
+        //conn->_read_bytes = 0;
     }else if (conn->_read_until != NULL) { // read to a position
         if (conn->_read_until == ZC_ASYNIO_READ_CLOSE) { // read to end
             if (conn->close) {
-                conn->_read_callback(conn, data, zc_buffer_used(buf));
-                conn->_read_until = NULL;
+                rlen = zc_buffer_used(buf);
+                conn->_read_callback(conn, data, rlen);
+                //conn->_read_until = NULL;
             }
         }else{
+            //ZCINFO("check until:%s", conn->_read_until);
             char *pos = strstr(data, conn->_read_until);
             if (NULL != pos) { // found
-                conn->_read_callback(conn, data, pos-data+strlen(conn->_read_until));
-                conn->_read_until = NULL;
+                rlen = pos-data+strlen(conn->_read_until);
+                conn->_read_callback(conn, data, rlen); 
+                //conn->_read_until = NULL;
             }   
         }
     }
-
-    return ZC_OK;
+    if (rlen == 0) {
+        return ZC_AGAIN;
+    }else{
+        return rlen;
+    }
 }
 
 // wrote event
@@ -346,7 +357,7 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     ZCINFO("buffer used:%d", zc_buffer_used(rbuf));
     while (zc_buffer_used(rbuf) > 0) {
         ret = conn->p.handle_read(conn);
-        //ZCINFO("handle_read return:%d", ret);
+        ZCINFO("handle_read return:%d", ret);
         if (ret == ZC_AGAIN) // read again
             break;
         if (ret < 0) {

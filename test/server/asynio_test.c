@@ -26,7 +26,7 @@ int my_handle_read(zcAsynIO *conn)
 }
 
 
-int
+/*int
 my_handle_accept(zcAsynIO *conn)
 {
     //ZCINFO("try accept");
@@ -39,7 +39,7 @@ my_handle_accept(zcAsynIO *conn)
     zc_socket_linger(newconn->sock, 1, 0);
 
     return ZC_OK;
-}
+}*/
 
 int
 my_handle_connected(zcAsynIO *conn) 
