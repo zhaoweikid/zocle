@@ -268,7 +268,6 @@ zc_protocol_init(zcProtocol *p)
 }
 
 static void zc_asynio_read_timer_reset(zcAsynIO *conn);
-static void zc_asynio_write_start(zcAsynIO *conn);
 
 #define ZC_ONE_READ_MAX 8192
 
@@ -490,7 +489,7 @@ zc_asynio_write_init(zcAsynIO *conn)
 }
 
 
-static void
+void
 zc_asynio_write_start(zcAsynIO *conn)
 {
     if (!conn->w_init) {
