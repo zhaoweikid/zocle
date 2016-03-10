@@ -99,7 +99,7 @@ zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
             strncpy(count, data+1, i-1);
             r->len = (int)strtol(count, (char **)NULL, 10);
 
-            // init zxlist
+            // init zclist
             r->array = zc_list_new();
             r->array->del = zc_redis_resp_delete;
 

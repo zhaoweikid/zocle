@@ -36,8 +36,8 @@ int zc_redis_execute(const char *host, const int port, const char *command, cons
 
 #ifdef ZOCLE_WITH_LIBEV
 zcAsynIO* zc_asynio_redis_new_client(const char *host, const int port, int timeout,
-        struct ev_loop *loop, const char *command, int c_len, int (*callback)(zcAsynIO*, zcRedisResp*));
-void zc_asynio_redis_execute(zcAsynIO *conn, const char *command, int c_len);
+        struct ev_loop *loop, const char *command, const int c_len, int (*callback)(zcAsynIO*, zcRedisResp*));
+void zc_asynio_redis_execute(zcAsynIO *conn, const char *command, const int c_len);
 #endif
 
 
