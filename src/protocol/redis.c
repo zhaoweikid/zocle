@@ -195,7 +195,7 @@ __handler_read(zcAsynIO *conn)
 {
     ZCINFO("redis read callback");
     const char *data = zc_buffer_data(conn->rbuf);
-    ZCINFO("%s", data);
+    /*ZCINFO("%s", data);*/
     int len = zc_buffer_used(conn->rbuf);
     zcRedisResp *r = zc_calloct(zcRedisResp);
     int ret = zc_redis_unpack(r, data, len);

@@ -47,7 +47,7 @@ int callback(zcAsynIO *conn, zcRedisResp *r){
 
 void test_asynio(){
     zcAsynIO *conn =  zc_asynio_redis_new_client("172.100.101.151", 6379, 3000, ev_default_loop(0),
-            "rpop list_msg", 13, callback);
+            "get 1", 5, callback);
     ev_run(ev_default_loop(0), 0);
 
 }
