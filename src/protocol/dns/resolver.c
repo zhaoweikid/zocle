@@ -21,7 +21,7 @@ zc_dnsheader_print(zcDNSHeader *h)
 {
     ZCINFO("DNS Header id:%d, qr:%d, opcode:%d, aa:%d, tc:%d, rd:%d, ra:%d, rcode:%d, "
            "qdcount:%d, ancount:%d, nscount:%d, arcount:%d",
-           h->id, h->qr, h->opcode, h->aa, h->tc, h->rd, h->ra, h->rcode, 
+           h->id, h->qr, h->opcode, h->aa, h->tc, h->rd, h->ra, h->rcode,
            h->qdcount, h->ancount, h->nscount, h->arcount);
 }
 
@@ -31,29 +31,29 @@ zc_dnsrr_print(zcDNSRR *r)
     switch(r->type) {
     case ZC_DNS_T_A: {
         zcDNSA *x = (zcDNSA*)r->data;
-        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d, ip:%s", 
+        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d, ip:%s",
             r->domain->data, r->type, r->cls, r->ttl, x->ip);
         break;
     }
     case ZC_DNS_T_NS: {
         zcDNSNS *x = (zcDNSNS*)r->data;
-        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d, ns:%s", 
+        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d, ns:%s",
             r->domain->data, r->type, r->cls, r->ttl, x->name->data);
         break;
     }
     case ZC_DNS_T_CNAME: {
         zcDNSCNAME *x = (zcDNSCNAME*)r->data;
-        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d, cname:%s", 
+        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d, cname:%s",
             r->domain->data, r->type, r->cls, r->ttl, x->name->data);
         break;
     }
     default:
-        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d", 
+        ZCINFO("DNS RR domain:%s, type:%d, class:%d, ttl:%d",
             r->domain->data, r->type, r->cls, r->ttl);
     }
 }
 
-zcDNSRR* 
+zcDNSRR*
 zc_dnsrr_new()
 {
     zcDNSRR *r = zc_calloct(zcDNSRR);
@@ -66,7 +66,7 @@ zc_dnsrr_delete(void *x)
 {
     zcDNSRR *r = (zcDNSRR*)x;
     zc_str_delete(r->domain);
-    
+
     if (r->data) {
         switch(r->type) {
         case ZC_DNS_T_A:
@@ -86,7 +86,7 @@ zc_dnsrr_delete(void *x)
         case ZC_DNS_T_PTR:
             break;
         case ZC_DNS_T_MX:
-            break; 
+            break;
         case ZC_DNS_T_TXT:
             break;
         case ZC_DNS_T_AAAA:
@@ -105,7 +105,7 @@ zc_dnsrr_delete(void *x)
 
 
 
-int 
+int
 zc_dns_pack_header(zcDNSHeader *h, char *store, int slen)
 {
     int i = 0;
@@ -134,10 +134,10 @@ zc_dns_pack_header(zcDNSHeader *h, char *store, int slen)
 }
 
 
-int 
+int
 zc_dns_pack_query_body(const char *domain, uint16_t type, uint16_t cls, char *store, int slen)
 {
-    if (strlen(domain)+1+sizeof(type)+sizeof(cls) >= slen) 
+    if (strlen(domain)+1+sizeof(type)+sizeof(cls) >= slen)
         return ZC_ERR;
 
     const char *start = domain;
@@ -154,7 +154,7 @@ zc_dns_pack_query_body(const char *domain, uint16_t type, uint16_t cls, char *st
             start++;
         }
         store[oldi] = len;
-        if (*start == '.') start++; 
+        if (*start == '.') start++;
     }
     store[i] = 0;
     i++;
@@ -185,7 +185,7 @@ int  zc_dns_pack_query_simple(const char *domain, uint16_t type, uint16_t cls, c
 {
     zcDNSHeader req;
     memset(&req, 0, sizeof(zcDNSHeader));
-    
+
     srandom(time(NULL));
 
     req.id = random()%65535;
@@ -201,13 +201,13 @@ int  zc_dns_pack_query_simple(const char *domain, uint16_t type, uint16_t cls, c
     return zc_dns_pack_query(&req, domain, type, cls, store, slen);
 }
 
-int 
+int
 zc_dns_unpack_header(zcDNSHeader *h, const char *data, int dlen)
 {
     if (dlen < sizeof(zcDNSHeader))
         return ZC_ERR;
     memset(h, 0, sizeof(zcDNSHeader));
-    
+
     uint16_t v;
     int i = 0;
     memcpy(&v, data, sizeof(short));
@@ -224,7 +224,7 @@ zc_dns_unpack_header(zcDNSHeader *h, const char *data, int dlen)
     memcpy(&v, data+i, sizeof(short));
     h->ancount = ntohs(v);
     i += sizeof(short);
-    
+
     memcpy(&v, data+i, sizeof(short));
     h->nscount = ntohs(v);
     i += sizeof(short);
@@ -254,7 +254,7 @@ _unpack_pointer(zcString *name, const char *data, int i)
         }
         zc_str_append_len(name, newdata+1, len1);
         newdata += len1 + 1;
-    } 
+    }
     return ZC_OK;
 }*/
 
@@ -288,7 +288,7 @@ _unpack_string(zcString *name, const char *data, int i)
     return i;
 }
 
-int 
+int
 zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int leftlen)
 {
     //ZCINFO("used:%d, leftlen:%d, n:%d", used, leftlen, n);
@@ -297,7 +297,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
 
     uint8_t  len1;
     int i = used;
-    
+
     while (1) {
         len1 = data[i];
         if (len1 == 0) {
@@ -309,7 +309,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
     }
     i += sizeof(short)*2;
 
-    //uint16_t len2 = 0; 
+    //uint16_t len2 = 0;
     uint16_t v;
     zcDNSRR *r = NULL;
 
@@ -324,24 +324,24 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
         memcpy(&v, data+i, sizeof(short));
         r->type = ntohs(v);
         i += sizeof(short);
-        //ZCINFO("type: %d", r->type); 
+        //ZCINFO("type: %d", r->type);
 
         memcpy(&v, data+i, sizeof(short));
         r->cls = ntohs(v);
         i += sizeof(short);
-        //ZCINFO("class: %d", r->cls); 
+        //ZCINFO("class: %d", r->cls);
 
         uint32_t vint;
         memcpy(&vint, data+i, sizeof(int));
         r->ttl = ntohl(vint);
         i += sizeof(int);
-        //ZCINFO("ttl: %d", r->ttl); 
+        //ZCINFO("ttl: %d", r->ttl);
 
         uint16_t size;
         memcpy(&v, data+i, sizeof(short));
         size = ntohs(v);
         i += sizeof(short);
-        //ZCINFO("size: %d", size); 
+        //ZCINFO("size: %d", size);
 
         switch (r->type) {
             case ZC_DNS_T_A: {
@@ -356,7 +356,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
             case ZC_DNS_T_NS: {
                 zcDNSNS *n = zc_calloct(zcDNSNS);
                 n->name = zc_str_new(64);
-                _unpack_string(n->name, data, i); 
+                _unpack_string(n->name, data, i);
                 i += size;
                 r->data = n;
                 break;
@@ -364,7 +364,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
             case ZC_DNS_T_CNAME: {
                 zcDNSCNAME *n = zc_calloct(zcDNSCNAME);
                 n->name = zc_str_new(64);
-                _unpack_string(n->name, data, i); 
+                _unpack_string(n->name, data, i);
                 i += size;
                 r->data = n;
                 break;
@@ -387,7 +387,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
                 snprintf(dmx->ip, 16, "%d.%d.%d.%d", x[0], x[1], x[2], x[3]);
                 i += size-sizeof(short);
                 r->data = dmx;
-                break; 
+                break;
             }
             case ZC_DNS_T_TXT:
                 i += size;
@@ -409,7 +409,7 @@ zc_dns_unpack_resp_body(zcList *result, int n, const char *data, int used, int l
                 goto unpack_error;
         }
         //zc_dnsrr_print(r);
-        zc_list_append(result, r); 
+        zc_list_append(result, r);
         n--;
         //ZCINFO("n:%d", n);
     }
@@ -423,17 +423,17 @@ unpack_error:
     return ZC_ERR;
 }
 
-int	 
+int
 zc_dns_unpack_resp(zcDNSHeader *h, zcList *result, const char *data, int dlen)
 {
     int ret = zc_dns_unpack_header(h, data, dlen);
-    ret = zc_dns_unpack_resp_body(result, h->ancount + h->nscount + h->arcount, 
+    ret = zc_dns_unpack_resp_body(result, h->ancount + h->nscount + h->arcount,
             data, ret, dlen-ret);
     //ZCINFO("unpack body: %d, n:%d, len:%d", ret, h->ancount + h->nscount + h->arcount, ret);
-    return ret; 
+    return ret;
 }
 
-int	 
+int
 zc_dns_unpack_resp_simple(zcList *result, const char *data, int dlen)
 {
     zcDNSHeader h;
@@ -442,13 +442,13 @@ zc_dns_unpack_resp_simple(zcList *result, const char *data, int dlen)
 }
 
 
-int 
+int
 zc_dns_pack_rr(const char *domain, uint16_t type, uint16_t cls, uint16_t ttl, const char *data)
 {
     return ZC_OK;
 }
 
-int 
+int
 zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, zcList *result)
 {
     zcSocket *sock = zc_socket_new_udp(5);
@@ -467,7 +467,7 @@ zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, z
     req.ra = 0;
     req.rcode = 0;
     req.qdcount = 1;
-    
+
     char pack[512] = {0};
     int n;
     n = zc_dns_pack_query(&req, domain, type, cls, pack, sizeof(pack));
@@ -485,7 +485,7 @@ zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, z
         ret = ZC_ERR;
         goto query_over;
     }
-    
+
     char recvpack[512] = {0};
     ret = zc_socket_recvfrom_self(sock, recvpack, sizeof(recvpack), 0);
     ZCINFO("recvfrom ret: %d", ret);
@@ -499,17 +499,17 @@ zc_dns_query(const char *dns, const char *domain, uint16_t type, uint16_t cls, z
         printf("%02x ", (unsigned char)recvpack[i]);
     }
     printf("\n");*/
-    
+
     n = ret;
     zcDNSHeader recvh;
     ret = zc_dns_unpack_header(&recvh, recvpack, n);
     zc_dnsheader_print(&recvh);
 
     zcList *list = zc_list_new();
-    ret = zc_dns_unpack_resp_body(list, recvh.ancount + recvh.nscount + recvh.arcount, 
+    ret = zc_dns_unpack_resp_body(list, recvh.ancount + recvh.nscount + recvh.arcount,
             recvpack, ret, n-ret);
     ZCINFO("unpack body: %d, n:%d, len:%d", ret, recvh.ancount + recvh.nscount + recvh.arcount, n);
-    
+
     zcDNSRR *rr;
     zcListNode *node;
     zc_list_foreach(list, node) {
@@ -526,7 +526,7 @@ query_over:
 
 #ifdef ZOCLE_WITH_LIBEV
 
-static int 
+static int
 zc_dns_read_callback(zcAsynConn *conn)
 {
     zcBuffer *rbuf = conn->rbuf;
@@ -554,20 +554,20 @@ zc_dns_read_callback(zcAsynConn *conn)
         zc_list_delete(result);
         return ZC_ERR;
     }
-    
+
     return len;
 }
 
-zcAsynConn* 
+zcAsynConn*
 zc_asynconn_new_dns_client(const char *dns, int timeout, struct ev_loop *loop, const char *host, int (*callback)(zcAsynConn*))
 {
     zcProtocol p;
     zc_protocol_init(&p);
     p.handle_read = callback;
     zcAsynConn *conn = zc_asynconn_new_udp_client(dns, 53, timeout, &p, loop, 1024, 1024);
-    int n = zc_dns_pack_query_simple(host, ZC_DNS_T_A, ZC_DNS_C_IN, 
+    int n = zc_dns_pack_query_simple(host, ZC_DNS_T_A, ZC_DNS_C_IN,
             conn->wbuf->data, zc_buffer_idle(conn->wbuf));
-    //ZCINFO("wbuf len:%d", n); 
+    //ZCINFO("wbuf len:%d", n);
     //ZCINFO("wbuf end:%u", conn->wbuf->end);
     conn->wbuf->end = (uint32_t)n;
     zc_asynconn_start_write(conn);

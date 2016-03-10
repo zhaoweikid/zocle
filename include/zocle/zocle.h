@@ -58,6 +58,7 @@ extern "C" {
 #include <zocle/db/sqlitedb.h>
 #include <zocle/db/mysqldb.h>
 #include <zocle/db/dbif.h>
+#include <zocle/protocol/redis.h>
 
 #ifdef __cplusplus
 }
