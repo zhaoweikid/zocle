@@ -10,7 +10,7 @@
 void
 zc_redis_resp_print(zcRedisResp *r)
 {
-    ZCINFO("redis resp: type=%d int=%lld str=%s",r->type, r->integer, r->str );
+    ZCINFO("redis resp: type=%d int=%lld len=%d str=%s",r->type, r->integer, r->len, r->str );
     if(r->array != NULL){
         ZCINFO("list [");
         zcListNode *hnode;
@@ -87,10 +87,17 @@ zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
             while(*(data+i) != '\r') i++;
             strncpy(count, data+1, i-1);
             r->len = (int)strtol(count, (char **)NULL, 10);
-            r->str = zc_calloc(r->len+1);
-            i += 2; //to string start
-            strncpy(r->str, data+i, r->len);
-            i = i + r->len + 2;
+            if (r->len > 0)
+            {
+                r->str = zc_calloc(r->len+1);
+                i += 2; //to string start
+                strncpy(r->str, data+i, r->len);
+                i = i + r->len + 2;
+            }
+            else
+            {
+                i += 2;
+            }
             break;
         case '*':
             r->type = ZC_REDIS_RESP_ARRAY;
@@ -120,7 +127,7 @@ zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
     }
     if(*(data + i - 2) == '\r' && *(data + i - 1) == '\n'){
         //如果完整解析解析
-        //ZCINFO("return %d",i);
+        /*ZCINFO("return %d",i);*/
         return i;
     }else{
         ZCWARN("buf not complete, need read more");
@@ -186,8 +193,9 @@ zc_redis_execute(const char *host, const int port, const char *command, const in
 int
 __handler_read(zcAsynIO *conn)
 {
-    ZCINFO("callbakc");
+    ZCINFO("redis read callback");
     const char *data = zc_buffer_data(conn->rbuf);
+    ZCINFO("%s", data);
     int len = zc_buffer_used(conn->rbuf);
     zcRedisResp *r = zc_calloct(zcRedisResp);
     int ret = zc_redis_unpack(r, data, len);

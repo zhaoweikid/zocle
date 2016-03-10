@@ -47,8 +47,22 @@ int callback(zcAsynIO *conn, zcRedisResp *r){
 
 void test_asynio(){
     zcAsynIO *conn =  zc_asynio_redis_new_client("172.100.101.151", 6379, 3000, ev_default_loop(0),
-            "get 1", 5, callback);
+            "rpop list_msg", 13, callback);
     ev_run(ev_default_loop(0), 0);
+
+}
+void test_1(){
+    zcRedisResp *r ;
+
+    r = zc_redis_resp_new();
+    zc_redis_unpack(r, "*0\r\n" , 4);
+    zc_redis_resp_print(r);
+    zc_redis_resp_delete(r);
+
+    r = zc_redis_resp_new();
+    zc_redis_unpack(r, "*-1\r\n" , 5);
+    zc_redis_resp_print(r);
+    zc_redis_resp_delete(r);
 
 }
 
@@ -61,5 +75,6 @@ int main()
     /*test1();*/
     /*test2();*/
     test_asynio();
+    /*test_1();*/
 
 }
