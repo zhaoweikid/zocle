@@ -207,10 +207,20 @@ zc_asynio_redis_new_client(const char *host, const int port, int timeout,
     zcAsynIO *conn = zc_asynio_new_tcp_client(host, port, timeout, NULL, loop, 2048, 2048);
     conn->data = callback;
     conn->p.handle_read = __handler_read;
-    zc_buffer_append(conn->wbuf, (void *)command, c_len);
-    zc_buffer_append(conn->wbuf, "\r\n", 2);
+    if(command != NULL)
+    {
+        zc_buffer_append(conn->wbuf, (void *)command, c_len);
+        zc_buffer_append(conn->wbuf, "\r\n", 2);
+    }
     zc_asynio_write_start(conn);
     return conn;
+}
+
+void
+zc_asynio_redis_execute(zcAsynIO *conn, const char *command, const int c_len)
+{
+    zc_buffer_append(conn->wbuf, (void *)command, c_len);
+    zc_buffer_append(conn->wbuf, "\r\n", 2);
 }
 #endif
 

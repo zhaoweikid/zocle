@@ -41,6 +41,8 @@ void test2(){
 int callback(zcAsynIO *conn, zcRedisResp *r){
     zc_redis_resp_print(r);
     zc_redis_resp_delete(r);
+
+    /*zc_asynio_redis_execute(conn, "get 1", 5);*/
 }
 
 void test_asynio(){
