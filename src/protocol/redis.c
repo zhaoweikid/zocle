@@ -3,6 +3,9 @@
 #include <zocle/ds/list.h>
 #include <zocle/net/sockets.h>
 #include <zocle/str/string.h>
+#include <zocle/str/buffer.h>
+#include <zocle/server/asynio.h>
+#include <ev.h>
 
 void
 zc_redis_resp_print(zcRedisResp *r)
@@ -147,11 +150,13 @@ zc_redis_execute(const char *host, const int port, const char *command, const in
     if (ret != c_len)
     {
         ZCERROR("send error! %d\n", ret);
+        return -3;
     }
     ret = zc_socket_send(sock, "\r\n", 2);
     if (ret != 2)
     {
         ZCERROR("send error! %d\n", ret);
+        return -3;
     }
 
     zcString *s = zc_str_new(0);
@@ -177,12 +182,35 @@ zc_redis_execute(const char *host, const int port, const char *command, const in
 }
 
 
-
 #ifdef ZOCLE_WITH_LIBEV
-zcAsynIO* zc_asynio_new_redis_client(const char *host, const int port, int timeout,
-        struct ev_loop *loop, const char *command, int (*callback)(zcAsynIO*))
+int
+__handler_read(zcAsynIO *conn)
 {
+    const char *data = zc_buffer_data(conn->rbuf);
+    int len = zc_buffer_used(conn->rbuf);
+    zcRedisResp *r = zc_calloct(zcRedisResp);
+    int ret = zc_redis_unpack(r, data, len);
+    if (ret < 0){
+         ZCWARN("unpack redis error");
+    }else{
+        int buf_used = ((int (*)(zcAsynIO*, zcRedisResp*)) conn->data)(conn, r);
+        if(buf_used){
+            return buf_used ;
+        }
+        return 0;
+    }
+    return 0;
+}
 
+zcAsynIO*
+zc_asynio_redis_new_client(const char *host, const int port, int timeout,
+        struct ev_loop *loop, const char *command, int c_len, int (*callback)(zcAsynIO*, zcRedisResp*))
+{
+    zcAsynIO *conn = zc_asynio_new_tcp_client(host, port, timeout, NULL, loop, 2048, 2048);
+    conn->data = callback;
+    conn->p.handle_read = __handler_read;
+    zc_buffer_append(conn->wbuf, (void *)command, c_len);
+    return conn;
 }
 #endif
 

@@ -103,7 +103,7 @@ zcAsynIO*   zc_asynio_new_tcp_client(const char *host, int port, int timeout, zc
 				struct ev_loop *loop, int rbufsize, int wbufsize);
 zcAsynIO*   zc_asynio_new_ssl_client(const char *host, int port, int timeout, zcProtocol *p,
 				struct ev_loop *loop, int rbufsize, int wbufsize);
-zcAsynIO*   zc_asynio_new_udp_client(const char *host, int port, int timeout, zcProtocol *p, 
+zcAsynIO*   zc_asynio_new_udp_client(const char *host, int port, int timeout, zcProtocol *p,
 				struct ev_loop *loop, int rbufsize, int wbufsize);
 
 zcAsynIO*   zc_asynio_new_tcp_server(const char *host, int port, int timeout, zcProtocol *p,
@@ -116,7 +116,7 @@ void		zc_asynio_copy(zcAsynIO *conn, zcAsynIO *fromconn);
 int			zc_asynio_connect(zcAsynIO *conn, const char *host, int port);
 int			zc_asynio_call_later(zcAsynIO *conn, int after, int repeat, int (*callback)(zcAsynIO*, void*), void *data);
 int			zc_asynio_read_bytes(zcAsynIO *conn, int len, zcFuncReadx f);
-int			zc_asynio_read_until(zcAsynIO *conn, char*, zcFuncReadx f); 
+int			zc_asynio_read_until(zcAsynIO *conn, char*, zcFuncReadx f);
 
 #endif
 

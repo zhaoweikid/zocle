@@ -1,4 +1,5 @@
 #include <zocle/zocle.h>
+#include <ev.h>
 
 void test1()
 {
@@ -37,6 +38,17 @@ void test2(){
     zc_redis_resp_print(r);
     zc_redis_resp_delete(r);
 }
+int callback(zcAsynIO *conn, zcRedisResp *r){
+    zc_redis_resp_print(r);
+    zc_redis_resp_delete(r);
+}
+
+void test_asynio(){
+    zcAsynIO *conn =  zc_asynio_redis_new_client("172.100.101.151", 6379, 3000, ev_default_loop(0),
+            "ping", 4, callback);
+    ev_run(ev_default_loop(0), 0);
+
+}
 
 int main()
 {
@@ -44,7 +56,8 @@ int main()
     zc_log_new("stdout", ZC_LOG_ALL);
     zc_log_whole(_zc_log, 1);
 
-    test1();
-    test2();
+    /*test1();*/
+    /*test2();*/
+    test_asynio();
 
 }
