@@ -124,7 +124,7 @@ void show_help()
     exit(0);
 }
 
-int main(int argc, const char * argv[])
+int main(int argc, char * const argv[])
 {
     zc_log_new("stdout", ZC_LOG_ALL);
 

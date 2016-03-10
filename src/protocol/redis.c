@@ -186,6 +186,7 @@ zc_redis_execute(const char *host, const int port, const char *command, const in
 int
 __handler_read(zcAsynIO *conn)
 {
+    ZCINFO("callbakc");
     const char *data = zc_buffer_data(conn->rbuf);
     int len = zc_buffer_used(conn->rbuf);
     zcRedisResp *r = zc_calloct(zcRedisResp);
@@ -193,11 +194,8 @@ __handler_read(zcAsynIO *conn)
     if (ret < 0){
          ZCWARN("unpack redis error");
     }else{
-        int buf_used = ((int (*)(zcAsynIO*, zcRedisResp*)) conn->data)(conn, r);
-        if(buf_used){
-            return buf_used ;
-        }
-        return 0;
+        ((int (*)(zcAsynIO*, zcRedisResp*)) conn->data)(conn, r);
+        return ret;
     }
     return 0;
 }
@@ -210,6 +208,8 @@ zc_asynio_redis_new_client(const char *host, const int port, int timeout,
     conn->data = callback;
     conn->p.handle_read = __handler_read;
     zc_buffer_append(conn->wbuf, (void *)command, c_len);
+    zc_buffer_append(conn->wbuf, "\r\n", 2);
+    zc_asynio_write_start(conn);
     return conn;
 }
 #endif

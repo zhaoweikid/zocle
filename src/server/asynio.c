@@ -6,7 +6,9 @@
 #include <zocle/mem/alloc.h>
 #include <zocle/str/buffer.h>
 #include <errno.h>
+#include <stdio.h>
 #include <unistd.h>
+#include <math.h>
 
 #ifndef EALREADY
 #define EALREADY  103
@@ -21,6 +23,7 @@
 #endif
 
 #define ZC_ONE_ACCEPT_MAX   1
+#define EPSINON   (float)0.00001
 
 
 static const char *ZC_ASYNIO_READ_CLOSE = "<close>";
@@ -265,7 +268,6 @@ zc_protocol_init(zcProtocol *p)
 }
 
 static void zc_asynio_read_timer_reset(zcAsynIO *conn);
-static void zc_asynio_write_start(zcAsynIO *conn);
 
 #define ZC_ONE_READ_MAX 8192
 
@@ -487,7 +489,7 @@ zc_asynio_write_init(zcAsynIO *conn)
 }
 
 
-static void
+void
 zc_asynio_write_start(zcAsynIO *conn)
 {
     if (!conn->w_init) {
@@ -748,15 +750,11 @@ static void
 _call_later_ev_timeout(struct ev_loop *loop, ev_timer *t, int events)
 {
     struct zc_asyn_callback_value_t *v = t->data;
-
+    
+    double repeat_time = (double)t->repeat;
     int ret = v->callback(v->conn, v->data);
-    if (t->repeat) {
-        if (ret < 0) {
-            ZCINFO("callback return err, stop repeat timer");
-            ev_timer_stop(loop, t);
-            zc_free(v);
-        }
-    }else{
+    //ZCINFO("repeat:%d, ret:%lf", (double)t->repeat, ret);
+    if (ret == ZC_STOP || abs(repeat_time) <= EPSINON) {
         ZCINFO("stop timer");
         ev_timer_stop(loop, t);
         zc_free(v);

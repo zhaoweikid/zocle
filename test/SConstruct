@@ -11,6 +11,7 @@
 import os, sys, glob
 
 Import('defs', 'includes', 'libpath', 'libs')
+
 includes += ['../include']
 
 files = []

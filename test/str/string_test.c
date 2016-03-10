@@ -313,7 +313,7 @@ int main()
     assert(ss1->len == 0);
 
     zcString *ss2 = zc_list_at(ls, -1, NULL);
-    ZCINFO("last size:%d len:%d %s\n", ss1->size, ss1->len, ss1->data);
+    ZCINFO("last size:%d len:%d %s\n", ss2->size, ss2->len, ss2->data);
     //assert(ss2->len == 0);
 
     zc_str_delete(ss);

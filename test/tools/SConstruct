@@ -5,7 +5,7 @@ sourcedirs = ['.']
 files = Glob("*.c")
 for d in sourcedirs:
 	files += Glob(d + '/*.c')
-libs = ['zocle', 'pcre', 'mysqlclient']
+libs = ['zocle', 'pcre', 'mysqlclient', 'pthread']
 defs = ['_REENTRANT', '_GNU_SOURCE']
 libpath = ['../../', '/opt/mysql/lib']
 if sys.platform == 'linux2':
