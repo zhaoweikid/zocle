@@ -1,6 +1,6 @@
 import os, sys
 
-includes = ['../../include', '/usr/local/mysql/include', '/opt/mysql/include']
+includes = ['../../include', '/usr/local/mysql/include', '/opt/mysql/include', '/usr/include/mysql']
 sourcedirs = ['.']
 files = Glob("*.c")
 for d in sourcedirs:

@@ -20,7 +20,9 @@ for fn in files:
 	bin = fn[:-2]
 	if not bin.find('lib') >= 0:
 		env.Program(bin, [fn,'/usr/local/lib/libev.a', '../../libzocle.a'])
-		#env.Program(bin, [fn,'/usr/local/lib/libev.a'])
-	#elif bin.startswith('libevent'):
-	#	env.Program(bin, [[fn,'/usr/local/lib/libevent.a'], '../../libzocle2.a'])
+	elif bin.startswith('libev_'):
+		env.Program(bin, [[fn,'/usr/local/lib/libev.a'], '../../libzocle.a'])
+	elif bin.startswith('libevent'):
+		env.Program(bin, [[fn,'/usr/local/lib/libevent.a'], '../../libzocle.a'])
+
 

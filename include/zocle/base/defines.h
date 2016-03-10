@@ -36,6 +36,7 @@
 #define ZC_MIDDLE   0
 #define ZC_PTR_FAILED   (void *)(-1)
 #define ZC_AGAIN	-91000
+#define ZC_STOP		-1
 
 #define ZC_ERR_NULL         -90000
 #define ZC_ERR_BIGGER       -90001

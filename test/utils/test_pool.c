@@ -96,7 +96,7 @@ int test_db()
             ZCWARN("query error!");
         }else{
             rec->row_next(rec);
-            ZCINFO("query: %s, num:%lld", rec->field_str_pos(rec, 0, ""), ((zcMySQLRec*)rec)->_rows);
+            ZCINFO("query: %s, num:%lu", rec->field_str_pos(rec, 0, ""), ((zcMySQLRec*)rec)->_rows);
         }
 
         zc_pool_put(pool, db);

@@ -1,22 +1,25 @@
 #include <zocle/zocle.h>
 
-long long i;
+int i;
 
 void* my_producer(void *x)
 {
-    zcThreadQParam *param = (zcThreadQParam*)x;
-    ZCINFO("producer:%lld", i);
-    param->task = (void*)i;
+    char *a = zc_malloc(128);
+    snprintf(a, 128, "producer %d", i);
+    ZCINFO("%s", a);
     sleep(1); 
     i++;
-    return param;
+    return a;
 }
 
 void* my_consumer(void *x)
 {
-    zcThreadQParam *param = (zcThreadQParam*)x;
-    ZCINFO("consumer:%lld", (long long)param->task);
+    char *a = (char*)x;
+
+    ZCINFO("consumer %s", a);
     //sleep(1);
+
+    zc_free(a);
 
     return NULL;
 }
@@ -24,15 +27,15 @@ void* my_consumer(void *x)
 
 int test()
 {
-    zcThreadQueue *t = zc_threadqueue_new(10);
+    zcThreadSeq *t = zc_threadseq_new(10);
     if (t == NULL) {
-        ZCERROR("threadqueue new error");
+        ZCERROR("threadseq new error");
         return -1;
     }
     t->consume = my_consumer;
     t->produce = my_producer;
 
-    zc_threadqueue_start(t);
+    zc_threadseq_start(t);
 
     ZCINFO("run end");
 
