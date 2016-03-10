@@ -51,14 +51,14 @@ static inline void zc_listhead_init(struct zc_listhead_t *list)
  * This is only for internal list manipulation where we know
  * the prev/next entries already!
  */
-static inline void zc_listhead_add_bt(struct zc_listhead_t *new,
+static inline void zc_listhead_add_bt(struct zc_listhead_t *new_node,
 			      struct zc_listhead_t *prev,
 			      struct zc_listhead_t *next)
 {
-	next->prev = new;
-	new->next = next;
-	new->prev = prev;
-	prev->next = new;
+	next->prev = new_node;
+	new_node->next = next;
+	new_node->prev = prev;
+	prev->next = new_node;
 }
 
 /**
@@ -69,9 +69,9 @@ static inline void zc_listhead_add_bt(struct zc_listhead_t *new,
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
-static inline void zc_listhead_add(struct zc_listhead_t *new, struct zc_listhead_t *head)
+static inline void zc_listhead_add(struct zc_listhead_t *new_node, struct zc_listhead_t *head)
 {
-	zc_listhead_add_bt(new, head, head->next);
+	zc_listhead_add_bt(new_node, head, head->next);
 }
 
 
@@ -83,9 +83,9 @@ static inline void zc_listhead_add(struct zc_listhead_t *new, struct zc_listhead
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-static inline void zc_listhead_add_tail(struct zc_listhead_t *new, struct zc_listhead_t *head)
+static inline void zc_listhead_add_tail(struct zc_listhead_t *new_node, struct zc_listhead_t *head)
 {
-	zc_listhead_add_bt(new, head->prev, head);
+	zc_listhead_add_bt(new_node, head->prev, head);
 }
 
 /*
@@ -127,18 +127,18 @@ static inline void zc_listhead_del_set(struct zc_listhead_t *entry)
  * If @old was empty, it will be overwritten.
  */
 static inline void zc_listhead_replace(struct zc_listhead_t *old,
-				struct zc_listhead_t *new)
+				struct zc_listhead_t *new_node)
 {
-	new->next = old->next;
-	new->next->prev = new;
-	new->prev = old->prev;
-	new->prev->next = new;
+	new_node->next = old->next;
+	new_node->next->prev = new_node;
+	new_node->prev = old->prev;
+	new_node->prev->next = new_node;
 }
 
 static inline void zc_listhead_replace_init(struct zc_listhead_t *old,
-					struct zc_listhead_t *new)
+					struct zc_listhead_t *new_node)
 {
-	zc_listhead_replace(old, new);
+	zc_listhead_replace(old, new_node);
 	zc_listhead_init(old);
 }
 
