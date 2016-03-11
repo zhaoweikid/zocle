@@ -75,7 +75,7 @@ zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
     //ZCINFO("data %s", data);
     switch(*data){
         case '+':
-            r->type = ZC_REDIS_RESP_STRING;
+            r->type = ZC_REDIS_RESP_STATUS;
 
             while (*(data+i) != '\r') i++;
             r->len = i-1;
