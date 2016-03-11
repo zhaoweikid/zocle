@@ -10,7 +10,7 @@ enum zcRedisRespType {
     ZC_REDIS_RESP_STRING  = 1,
     ZC_REDIS_RESP_ARRAY   = 2,
     ZC_REDIS_RESP_INTEGER = 3,
-    ZC_REDIS_RESP_NIL     = 3,
+    ZC_REDIS_RESP_NIL     = 4,
     ZC_REDIS_RESP_STATUS  = 5,
     ZC_REDIS_RESP_ERROR   = 6
 };
