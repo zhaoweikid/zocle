@@ -7,6 +7,25 @@
 #include <zocle/server/asynio.h>
 #include <ev.h>
 
+int
+fast_atoi(const char *p)
+{
+    int x = 0;
+    bool neg = false;
+    if (*p == '-') {
+        neg = true;
+        ++p;
+    }
+    while (*p >= '0' && *p <= '9') {
+        x = (x*10) + (*p - '0');
+        ++p;
+    }
+    if (neg) {
+        x = -x;
+    }
+    return x;
+}
+
 void
 zc_redis_resp_print(zcRedisResp *r)
 {
@@ -45,13 +64,13 @@ zc_redis_resp_delete(void *x)
     {
         zc_list_delete(r->array);
     }
+    zc_free(r);
 }
 
 int
 zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
 {
     int i = 1;
-    char count[16] = {0};
 
     //ZCINFO("data %s", data);
     switch(*data){
@@ -77,16 +96,16 @@ zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
             r->type = ZC_REDIS_RESP_INTEGER;
 
             while(*(data+i) != '\r') i++;
-            strncpy(count, data+1, i-1);
-            r->integer = (int)strtol(count, (char **)NULL, 10);
+            r->integer = fast_atoi(data+1);
             i+=2;
             break;
         case '$':
             r->type = ZC_REDIS_RESP_STRING;
 
             while(*(data+i) != '\r') i++;
-            strncpy(count, data+1, i-1);
-            r->len = (int)strtol(count, (char **)NULL, 10);
+            r->len = fast_atoi(data+1);
+
+            // if len not -1
             if (r->len > 0)
             {
                 r->str = zc_calloc(r->len+1);
@@ -103,22 +122,24 @@ zc_redis_unpack(zcRedisResp *r,const char *data,const int dlen)
             r->type = ZC_REDIS_RESP_ARRAY;
 
             while(*(data+i) != '\r') i++;
-            strncpy(count, data+1, i-1);
-            r->len = (int)strtol(count, (char **)NULL, 10);
+            r->len = fast_atoi(data+1);
 
-            // init zclist
-            r->array = zc_list_new();
-            r->array->del = zc_redis_resp_delete;
-
-            zcRedisResp* tmp;
-            int ret = 0;
-
-            for(int j = 0;j < r->len;j++)
+            // if len not -1
+            if(r->len > 0)
             {
-                tmp = zc_redis_resp_new();
-                ret =  zc_redis_unpack(tmp, data+i+2, -1);
-                zc_list_append(r->array, (void *) tmp);
-                i+=ret;
+                // init zclist
+                r->array = zc_list_new();
+                r->array->del = zc_redis_resp_delete;
+
+                zcRedisResp* tmp;
+
+                for(int j = 0;j < r->len;j++)
+                {
+                    tmp = zc_redis_resp_new();
+                    int ret =  zc_redis_unpack(tmp, data+i+2, -1);
+                    zc_list_append(r->array, (void *) tmp);
+                    i+=ret;
+                }
             }
             i+=2;
             break;

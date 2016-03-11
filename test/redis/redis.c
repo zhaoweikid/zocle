@@ -1,5 +1,6 @@
 #include <zocle/zocle.h>
 #include <ev.h>
+#include <assert.h>
 
 void test1()
 {
@@ -39,19 +40,24 @@ void test2(){
     zc_redis_resp_delete(r);
 }
 int callback(zcAsynIO *conn, zcRedisResp *r){
+    static int count = 0;
+    ZCINFO("count %d", count++);
+
     zc_redis_resp_print(r);
     zc_redis_resp_delete(r);
 
-    /*zc_asynio_redis_execute(conn, "get 1", 5);*/
+    zc_asynio_redis_execute(conn, "get 1", 5);
+
+    return 0;
 }
 
 void test_asynio(){
-    zcAsynIO *conn =  zc_asynio_redis_new_client("172.100.101.151", 6379, 3000, ev_default_loop(0),
+    zcAsynIO *conn = zc_asynio_redis_new_client("172.100.101.151", 6379, 1000, ev_default_loop(0),
             "get 1", 5, callback);
     ev_run(ev_default_loop(0), 0);
 
 }
-void test_1(){
+void test3(){
     zcRedisResp *r ;
 
     r = zc_redis_resp_new();
@@ -68,13 +74,13 @@ void test_1(){
 
 int main()
 {
-    zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW);
+    zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_LEAK|ZC_MEM_DBG_OVERFLOW);
     zc_log_new("stdout", ZC_LOG_ALL);
     zc_log_whole(_zc_log, 1);
 
     /*test1();*/
     /*test2();*/
+    /*test3();*/
     test_asynio();
-    /*test_1();*/
 
 }
