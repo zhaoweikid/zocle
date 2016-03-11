@@ -5,7 +5,10 @@
 #include <zocle/str/string.h>
 #include <zocle/str/buffer.h>
 #include <zocle/server/asynio.h>
+
+#ifdef ZOCLE_WITH_LIBEV
 #include <ev.h>
+#endif
 
 int
 fast_atoi(const char *p)
