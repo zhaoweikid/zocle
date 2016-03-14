@@ -379,6 +379,7 @@ zc_socket_close(zcSocket  *s)
             SSL_CTX_free(s->sslobj->ctx);
     }
 #endif
+    zc_free(s);
 }
 void
 zc_socket_delete(void *s)
