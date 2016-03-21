@@ -12,18 +12,17 @@ ccflags     = '-ggdb -std=gnu99 -Wall'
 #if sys.platform.startswith('linux'):
 #	ccflags += ' -Wl,-soname,lib%s.so.%s' % (name, version.split('.')[0])
 
-defs = ['_REENTRANT', 
-		'_GNU_SOURCE', 
-		'ZOCLE_WITH_ICONV', 
-		'ZOCLE_WITH_PCRE', 
-		'ZOCLE_WITH_LIBEV', 
-		'ZOCLE_WITH_SSL', 
-		'ZOCLE_WITH_SQLITE', 
+defs = ['_REENTRANT',
+		'_GNU_SOURCE',
+		'ZOCLE_WITH_ICONV',
+		'ZOCLE_WITH_PCRE',
+		'ZOCLE_WITH_LIBEV',
+        'ZOCLE_WITH_SSL',
+		'ZOCLE_WITH_SQLITE',
 		'ZOCLE_WITH_MYSQL',
 		'ZOCLE_WITH_MSGPACK',
 		#'ASYNC_ONE_WATCHER',
 		#'ZOCLE_WITH_TCMALLOC',
-		'ZOCLE_WITH_MSGPACK', 
 		]
 
 files = []
@@ -50,6 +49,10 @@ if 'ZOCLE_WITH_SSL' in defs:
 		else:
 			includes.append('/usr/local/ssl/include')
 			libpath.append('/usr/local/ssl/lib')
+    # mac
+	elif os.path.isdir('/usr/local/opt/openssl/'):
+		includes.append('/usr/local/opt/openssl/include/')
+		libpath.append('/usr/local/opt/openssl/lib')
 	else:
 		print 'no ssl dir, use system'
 	libs.append('ssl')
@@ -66,6 +69,9 @@ if 'ZOCLE_WITH_LIBEV' in defs:
 
 if 'ZOCLE_WITH_MYSQL' in defs:
 	libs.append('mysqlclient')
+	if os.path.isdir('/usr/local/include/mysql'):
+		includes.append('/usr/local/include/mysql')
+		libpath.append('/usr/local/lib')
 	if os.path.isdir('/usr/local/mysql'):
 		includes.append('/usr/local/mysql/include')
 		libpath.append('/usr/local/mysql/lib')
@@ -92,13 +98,14 @@ env = None
 if sys.platform == 'win32':
 	libs += ['ws2_32', 'pthreadGC2', 'msvcrt', 'gdi32']
 	env = Environment(tools=['mingw'], CCFLAGS='-ggdb -std=gnu99 -Wall',
-				CPPDEFINES=defs, CPPPATH=includes, 
+				CPPDEFINES=defs, CPPPATH=includes,
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 else:
-	env = Environment(CCFLAGS=ccflags, 
-				CPPDEFINES=defs, CPPPATH=includes, 
+	env = Environment(CCFLAGS=ccflags,
+				CPPDEFINES=defs, CPPPATH=includes,
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
+files += Glob('src/protocol/redis.c')
 env.StaticLibrary(name, files)
 env.SharedLibrary(name, files, SHLIBVERSION=version)
 
