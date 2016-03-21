@@ -833,7 +833,7 @@ zc_asynio_delete(void* conn)
         ev_timer_stop(aconn->loop, &aconn->timer);
     }
     if (aconn->sock) {
-        zc_socket_close(aconn->sock);
+        zc_socket_delete(aconn->sock);
     }
     /*if (aconn->calls) {
         zc_callchain_safedel(aconn->calls);    
