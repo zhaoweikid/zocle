@@ -15,7 +15,7 @@ zc_confdict_new(const char *filename)
     strcpy(cd->filename, filename);
     cd->groups = zc_dict_new(256, 0);
     if (NULL == cd->groups) {
-        ZCERROR("create groups error!");
+        ZCERROR("create groups error!\n");
         zc_free(cd);
         return NULL;
     }
@@ -45,7 +45,7 @@ int zc_confdict_parse(zcConfDict *cd)
 
     f = fopen(cd->filename, "r");
     if (NULL == f) {
-        ZCWARN("open file error: %s", cd->filename);
+        ZCWARN("open file error: %s\n", cd->filename);
         return ZC_FAILED;
     }
     
@@ -64,6 +64,7 @@ int zc_confdict_parse(zcConfDict *cd)
         lineno++;
         
         //ZCINFO("buf:%s", buf);
+        // resume last line
         if (pstart[0] == ' ' || pstart[0] == '\t') {
             while (*pstart == ' ' || *pstart == '\t') pstart++;
             pend = pstart; 
@@ -73,7 +74,7 @@ int zc_confdict_parse(zcConfDict *cd)
             continue;
         }else{
             if (key[0] != 0) {
-                //ZCINFO("set %s:%s", key, value->data);
+                //ZCDEBUG("set %s:%s\n", key, value->data);
                 zc_dict_add(group_table, key, 0, zc_strdup(value->data,0));
                 key[0] = 0;
                 zc_cstr_clear(value);
@@ -88,7 +89,7 @@ int zc_confdict_parse(zcConfDict *cd)
         if (pstart[0] == '[') { // found group
             char *sp = strchr(pstart, ']');
             if (NULL == sp) {
-                ZCERROR("config file error, not found ] at line:%d", lineno);
+                ZCERROR("config file error, not found ] at line:%d\n", lineno);
                 fclose(f);
                 return -1;
             }
@@ -100,7 +101,8 @@ int zc_confdict_parse(zcConfDict *cd)
                 i++;
                 pstart++;
             }
-            ZCINFO("found group: %s", group);
+            group[i] = 0;
+            //ZCINFO("found group: %s\n", group);
             group_table = zc_dict_new(1024, 0);
             group_table->valdel = zc_free_func;
             zc_dict_add(cd->groups, group, 0, group_table);
@@ -135,9 +137,10 @@ int zc_confdict_parse(zcConfDict *cd)
         *end = 0;  
         zc_cstr_append(value, pstart);
         //zc_dict_add_data(group_table, key, pstart);
+        //ZCDEBUG("key:%s value:%s\n", key, value->data); 
     }
     if (key[0] != 0) {
-        ZCINFO("set %s:%s", key, value->data);
+        //ZCINFO("set %s:%s", key, value->data);
         zc_dict_add(group_table, key, 0, zc_strdup(value->data,0));
         key[0] = 0;
         zc_cstr_clear(value);
@@ -343,9 +346,9 @@ void
 zc_confdict_print(zcConfDict *cd)
 {
     void *value;
+    char *key;
 
     if (cd->groups) {
-        char *key;
         zc_dict_foreach_start(cd->groups, key, value)
             zc_dict_walk((zcDict*)value, walk, NULL);
         zc_dict_foreach_end

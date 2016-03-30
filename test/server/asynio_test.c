@@ -26,7 +26,7 @@ int my_handle_read(zcAsynIO *conn)
 }
 
 
-/*int
+int
 my_handle_accept(zcAsynIO *conn)
 {
     //ZCINFO("try accept");
@@ -38,8 +38,10 @@ my_handle_accept(zcAsynIO *conn)
     zcAsynIO *newconn = zc_asynio_new_accepted(newsock, conn);
     zc_socket_linger(newconn->sock, 1, 0);
 
+    zc_asynio_delete(conn);
+
     return ZC_OK;
-}*/
+}
 
 int
 my_handle_connected(zcAsynIO *conn) 
@@ -49,6 +51,24 @@ my_handle_connected(zcAsynIO *conn)
     return ZC_OK;
 }
 
+int my_call_later(zcAsynIO *conn, void *data)
+{
+    static int count = 0;
+    char *s = (char*)data;
+
+    ZCDEBUG("later %s", s);
+
+    count++;
+
+    if (count == 20) 
+        return ZC_STOP;
+
+    return ZC_OK;
+    //return ZC_STOP;
+}
+
+
+
 int main()
 {
     zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW);
@@ -56,7 +76,7 @@ int main()
     zcProtocol p;
 
     zc_protocol_init(&p);
-    //p.handle_accept = my_handle_accept;
+    p.handle_accept = my_handle_accept;
     p.handle_connected = my_handle_connected;
     p.handle_read = my_handle_read;
     
@@ -67,6 +87,8 @@ int main()
         ZCERROR("server create error");
         return 0;
     }
+    
+    zc_asynio_call_later(conn, 0, 1000, my_call_later, "good");
 
     zc_check(conn);
     zc_check(conn->sock);

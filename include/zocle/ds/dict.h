@@ -65,8 +65,17 @@ void    zc_dict_print(zcDict *ht);
 
 #define zc_dict_foreach_end  _zc_ht_n--; } }}
 
-#define zc_dict_node_foreach(ht,node) \
-    for (node=ht->table; ht->len>0; node++)
+#define zc_dict_foreach_keys_start(ht,k) \
+    {int _zc_ht_n = ht->len;\
+    for (zcDictNode *node=ht->table; _zc_ht_n>0; node++) {\
+        if (node->key != NULL && node->key != ZC_KEY_DUMMY) {\
+			k = node->key;
+
+#define zc_dict_foreach_keys_end  _zc_ht_n--; } }}
+
+
+
+
 
 
 #endif
