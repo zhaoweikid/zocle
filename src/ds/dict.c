@@ -61,7 +61,7 @@ zc_dict_new_full(int minsize, char reduce, zcFuncDel keydel, zcFuncDel valdel)
     memset(ht->table, 0, sizeof(zcDictNode)*newsize);
     ht->filled = ht->len = 0;
     ht->hash   = zc_hash_bkdr;
-    ht->keydel = keydel;
+    ht->keydel = zc_free_func;
     ht->valdel = valdel;
 
     return ht;
