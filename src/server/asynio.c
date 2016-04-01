@@ -754,7 +754,7 @@ _call_later_ev_timeout(struct ev_loop *loop, ev_timer *t, int events)
     double repeat_time = (double)t->repeat;
     int ret = v->callback(v->conn, v->data);
     //ZCINFO("repeat:%d, ret:%lf", (double)t->repeat, ret);
-    if (ret == ZC_STOP || abs(repeat_time) <= EPSINON) {
+    if (ret == ZC_STOP || fabs(repeat_time) <= EPSINON) {
         ZCINFO("stop timer");
         ev_timer_stop(loop, t);
         zc_free(v);
