@@ -13,7 +13,7 @@ zc_confdict_new(const char *filename)
     zcConfDict *cd = (zcConfDict*)zc_malloc(sizeof(zcConfDict));
     memset(cd, 0, sizeof(zcConfDict));
     strcpy(cd->filename, filename);
-    cd->groups = zc_dict_new(256, 0);
+    cd->groups = zc_dict_new(256);
     if (NULL == cd->groups) {
         ZCERROR("create groups error!\n");
         zc_free(cd);
@@ -21,7 +21,7 @@ zc_confdict_new(const char *filename)
     }
     cd->groups->valdel = zc_dict_delete;
     
-    cd->group_default = zc_dict_new(1024, 0);
+    cd->group_default = zc_dict_new(1024);
     cd->group_default->valdel = zc_free_func;
 
     cd->kvsp = '=';
@@ -103,7 +103,7 @@ int zc_confdict_parse(zcConfDict *cd)
             }
             group[i] = 0;
             //ZCINFO("found group: %s\n", group);
-            group_table = zc_dict_new(1024, 0);
+            group_table = zc_dict_new(1024);
             group_table->valdel = zc_free_func;
             zc_dict_add(cd->groups, group, 0, group_table);
 

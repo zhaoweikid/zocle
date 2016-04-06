@@ -62,8 +62,8 @@ struct zc_asynio_t
 	zcBuffer	*rbuf;
 	zcBuffer	*wbuf;
 
-    char        connected:1;
-    char        accepting:1; // for server
+    char        connected:1; // for connection created
+    char        accepting:1; // flag for server listen
 	char		close:1;
 	char		ssl:1;
     char        protocol_free:1; // protocol is need free?

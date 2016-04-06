@@ -33,7 +33,7 @@ typedef struct zc_dict_t
 	zcFuncDel  valdel;
 }zcDict;
 
-zcDict* zc_dict_new(int minsize, char reduce);
+zcDict* zc_dict_new(int size);
 zcDict* zc_dict_new_full(int minsize, char reduce, zcFuncDel keydel, zcFuncDel valdel);
 void    zc_dict_delete(void *h);
 void    zc_dict_clear(zcDict *ht);

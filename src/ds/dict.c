@@ -37,9 +37,9 @@ zc_dict_node_destroy(void *hn, zcFuncDel keydel, zcFuncDel valdel)
  * @param reduce   bunk maybe reduce?
  */
 zcDict*
-zc_dict_new(int minsize, char reduce) 
+zc_dict_new(int size) 
 {
-    return zc_dict_new_full(minsize, 0, zc_free_func, zc_nofree_func);
+    return zc_dict_new_full(size, 0, zc_free_func, zc_nofree_func);
 }
 
 zcDict*

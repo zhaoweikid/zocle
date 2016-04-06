@@ -97,6 +97,13 @@ zc_callchain_call(zcCallChain *cc, zcAsynIO *conn, int ret)
     return err;
 }
 
+static int
+zc_asynio_set_closed(zcAsynIO *conn)
+{
+    conn->connected = ZC_FALSE;
+    return ZC_OK;
+}
+
 
 
 // accept only one socket
@@ -339,7 +346,7 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     }
 
     // tcp
-    if (conn->accepting) {
+    if (conn->accepting) { // do accept only, for listen socket
         conn->p.handle_accept(conn);
         return;
     }
