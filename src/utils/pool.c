@@ -25,8 +25,8 @@ zc_pool_new(int maxidle, int maxitem, int timeout, zcFuncNew newf, zcFuncDel del
     p->max_idle = maxidle;
     p->max_all  = maxitem;
     p->timeout  = timeout;
-    p->new = newf;
-    p->del = delf;
+    p->newfunc  = newf;
+    p->delfunc  = delf;
 
     int ret;
     ret = pthread_mutex_init(&p->mutex, NULL);
@@ -58,15 +58,15 @@ zc_pool_delete(void *x)
     zcListNode *node;
     zc_list_foreach(p->idle, node) {
         item = (zcPoolItem*)node->data;
-        if (p->del) {
-            p->del(item->data);
+        if (p->delfunc) {
+            p->delfunc(item->data);
         }
         zc_free(item);
     }
     zc_list_foreach(p->used, node) {
         item = (zcPoolItem*)node->data;
-        if (p->del) {
-            p->del(item->data);
+        if (p->delfunc) {
+            p->delfunc(item->data);
         }
         zc_free(item);
     }
@@ -85,7 +85,7 @@ zc_pool_newitem(zcPool *p, int n)
 {
     int i;
     for (i=0; i<n; i++) {
-        void *x = p->new(p->userdata);
+        void *x = p->newfunc(p->userdata);
         zcPoolItem *item = zc_calloct(zcPoolItem);
         item->data = x;
         item->uptime = time(NULL);

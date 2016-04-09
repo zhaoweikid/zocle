@@ -21,8 +21,8 @@ typedef struct zc_pool_t
 	int			max_idle; // 最大空闲项目
 	int			timeout;
 
-	zcFuncNew	new;	
-	zcFuncDel	del;
+	zcFuncNew	newfunc;	
+	zcFuncDel	delfunc;
 	void		*userdata;
 
 	pthread_mutex_t mutex;
