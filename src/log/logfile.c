@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -61,7 +62,11 @@ _gettid()
 #ifdef _WIN32
     return (unsigned long)pthread_self().p;
 #else
-    return (unsigned long)pthread_self();
+    #ifdef __linux
+        return (unsigned long)syscall(SYS_gettid);
+    #else
+        /return (unsigned long)pthread_self();
+    #endif
 #endif
 }
 
@@ -371,7 +376,7 @@ zc_log_set_prefix(zcLog *log, char *prefix)
         log->logprefix[0] = 0;
         return;
     }
-    snprintf(log->logprefix, sizeof(log->logprefix), prefix);
+    snprintf(log->logprefix, sizeof(log->logprefix), "%s", prefix);
 }
 
 int
