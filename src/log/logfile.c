@@ -65,7 +65,7 @@ _gettid()
     #ifdef __linux
         return (unsigned long)syscall(SYS_gettid);
     #else
-        /return (unsigned long)pthread_self();
+        return (unsigned long)pthread_self();
     #endif
 #endif
 }
