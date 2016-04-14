@@ -181,7 +181,6 @@ zc_asynio_handle_close(zcAsynIO *conn)
     return ZC_OK;
 }
 
-
 // read event
 int
 zc_asynio_handle_read(zcAsynIO *conn)
@@ -535,6 +534,7 @@ zc_asynio_read_timer_reset(zcAsynIO *conn)
 
 
 
+
 zcAsynIO* 
 zc_asynio_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize, int wbufsize)
 {
@@ -544,6 +544,46 @@ zc_asynio_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize,
 
     conn->rbuf = zc_buffer_new(rbufsize);
     conn->wbuf = zc_buffer_new(wbufsize);
+    /*conn->connected = ZC_FALSE;
+    conn->accepting = ZC_FALSE;
+    conn->close= ZC_FALSE;
+    conn->ssl  = ZC_FALSE;*/
+    conn->sock = sock;
+    conn->loop = loop;
+
+    if (p) {
+        zc_asynio_set_protocol(conn, p);
+    }else{ //default
+        zc_protocol_init(&conn->p);
+    }
+
+    ev_io_init(&conn->r, zc_asynio_ev_read, conn->sock->fd, EV_READ);
+    conn->r.data = conn;
+    ev_io_start(conn->loop, &conn->r);
+    
+    int timeout = sock->timeout;
+    conn->read_timeout = conn->write_timeout = conn->conn_timeout = timeout;
+    //ZCINFO("timeout:%d\n", timeout);
+    if (timeout > 0) {
+        //ev_timer_init(&conn->timer, zc_asynio_ev_timeout, timeout, 1);
+        float tm = timeout/1000.0;
+        ev_timer_init(&conn->rtimer, zc_asynio_read_ev_timeout, tm, tm);
+        conn->rtimer.data = conn;
+        ev_timer_start(conn->loop, &conn->rtimer);
+    }
+
+    return conn;
+}
+
+zcAsynIO* 
+zc_asynio_new_buf(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, zcBuffer *rbuf, zcBuffer *wbuf)
+{
+    zcAsynIO *conn = NULL;
+    conn = zc_calloct(zcAsynIO);
+    zc_socket_setblock(sock, ZC_FALSE);
+
+    conn->rbuf = rbuf;
+    conn->wbuf = wbuf;
     /*conn->connected = ZC_FALSE;
     conn->accepting = ZC_FALSE;
     conn->close= ZC_FALSE;
@@ -814,18 +854,22 @@ zc_asynio_delete(void* conn)
     zcAsynIO *aconn = (zcAsynIO*)conn;
     //ZCINFO("read buffer delete");
     zcBuffer *tmp;
-    zcBuffer *buf = aconn->rbuf;
-    while (buf) {
-        tmp = buf->next;
-        zc_buffer_delete(buf);
-        buf = tmp;
+    if (aconn->rbuf_free) {
+        zcBuffer *buf = aconn->rbuf;
+        while (buf) {
+            tmp = buf->next;
+            zc_buffer_delete(buf);
+            buf = tmp;
+        }
     }
     //ZCINFO("write buffer delete");
-    buf = aconn->wbuf;
-    while (buf) {
-        tmp = buf->next;
-        zc_buffer_delete(buf);
-        buf = tmp;
+    if (aconn->wbuf_free) {
+        zcBuffer *buf = aconn->wbuf;
+        while (buf) {
+            tmp = buf->next;
+            zc_buffer_delete(buf);
+            buf = tmp;
+        }
     }
 
     //ZCINFO("stop io in loop");

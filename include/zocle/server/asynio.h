@@ -68,6 +68,8 @@ struct zc_asynio_t
 	char		ssl:1;
     char        protocol_free:1; // protocol is need free?
 	char		w_init:1; // write event init complete
+	char		rbuf_free:1; // rbuf need free
+	char		wbuf_free:1; // wbuf need free
 
     int         read_timeout;
     int         write_timeout;
@@ -95,6 +97,7 @@ struct zc_asynio_t
 };
 
 zcAsynIO*	zc_asynio_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize, int wbufsize);
+zcAsynIO*	zc_asynio_new_buf(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, zcBuffer *rbuf, zcBuffer *wbuf);
 void		zc_asynio_delete(void*);
 void        zc_asynio_delete_delay(void*);
 #define     zc_asynio_safedel(x)  do{zc_asynio_delete(x);x=NULL;}while(0)
