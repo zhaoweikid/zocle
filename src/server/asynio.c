@@ -97,12 +97,12 @@ zc_callchain_call(zcCallChain *cc, zcAsynIO *conn, int ret)
     return err;
 }
 
-static int
+/*static int
 zc_asynio_set_closed(zcAsynIO *conn)
 {
     conn->connected = ZC_FALSE;
     return ZC_OK;
-}
+}*/
 
 
 
@@ -544,6 +544,9 @@ zc_asynio_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize,
 
     conn->rbuf = zc_buffer_new(rbufsize);
     conn->wbuf = zc_buffer_new(wbufsize);
+    conn->rbuf_free = 1;
+    conn->wbuf_free = 1;
+
     /*conn->connected = ZC_FALSE;
     conn->accepting = ZC_FALSE;
     conn->close= ZC_FALSE;
@@ -584,6 +587,8 @@ zc_asynio_new_buf(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, zcBuffer 
 
     conn->rbuf = rbuf;
     conn->wbuf = wbuf;
+    conn->rbuf_free = 0;
+    conn->wbuf_free = 0;
     /*conn->connected = ZC_FALSE;
     conn->accepting = ZC_FALSE;
     conn->close= ZC_FALSE;

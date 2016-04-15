@@ -66,8 +66,8 @@ struct zc_asynio_t
     char        accepting:1; // flag for server listen
 	char		close:1;
 	char		ssl:1;
-    char        protocol_free:1; // protocol is need free?
 	char		w_init:1; // write event init complete
+    char        protocol_free:1; // protocol is need free?
 	char		rbuf_free:1; // rbuf need free
 	char		wbuf_free:1; // wbuf need free
 
