@@ -335,7 +335,9 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
         ZCINFO("udp read:%d", ret);
         ret = conn->p.handle_read(conn);
         rbuf->pos += ret;
-        zc_buffer_compact(rbuf);
+        if (conn->rbuf_auto_compact) {
+            zc_buffer_compact(rbuf);
+        }
         //zc_buffer_reset(rbuf);
         if (zc_buffer_used(conn->wbuf) > 0) {
             zc_asynio_write_start(conn);
@@ -375,7 +377,9 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
         }
         rbuf->pos += ret;
     }
-    zc_buffer_compact(conn->rbuf);
+    if (conn->rbuf_auto_compact) {
+        zc_buffer_compact(conn->rbuf);
+    }
 
     if (zc_buffer_used(conn->wbuf) > 0) {
         zc_asynio_write_start(conn);
@@ -546,6 +550,7 @@ zc_asynio_new(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, int rbufsize,
     conn->wbuf = zc_buffer_new(wbufsize);
     conn->rbuf_free = 1;
     conn->wbuf_free = 1;
+    conn->rbuf_auto_compact = 1;
 
     /*conn->connected = ZC_FALSE;
     conn->accepting = ZC_FALSE;
@@ -589,6 +594,7 @@ zc_asynio_new_buf(zcSocket *sock, zcProtocol *p, struct ev_loop *loop, zcBuffer 
     conn->wbuf = wbuf;
     conn->rbuf_free = 0;
     conn->wbuf_free = 0;
+    conn->rbuf_auto_compact = 1;
     /*conn->connected = ZC_FALSE;
     conn->accepting = ZC_FALSE;
     conn->close= ZC_FALSE;

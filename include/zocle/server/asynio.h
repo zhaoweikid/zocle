@@ -70,6 +70,7 @@ struct zc_asynio_t
     char        protocol_free:1; // protocol is need free?
 	char		rbuf_free:1; // rbuf need free
 	char		wbuf_free:1; // wbuf need free
+    char        rbuf_auto_compact:1; // read buffer is auto compact, default 1
 
     int         read_timeout;
     int         write_timeout;

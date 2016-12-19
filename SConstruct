@@ -15,9 +15,9 @@ ccflags     = '-ggdb -std=gnu99 -Wall'
 defs = ['_REENTRANT', 
 		'_GNU_SOURCE', 
 		#'ZOCLE_WITH_ICONV', 
-		'ZOCLE_WITH_PCRE', 
+		#'ZOCLE_WITH_PCRE', 
 		'ZOCLE_WITH_LIBEV', 
-		'ZOCLE_WITH_SSL', 
+		#'ZOCLE_WITH_SSL', 
 		#'ZOCLE_WITH_SQLITE', 
 		#'ZOCLE_WITH_MYSQL',
 		'ZOCLE_WITH_MSGPACK',
@@ -53,7 +53,7 @@ if 'ZOCLE_WITH_SSL' in defs:
 	else:
 		print 'no ssl dir, use system'
 	libs.append('ssl')
-libs.append('crypto')
+	libs.append('crypto')
 
 if 'ZOCLE_WITH_ICONV' in defs:
 	libs.append('iconv')
