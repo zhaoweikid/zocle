@@ -188,17 +188,19 @@ zc_asynio_handle_read(zcAsynIO *conn)
     zcBuffer *buf = conn->rbuf;
     int rlen = 0;
 
-    
-    //ZCINFO("read_bytes:%d, read_until:%s", conn->_read_bytes, conn->_read_until);
+    ZCDEBUG("read_bytes:%d, read_until:%s, rbuf:%d", conn->_read_bytes, conn->_read_until, 
+                zc_buffer_used(buf));
 
     char *data = zc_buffer_data(buf);
     if (conn->_read_bytes > 0 && zc_buffer_used(buf) >= conn->_read_bytes) { // read_bytes
+        ZCDEBUG("read bytes call");
         rlen = conn->_read_bytes;
         conn->_read_callback(conn, data, rlen);
         //conn->_read_bytes = 0;
     }else if (conn->_read_until != NULL) { // read to a position
         if (conn->_read_until == ZC_ASYNIO_READ_CLOSE) { // read to end
             if (conn->close) {
+                ZCDEBUG("read util call");
                 rlen = zc_buffer_used(buf);
                 conn->_read_callback(conn, data, rlen);
                 //conn->_read_until = NULL;
@@ -206,6 +208,7 @@ zc_asynio_handle_read(zcAsynIO *conn)
         }else{
             char *pos = strstr(data, conn->_read_until);
             if (NULL != pos) { // found
+                ZCDEBUG("read util call");
                 rlen = pos-data+strlen(conn->_read_until);
                 conn->_read_callback(conn, data, rlen); 
                 //conn->_read_until = NULL;
@@ -231,10 +234,11 @@ zc_asynio_handle_wrote(zcAsynIO *conn)
 int
 zc_asynio_handle_read_timeout(zcAsynIO *conn)
 {
-    ZCNOTE("read timeout, close conn");
+    ZCNOTE("read timeout, close conn:%p", conn);
     conn->p.handle_close(conn);
     //zc_asynio_delete(conn);
-    zc_asynio_safedel(conn);
+    //zc_asynio_safedel(conn);
+    zc_asynio_delete_delay(conn);
     return ZC_OK;
 }
 
@@ -275,7 +279,7 @@ zc_protocol_init(zcProtocol *p)
 
 static void zc_asynio_read_timer_reset(zcAsynIO *conn);
 
-#define ZC_ONE_READ_MAX 8192
+#define ZC_ONE_READ_MAX 8192*2
 
 // read data to buffer
 static int
@@ -294,7 +298,8 @@ zc_asynio_read_buffer(zcAsynIO *conn, zcBuffer *buf)
                 }
             }
             conn->p.handle_close(conn);
-            zc_asynio_safedel(conn);
+            //zc_asynio_safedel(conn);
+            zc_asynio_delete_delay(conn);
             return ZC_ERR;
         }
         if (ret < 0) { // EWOULDBLOCK, EAGAIN
@@ -328,14 +333,15 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
         if (ret <= 0) {
             ZCNOTE("recvfrom error:%d, close conn", ret);
             conn->p.handle_close(conn);
-            zc_asynio_safedel(conn);
+            //zc_asynio_safedel(conn);
+            zc_asynio_delete_delay(conn);
             return;
         }
         rbuf->end += ret;
         ZCINFO("udp read:%d", ret);
         ret = conn->p.handle_read(conn);
-        rbuf->pos += ret;
         if (conn->rbuf_auto_compact) {
+            rbuf->pos += ret;
             zc_buffer_compact(rbuf);
         }
         //zc_buffer_reset(rbuf);
@@ -355,27 +361,32 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
         conn->p.handle_connected(conn);
         conn->connected = ZC_TRUE;
     }
-    ZCINFO("try read data\n");
+    ZCDEBUG("try read data\n");
     zcBuffer *rbuf = conn->rbuf;
     int rsize = 0;
     ret = zc_asynio_read_buffer(conn, rbuf);
+    ZCDEBUG("read data %d to rbuf", ret);
     if (ret < 0) //close
         return;
     rsize += ret;
 
-    ZCINFO("buffer used:%d", zc_buffer_used(rbuf));
+    ZCDEBUG("buffer used:%d", zc_buffer_used(rbuf));
     while (zc_buffer_used(rbuf) > 0) {
+        ZCDEBUG("handle read %d", zc_buffer_used(rbuf));
         ret = conn->p.handle_read(conn);
-        ZCINFO("handle_read return:%d", ret);
+        ZCDEBUG("handle_read return:%d", ret);
         if (ret == ZC_AGAIN) // read again
             break;
         if (ret < 0) {
             ZCWARN("handle_read failed %d, break", ret);
             conn->p.handle_close(conn);
-            zc_asynio_safedel(conn);
+            //zc_asynio_safedel(conn);
+            zc_asynio_delete_delay(conn);
             return;
         }
-        rbuf->pos += ret;
+        if (conn->rbuf_auto_compact) {
+            rbuf->pos += ret;
+        }
     }
     if (conn->rbuf_auto_compact) {
         zc_buffer_compact(conn->rbuf);
@@ -386,7 +397,7 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     }
     zc_asynio_read_timer_reset(conn);
 
-    ZCINFO("<read event end>");
+    ZCDEBUG("<%s read event end>", addr);
     return;
 }
 
@@ -411,7 +422,8 @@ zc_asynio_ev_write(struct ev_loop *loop, ev_io *w, int events)
         if (ret != zc_buffer_used(wbuf)) {
             ZCWARN("sendto error:%d, wbuf:%d, close conn", ret, zc_buffer_used(wbuf));
             conn->p.handle_close(conn);
-            zc_asynio_safedel(conn);
+            //zc_asynio_safedel(conn);
+            zc_asynio_delete_delay(conn);
             return;
         }
         ZCINFO("udp write:%d", ret);
@@ -434,7 +446,8 @@ zc_asynio_ev_write(struct ev_loop *loop, ev_io *w, int events)
         ZCWARN("peek error:%d\n", ret);
         conn->p.handle_close(conn); 
         //zc_socket_delete(conn->sock);
-        zc_asynio_safedel(conn);
+        //zc_asynio_safedel(conn);
+        zc_asynio_delete_delay(conn);
         return;
     }
 
@@ -449,7 +462,8 @@ zc_asynio_ev_write(struct ev_loop *loop, ev_io *w, int events)
             }
             conn->p.handle_close(conn);
             //zc_socket_delete(conn->sock);
-            zc_asynio_safedel(conn);
+            //zc_asynio_safedel(conn);
+            zc_asynio_delete_delay(conn);
             return;
         }
         wbuf->pos += ret;
@@ -869,6 +883,7 @@ zc_asynio_delete(void* conn)
         zcBuffer *buf = aconn->rbuf;
         while (buf) {
             tmp = buf->next;
+            ZCDEBUG("free rbuf:%p", buf);
             zc_buffer_delete(buf);
             buf = tmp;
         }
@@ -915,6 +930,7 @@ _call_later_delete_conn(struct ev_loop *loop, ev_timer *t, int events)
 void
 zc_asynio_delete_delay(void* c)
 {
+    ZCDEBUG("delete delay conn:%p", c);
     zcAsynIO *conn = (zcAsynIO*)c;
     // have timer, must stop
     if (conn->timer.pending > 0 || conn->timer.active > 0) {
@@ -924,6 +940,13 @@ zc_asynio_delete_delay(void* c)
     ev_timer_init(&conn->timer, _call_later_delete_conn, tm, tm);
     conn->timer.data = conn;
     ev_timer_start(conn->loop, &conn->timer);
+
+    //ZCINFO("stop io in loop");
+    ev_io_stop(conn->loop, &conn->r);
+    ev_io_stop(conn->loop, &conn->w);
+
+    ev_timer_stop(conn->loop, &conn->rtimer);
+    ev_timer_stop(conn->loop, &conn->wtimer);
 }
 
 

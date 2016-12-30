@@ -405,12 +405,12 @@ zc_check_real(void *ptr, const char *file, int line)
 {
     int size = *((uint32_t *)(ptr - 8));
     if (*((uint32_t *)(ptr-4)) != 0x55555555) {
-        ZCERROR("zc_check start failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d\n", 
+        ZCERROR("[zc_check start failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d]\n", 
                 ptr, size, *((uint32_t *)(ptr-4)), *((uint32_t *)(ptr+size)), file, line);
         return ZC_FAILED;
     }
     if (*((uint32_t *)(ptr + size)) != 0x55555555) {
-        ZCERROR("zc_check end failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d\n", 
+        ZCERROR("[zc_check end failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d]\n", 
                 ptr, size, *((uint32_t *)(ptr-4)), *((uint32_t *)(ptr+size)), file, line);
         return ZC_FAILED;
     }
