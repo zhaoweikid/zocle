@@ -100,7 +100,7 @@ else:
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 env.StaticLibrary(name, files)
-env.SharedLibrary(name, files, SHLIBVERSION=version)
+#env.SharedLibrary(name, files, SHLIBVERSION=version)
 
 #SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
 
