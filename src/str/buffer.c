@@ -7,7 +7,7 @@
 
 zcBuffer* zc_buffer_resize_tw(zcBuffer *buf, uint32_t size);
 
-zcBuffer*   
+zcBuffer*
 zc_buffer_new(uint32_t size)
 {
     zcBuffer *buf;
@@ -18,7 +18,7 @@ zc_buffer_new(uint32_t size)
     return buf;
 }
 
-zcBuffer*   
+zcBuffer*
 zc_buffer_new_ring(uint32_t size)
 {
     zcBuffer *buf;
@@ -41,7 +41,7 @@ int
 zc_buffer_new2(zcBuffer **buf, uint32_t size)
 {
     zcBuffer *buffer;
-    
+
     buffer = (zcBuffer*)zc_malloc(sizeof(zcBuffer) + size);
     *buf = buffer;
     zc_buffer_init(buffer, size);
@@ -99,7 +99,7 @@ zc_buffer_destroy(void *b)
     }
 }
 
-int 
+int
 zc_buffer_set(zcBuffer *buf, void *data, int len)
 {
     if (len > buf->size) {
@@ -153,7 +153,9 @@ zc_buffer_get(zcBuffer *buf, void *data, int len)
     int leav = buf->end - buf->pos;
     if (len > leav)
         len = leav;
-    memcpy(data, buf->data+buf->pos, len);
+    if (NULL != data) {
+        memcpy(data, buf->data+buf->pos, len);
+    }
     buf->pos += len;
     if (buf->pos == buf->end) {
         buf->pos = buf->end = 0;
@@ -161,13 +163,13 @@ zc_buffer_get(zcBuffer *buf, void *data, int len)
     return len;
 }
 
-int 
+int
 zc_buffer_append_tw(zcBuffer *buf, void *data, int len)
 {
     if (zc_buffer_idle(buf) < len) {
-        return ZC_ERR; 
+        return ZC_ERR;
     }
-    
+
     if (buf->end > buf->pos) {
         int len1 = buf->size - buf->end;
         if (len1 >= len) {
@@ -186,14 +188,14 @@ zc_buffer_append_tw(zcBuffer *buf, void *data, int len)
     return ZC_OK;
 }
 
-int 
+int
 zc_buffer_append(zcBuffer *buf, void *data, int len)
 {
     if (buf->ring)
         return zc_buffer_append_tw(buf, data, len);
 
     if (buf->end + len > buf->size) {
-        return ZC_ERR; 
+        return ZC_ERR;
     }
     memcpy(buf->data+buf->end, data, len);
     buf->end += len;
@@ -207,12 +209,12 @@ zc_buffer_append_resize_tw(zcBuffer *buf, void *data, int len)
     int blen = zc_buffer_used(buf);
     int wantsize = blen+len;
     if (wantsize > buf->size) {
-        int newsize = buf->size; 
+        int newsize = buf->size;
         while (newsize < wantsize) {
             newsize = newsize * 2;
         }
         zcBuffer *newbuf = zc_buffer_resize_tw(buf, newsize);
-        zc_buffer_delete(buf);  
+        zc_buffer_delete(buf);
         buf = newbuf;
     }
     memcpy(buf->data+buf->end, data, len);
@@ -230,12 +232,12 @@ zc_buffer_append_resize(zcBuffer *buf, void *data, int len)
         return zc_buffer_append_resize_tw(buf, data, len);
 
     if (buf->end + len > buf->size) {
-        int newsize = buf->size; 
+        int newsize = buf->size;
         while (newsize < len+buf->end) {
             newsize = newsize * 2;
         }
         zcBuffer *newbuf = zc_buffer_resize(buf, newsize);
-        zc_buffer_delete(buf);  
+        zc_buffer_delete(buf);
         buf = newbuf;
     }
     memcpy(buf->data + buf->end, data, len);
@@ -257,7 +259,7 @@ zc_buffer_compact_tw(zcBuffer *buf)
 
     char *tmp = (char*)zc_malloc(len);
     zc_buffer_get_tw(buf, tmp, len);
-        
+
     memcpy(buf->data, tmp, len);
     buf->pos = 0;
     buf->end = len;
@@ -277,7 +279,7 @@ zc_buffer_compact(zcBuffer *buf)
     if (buf->pos == 0)
         return ZC_OK;
     int leav = buf->end - buf->pos;
-    
+
     if (leav > 0) {
         memmove(buf->data, buf->data+buf->pos, leav);
     }
@@ -286,10 +288,10 @@ zc_buffer_compact(zcBuffer *buf)
     return ZC_OK;
 }
 
-zcBuffer*   
+zcBuffer*
 zc_buffer_resize_tw(zcBuffer *buf, uint32_t size)
 {
-    zcBuffer *newbuf = zc_buffer_new(size);  
+    zcBuffer *newbuf = zc_buffer_new(size);
     newbuf->end = zc_buffer_get_tw(buf, newbuf->data, newbuf->size);
     zc_buffer_delete(buf);
 
@@ -297,12 +299,12 @@ zc_buffer_resize_tw(zcBuffer *buf, uint32_t size)
 }
 
 
-zcBuffer*   
+zcBuffer*
 zc_buffer_resize(zcBuffer *buf, uint32_t size)
 {
     if (buf->ring)
         return zc_buffer_resize_tw(buf, size);
-    zcBuffer *newbuf = zc_buffer_new(size);  
+    zcBuffer *newbuf = zc_buffer_new(size);
     newbuf->end = zc_buffer_get(buf, newbuf->data, newbuf->size);
     zc_buffer_delete(buf);
 
@@ -310,7 +312,7 @@ zc_buffer_resize(zcBuffer *buf, uint32_t size)
 }
 
 
-void 
+void
 zc_buffer_delete_all(void *x)
 {
     zcBuffer *buf = (zcBuffer*)x;
