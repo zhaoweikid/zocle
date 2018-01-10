@@ -1,3 +1,4 @@
+#ifdef __linux
 #ifndef ZOCLE_EVENT
 #define ZOCLE_EVENT
 
@@ -34,5 +35,7 @@ int		zc_loop_add_ev(zcLoop *, int fd, uint32_t evts, zcFuncEvent f, void*);
 int		zc_loop_mod_ev(zcLoop *, int fd, uint32_t evts, zcFuncEvent f, void*);
 int		zc_loop_del_ev(zcLoop *, int fd, uint32_t evts, zcFuncEvent f, void*);
 
+
+#endif
 
 #endif

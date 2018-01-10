@@ -60,7 +60,7 @@ zc_thrift_write_field_end(zcBuffer *buf)
 int
 zc_thrift_write_field_stop(zcBuffer *buf)
 {
-    return zc_thrift_write_byte(buf, THRIFT_STOP);
+    return zc_thrift_write_byte(buf, ZC_THRIFT_STOP);
 }
 
 int
@@ -157,18 +157,18 @@ zc_thrift_write_binary(zcBuffer *buf, char *s, int n)
 // ---- read ----
 
 int
-zc_thrift_read_msg_begin(char *s, char *name, char *type, int *seqid)
+zc_thrift_read_msg_begin(const char *s, char *name, char *type, int *seqid)
 {
     int n = 0;
     int size = 0;
     zc_thrift_read_i32(s, &size);
     n += 4;
     if (size < 0) {
-        int ver = size & THRIFT_VERSION_MASK;
-        if (ver != THRIFT_VERSION_1)
+        int ver = size & ZC_THRIFT_VERSION_MASK;
+        if (ver != ZC_THRIFT_VERSION_1)
             return ZC_ERR;
 
-        *type = size & THRIFT_TYPE_MASK;
+        *type = size & ZC_THRIFT_TYPE_MASK;
         int namelen = 0;
         n += zc_thrift_read_binary(s+n, name, &namelen);
         n += zc_thrift_read_i32(s+n, seqid); 
@@ -184,28 +184,28 @@ zc_thrift_read_msg_begin(char *s, char *name, char *type, int *seqid)
 }
 
 int
-zc_thrift_read_msg_end(char *s)
+zc_thrift_read_msg_end(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_struct_begin(char *s)
+zc_thrift_read_struct_begin(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_struct_end(char *s)
+zc_thrift_read_struct_end(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_field_begin(char *s, char *name, char *type, short *id)
+zc_thrift_read_field_begin(const char *s, char *type, short *id)
 {
     zc_thrift_read_byte(s, type);
-    if (type == THRIFT_STOP) {
+    if (type == ZC_THRIFT_STOP) {
         return 1;
     }
     zc_thrift_read_i16(s+1, id);
@@ -213,13 +213,13 @@ zc_thrift_read_field_begin(char *s, char *name, char *type, short *id)
 }
 
 int
-zc_thrift_read_field_end(char *s)
+zc_thrift_read_field_end(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_map_begin(char *s, char *ktype, char *vtype, int *size)
+zc_thrift_read_map_begin(const char *s, char *ktype, char *vtype, int *size)
 {
     zc_thrift_read_byte(s, ktype);
     zc_thrift_read_byte(s+1, vtype);
@@ -229,13 +229,13 @@ zc_thrift_read_map_begin(char *s, char *ktype, char *vtype, int *size)
 }
 
 int
-zc_thrift_read_map_end(char *s)
+zc_thrift_read_map_end(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_list_begin(char *s, char *etype, int *size)
+zc_thrift_read_list_begin(const char *s, char *etype, int *size)
 {
     zc_thrift_read_byte(s, etype);
     zc_thrift_read_i32(s+1, size);
@@ -243,13 +243,13 @@ zc_thrift_read_list_begin(char *s, char *etype, int *size)
 }
 
 int
-zc_thrift_read_list_end(char *s)
+zc_thrift_read_list_end(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_set_begin(char *s, char *etype, int *size)
+zc_thrift_read_set_begin(const char *s, char *etype, int *size)
 {
     zc_thrift_read_byte(s, etype);
     zc_thrift_read_i32(s+1, size);
@@ -257,55 +257,55 @@ zc_thrift_read_set_begin(char *s, char *etype, int *size)
 }
 
 int
-zc_thrift_read_set_end(char *s)
+zc_thrift_read_set_end(const char *s)
 {
     return 0;
 }
 
 int
-zc_thrift_read_bool(char *s, char *b)
+zc_thrift_read_bool(const char *s, char *b)
 {
-    memcpy(b, s, sizeof(char));
+    memcpy(b, s, sizeof(const char));
     return 1;
 }
 
 int
-zc_thrift_read_byte(char *s, char *b)
+zc_thrift_read_byte(const char *s, char *b)
 {
-    memcpy(b, s, sizeof(char));
+    memcpy(b, s, sizeof(const char));
     return 1;
 }
 
 int
-zc_thrift_read_i16(char *s, short *n)
+zc_thrift_read_i16(const char *s, short *n)
 {
     memcpy(n, s, sizeof(short));
     return 2;
 }
 
 int
-zc_thrift_read_i32(char *s, int *n)
+zc_thrift_read_i32(const char *s, int *n)
 {
     memcpy(n, s, sizeof(int));
     return 4;
 }
 
 int
-zc_thrift_read_i64(char *s, long long *n)
+zc_thrift_read_i64(const char *s, long long *n)
 {
     memcpy(n, s, sizeof(long long));
     return 8;
 }
 
 int
-zc_thrift_read_double(char *s, double *n)
+zc_thrift_read_double(const char *s, double *n)
 {
     memcpy(n, s, sizeof(double));
     return 4;
 }
 
 int
-zc_thrift_read_binary(char *s, char *b, int *n)
+zc_thrift_read_binary(const char *s, char *b, int *n)
 {
     zc_thrift_read_i32(s, n);
     memcpy(b, s+4, *n);

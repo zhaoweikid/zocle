@@ -1,31 +1,32 @@
-#ifndef __THRIFT_H__
-#define __THRIFT_H__
+#ifndef __ZC_THRIFT_H__
+#define __ZC_THRIFT_H__
 
 #include <stdio.h>
 #include <stdint.h>
 
 
-#define THRIFT_VERSION_MASK -65536
-#define THRIFT_VERSION_1    -2147418112
-#define THRIFT_TYPE_MASK    0x000000ff
+#define ZC_THRIFT_VERSION_MASK -65536
+#define ZC_THRIFT_VERSION_1    -2147418112
+#define ZC_THRIFT_TYPE_MASK    0x000000ff
 
-#define THRIFT_STOP 0
-#define THRIFT_VOID 1
-#define THRIFT_BOOL 2
-#define THRIFT_BYTE 3
-#define THRIFT_I08  3
-#define THRIFT_DOUBLE   4
-#define THRIFT_I16  6
-#define THRIFT_I32  8
-#define THRIFT_I64  10
-#define THRIFT_STRING   11
-#define THRIFT_UTF7 11
-#define THRIFT_MAP  13
-#define THRIFT_SET  14
-#define THRIFT_LIST 15
-#define THRIFT_UTF8 16
-#define THRIFT_UTF16    17
+#define ZC_THRIFT_STOP 0
+#define ZC_THRIFT_VOID 1
+#define ZC_THRIFT_BOOL 2
+#define ZC_THRIFT_BYTE 3
+#define ZC_THRIFT_I08  3
+#define ZC_THRIFT_DOUBLE   4
+#define ZC_THRIFT_I16  6
+#define ZC_THRIFT_I32  8
+#define ZC_THRIFT_I64  10
+#define ZC_THRIFT_STRING   11
+#define ZC_THRIFT_UTF7 11
+#define ZC_THRIFT_MAP  13
+#define ZC_THRIFT_SET  14
+#define ZC_THRIFT_LIST 15
+#define ZC_THRIFT_UTF8 16
+#define ZC_THRIFT_UTF16    17
 
+// ---- write ----
 
 void zc_thrift_write_framed_head(zcBuffer *buf);
 void zc_thrift_write_framed(zcBuffer *buf);
@@ -52,25 +53,25 @@ int  zc_thrift_write_binary(zcBuffer *buf, char *s, int n);
 
 // ---- read ----
 
-int  zc_thrift_read_msg_begin(char *s, char *name, char *type, int *seqid);
-int  zc_thrift_read_msg_end(char *s);
-int  zc_thrift_read_struct_begin(char *s);
-int  zc_thrift_read_struct_end(char *s);
-int  zc_thrift_read_field_begin(char *s, char *name, char *type, short *id);
-int  zc_thrift_read_field_end(char *s);
-int  zc_thrift_read_map_begin(char *s, char *ktype, char *vtype, int *size);
-int  zc_thrift_read_map_end(char *s);
-int  zc_thrift_read_list_begin(char *s, char *etype, int *size);
-int  zc_thrift_read_list_end(char *s);
-int  zc_thrift_read_set_begin(char *s, char *etype, int *size);
-int  zc_thrift_read_set_end(char *s);
-int  zc_thrift_read_bool(char *s, char *b);
-int  zc_thrift_read_byte(char *s, char *b);
-int  zc_thrift_read_i16(char *s, short *n);
-int  zc_thrift_read_i32(char *s, int *n);
-int  zc_thrift_read_i64(char *s, long long *n);
-int  zc_thrift_read_double(char *s, double *n);
-int  zc_thrift_read_binary(char *s, char *b, int *n);
+int  zc_thrift_read_msg_begin(const char *s, char *name, char *type, int *seqid);
+int  zc_thrift_read_msg_end(const char *s);
+int  zc_thrift_read_struct_begin(const char *s);
+int  zc_thrift_read_struct_end(const char *s);
+int  zc_thrift_read_field_begin(const char *s, char *name, char *type, short *id);
+int  zc_thrift_read_field_end(const char *s);
+int  zc_thrift_read_map_begin(const char *s, char *ktype, char *vtype, int *size);
+int  zc_thrift_read_map_end(const char *s);
+int  zc_thrift_read_list_begin(const char *s, char *etype, int *size);
+int  zc_thrift_read_list_end(const char *s);
+int  zc_thrift_read_set_begin(const char *s, char *etype, int *size);
+int  zc_thrift_read_set_end(const char *s);
+int  zc_thrift_read_bool(const char *s, char *b);
+int  zc_thrift_read_byte(const char *s, char *b);
+int  zc_thrift_read_i16(const char *s, short *n);
+int  zc_thrift_read_i32(const char *s, int *n);
+int  zc_thrift_read_i64(const char *s, long long *n);
+int  zc_thrift_read_double(const char *s, double *n);
+int  zc_thrift_read_binary(const char *s, char *b, int *n);
 
 
 #endif

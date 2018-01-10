@@ -6,7 +6,7 @@
 #include <zocle/protocol/http/httpreq.h>
 #include <zocle/protocol/http/httpresp.h>
 #include <zocle/protocol/http/httpconn.h>
-#include <zocle/server/asynconn.h>
+#include <zocle/server/asynio.h>
 #include <zocle/enc/compress.h>
 
 #define ZC_WS_AGAIN		0

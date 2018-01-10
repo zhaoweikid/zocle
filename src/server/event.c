@@ -1,3 +1,4 @@
+#ifdef __linux
 #include <zocle/server/event.h>
 #include <sys/epoll.h>
 #include <zocle/base/defines.h>
@@ -135,4 +136,4 @@ zc_loop_del_ev(zcLoop *loop, int fd, uint32_t evts, zcFuncEvent f, void *data)
 }
 
 
-
+#endif

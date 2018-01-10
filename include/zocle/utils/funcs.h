@@ -21,4 +21,7 @@ uint32_t zc_hash_ap(void *str, int len);
 uint32_t zc_hash_js(void *str, int len);
 uint32_t zc_hash_elf(void *str, int len);
 
+
+int zc_format_hex(char *out, const char *data, int len);
+
 #endif

@@ -209,3 +209,33 @@ zc_hash_elf(void *s, int len)
 }
 
 
+int 
+zc_format_hex(char *out, const char *data, int len)
+{
+	int i;
+	char *s = out;
+	char *map = "0123456789ABCDEF";
+	unsigned char n;
+
+	for (i=0; i<len; i++) {
+		n = data[i];
+		*s = map[n/16];
+		s++;
+		*s = map[n%16];
+		s++;
+	
+		if (n >= 33 && n <= 126) {
+			*s = '/'; 
+			s++;
+			*s = n;
+			s++;
+		}
+
+		*s = ' ';
+		s++;
+	}
+	*s = 0;
+	return s-out;
+}
+
+
