@@ -12,35 +12,40 @@ void
 zc_thrift_write_framed(zcBuffer *buf)
 {
     char *data = buf->data;
-    int n = zc_buffer_used(buf) - 4;
+    int n = zc_htob32(zc_buffer_used(buf) - 4);
     memcpy(data, &n, 4);
 }
 
 int
 zc_thrift_write_msg_begin(zcBuffer *buf, char *name, char type, int seq)
 {
+    //zc_thrift_write_binary(buf, name, strlen(name));
+    //zc_thrift_write_byte(buf, type);
+    //zc_thrift_write_i32(buf, seq);
+	
+	zc_thrift_write_i32(buf, ZC_THRIFT_VERSION_1 | type);
     zc_thrift_write_binary(buf, name, strlen(name));
-    zc_thrift_write_byte(buf, type);
     zc_thrift_write_i32(buf, seq);
+		
     return 0;
 }
 
 int
 zc_thrift_write_msg_end(zcBuffer *buf)
 {
-    return 0;
+    return zc_thrift_write_field_stop(buf);
 }
 
 int
 zc_thrift_write_struct_begin(zcBuffer *buf, char *name)
 {
-    return 0;
+    return zc_thrift_write_field_begin(buf, name, ZC_THRIFT_STRUCT, 0);
 }
 
 int
 zc_thrift_write_struct_end(zcBuffer *buf)
 {
-    return 0;
+    return zc_thrift_write_field_stop(buf);
 }
 
 int
@@ -51,11 +56,11 @@ zc_thrift_write_field_begin(zcBuffer *buf, char *name, char type, int id)
     return 0;
 }
 
-int
+/*int
 zc_thrift_write_field_end(zcBuffer *buf)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_write_field_stop(zcBuffer *buf)
@@ -72,11 +77,11 @@ zc_thrift_write_map_begin(zcBuffer *buf, char ktype, char vtype, int size)
     return 0;
 }
 
-int
+/*int
 zc_thrift_write_map_end(zcBuffer *buf)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_write_list_begin(zcBuffer *buf, char etype, int size)
@@ -86,11 +91,11 @@ zc_thrift_write_list_begin(zcBuffer *buf, char etype, int size)
     return 0;
 }
 
-int
+/*int
 zc_thrift_write_list_end(zcBuffer *buf)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_write_set_begin(zcBuffer *buf, char etype, int size)
@@ -100,11 +105,11 @@ zc_thrift_write_set_begin(zcBuffer *buf, char etype, int size)
     return 0;
 }
 
-int
+/*int
 zc_thrift_write_set_end(zcBuffer *buf)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_write_bool(zcBuffer *buf, int b)
@@ -125,19 +130,22 @@ zc_thrift_write_byte(zcBuffer *buf, char byte)
 int
 zc_thrift_write_i16(zcBuffer *buf, short n)
 {
-    return zc_buffer_append(buf, &n, sizeof(short));
+	short n2 = zc_htob16(n);
+    return zc_buffer_append(buf, &n2, sizeof(short));
 }
 
 int
 zc_thrift_write_i32(zcBuffer *buf, int n)
 {
-    return zc_buffer_append(buf, &n, sizeof(int));
+	int n2 = zc_htob32(n);
+    return zc_buffer_append(buf, &n2, sizeof(int));
 }
 
 int
 zc_thrift_write_i64(zcBuffer *buf, long long  n)
 {
-    return zc_buffer_append(buf, &n, sizeof(long long));
+	long long n2 = zc_htob64(n);
+    return zc_buffer_append(buf, &n2, sizeof(long long));
 }
 
 int
@@ -149,9 +157,32 @@ zc_thrift_write_double(zcBuffer *buf, double n)
 int
 zc_thrift_write_binary(zcBuffer *buf, char *s, int n)
 {
-    zc_buffer_append(buf, &n, 4);
+	zc_thrift_write_i32(buf, n);
     zc_buffer_append(buf, s, n);
     return 0;
+}
+
+int	 
+zc_thrift_write_exception(zcBuffer *buf, char *s, int type, char *name, int seqid, bool framed)
+{
+	if (framed) {
+		zc_thrift_write_framed_head(buf);
+	}
+	zc_thrift_write_msg_begin(buf, name, ZC_THRIFT_EXCEPTION, seqid);
+
+	zc_thrift_write_field_begin(buf, NULL, ZC_THRIFT_STRING, 1);
+	zc_thrift_write_binary(buf, s, strlen(s));
+
+	zc_thrift_write_field_begin(buf, NULL, ZC_THRIFT_I32, 2);
+	zc_thrift_write_i32(buf, type);
+
+	zc_thrift_write_msg_end(buf);
+
+	if (framed) {
+		zc_thrift_write_framed(buf);
+	}
+	
+	return ZC_OK;	
 }
 
 // ---- read ----
@@ -186,23 +217,25 @@ zc_thrift_read_msg_begin(const char *s, char *name, char *type, int *seqid)
 int
 zc_thrift_read_msg_end(const char *s)
 {
-    return 0;
+    return 1;
 }
 
 int
 zc_thrift_read_struct_begin(const char *s)
 {
-    return 0;
+	char type;
+	short id;
+    return zc_thrift_read_field_begin(s, NULL, &type, &id);
 }
 
 int
 zc_thrift_read_struct_end(const char *s)
 {
-    return 0;
+    return 1;
 }
 
 int
-zc_thrift_read_field_begin(const char *s, char *type, short *id)
+zc_thrift_read_field_begin(const char *s, char *name, char *type, short *id)
 {
     zc_thrift_read_byte(s, type);
     if (type == ZC_THRIFT_STOP) {
@@ -212,11 +245,11 @@ zc_thrift_read_field_begin(const char *s, char *type, short *id)
     return 3;
 }
 
-int
+/*int
 zc_thrift_read_field_end(const char *s)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_read_map_begin(const char *s, char *ktype, char *vtype, int *size)
@@ -228,11 +261,11 @@ zc_thrift_read_map_begin(const char *s, char *ktype, char *vtype, int *size)
     return 6;
 }
 
-int
+/*int
 zc_thrift_read_map_end(const char *s)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_read_list_begin(const char *s, char *etype, int *size)
@@ -242,11 +275,11 @@ zc_thrift_read_list_begin(const char *s, char *etype, int *size)
     return 5;
 }
 
-int
+/*int
 zc_thrift_read_list_end(const char *s)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_read_set_begin(const char *s, char *etype, int *size)
@@ -256,11 +289,11 @@ zc_thrift_read_set_begin(const char *s, char *etype, int *size)
     return 5;
 }
 
-int
+/*int
 zc_thrift_read_set_end(const char *s)
 {
     return 0;
-}
+}*/
 
 int
 zc_thrift_read_bool(const char *s, char *b)
@@ -280,6 +313,7 @@ int
 zc_thrift_read_i16(const char *s, short *n)
 {
     memcpy(n, s, sizeof(short));
+	*n = zc_htob16(*n);
     return 2;
 }
 
@@ -287,6 +321,7 @@ int
 zc_thrift_read_i32(const char *s, int *n)
 {
     memcpy(n, s, sizeof(int));
+	*n = zc_htob32(*n);
     return 4;
 }
 
@@ -294,6 +329,7 @@ int
 zc_thrift_read_i64(const char *s, long long *n)
 {
     memcpy(n, s, sizeof(long long));
+	*n = zc_htob64(*n);
     return 8;
 }
 
