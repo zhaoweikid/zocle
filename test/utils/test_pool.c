@@ -58,9 +58,12 @@ int test_pool()
 }
 
 // test db connection
+
 int test_db()
 {
     ZCINFO("====== test db ======");
+
+#ifdef ZOCLE_WITH_MYSQL
     zcMySQLConf dbconf;
    
     zc_mysqlcf_init(&dbconf, "127.0.0.1", 3306, "root", "123456", "test", "utf8");
@@ -96,7 +99,7 @@ int test_db()
             ZCWARN("query error!");
         }else{
             rec->row_next(rec);
-            ZCINFO("query: %s, num:%lu", rec->field_str_pos(rec, 0, ""), ((zcMySQLRec*)rec)->_rows);
+            ZCINFO("query: %s, num:%llu", rec->field_str_pos(rec, 0, ""), ((zcMySQLRec*)rec)->_rows);
         }
 
         zc_pool_put(pool, db);
@@ -105,10 +108,10 @@ int test_db()
 
     zc_pool_delete(pool);
 
+#endif
     return 0;
 
 }
-
 
 
 

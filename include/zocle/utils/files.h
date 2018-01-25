@@ -12,4 +12,6 @@ int zc_isexists (const char *path);
 int64_t zc_file_size(const char *path);
 int     zc_file_path(const char *argv, char *path);
 
+int zc_dir_walk(char *path, int dep, int (*func)(char *root, char *name, int mode));
+
 #endif

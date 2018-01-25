@@ -1,9 +1,12 @@
 #include <zocle/utils/files.h>
+#include <zocle/log/logfile.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <zocle/base/defines.h>
 #include <time.h>
+#include <errno.h>
+#include <dirent.h>
 #include <string.h>
 #include <zocle/base/compact.h>
 
@@ -113,4 +116,40 @@ zc_file_path(const char *argv, char *path)
 
     return 0;
 }
+
+
+int 
+zc_dir_walk(char *path, int dep, int (*func)(char *root, char *name, int mode))
+{
+	DIR *d;
+    struct dirent *file;
+    struct stat sb;    
+	char	filename[256];
+   
+	d = opendir(path); 
+    if (!d) {
+        ZCINFO("opendir error: %s %d!", path, errno);
+        return ZC_ERR;
+    }
+    while ((file = readdir(d)) != NULL) {
+        if (strncmp(file->d_name, ".", 1) == 0)
+            continue;
+		snprintf(filename, sizeof(filename), "%s/%s", path, file->d_name);
+		if (stat(filename, &sb) < 0) {
+            //ZCDEBUG("stat error");
+			continue;
+        }
+        //strcpy(filename[len++], file->d_name);
+		func(filename, file->d_name, sb.st_mode);
+        if (S_ISDIR(sb.st_mode) && dep <= 100) {
+            zc_dir_walk(filename, dep+1, func);
+        }
+    }
+    closedir(d);
+    return ZC_OK;
+}
+
+
+
+
 

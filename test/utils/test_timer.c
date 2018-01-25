@@ -20,7 +20,7 @@ int main()
 
     uint64_t x = zc_timenow();
 
-    ZCINFO("timenow:%lu\n", x);
+    ZCINFO("timenow:%llu\n", x);
 
     return 0;
 }
