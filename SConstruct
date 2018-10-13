@@ -41,9 +41,9 @@ if sys.platform.startswith('win'):
 
 if 'ZOCLE_WITH_SSL' in defs:
 	if os.path.isdir('/usr/include/openssl'):
-		print 'use ssl at /usr/include/openssl'
+		print('use ssl at /usr/include/openssl')
 	elif os.path.isdir('/usr/local/ssl'):
-		print 'use ssl at /usr/local/ssl'
+		print('use ssl at /usr/local/ssl')
 		if sys.platform.startswith('win'):
 			includes.append(os.path.join(msys_home, 'local/ssl/include'))
 			libpath.append(os.path.join(msys_home, 'local/ssl/lib'))
@@ -51,9 +51,9 @@ if 'ZOCLE_WITH_SSL' in defs:
 			includes.append('/usr/local/ssl/include')
 			libpath.append('/usr/local/ssl/lib')
 	if os.path.isdir('/usr/local/opt/openssl'):
-		print 'use ssl at /usr/local/opt/openssl/'
+		print('use ssl at /usr/local/opt/openssl/')
 	else:
-		print 'no ssl dir, use system'
+		print('no ssl dir, use system')
 	libs.append('ssl')
 	libs.append('crypto')
 
@@ -102,7 +102,7 @@ else:
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 
 env.StaticLibrary(name, files)
-#env.SharedLibrary(name, files, SHLIBVERSION=version)
+env.SharedLibrary(name, files, SHLIBVERSION=version)
 
 #SConscript('test/SConstruct', exports=['defs', 'includes', 'libpath', 'libs'])
 
