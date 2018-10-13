@@ -296,7 +296,9 @@ zc_asynio_read_buffer(zcAsynIO *conn, zcBuffer *buf)
                 if (zc_buffer_used(buf) > 0) {
                     conn->p.handle_read(conn);
                 }
-            }
+            }else{
+				conn->p.handle_error(conn, ret);
+			}
             conn->p.handle_close(conn);
             //zc_asynio_safedel(conn);
             zc_asynio_delete_delay(conn);
@@ -357,20 +359,19 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
         conn->p.handle_accept(conn);
         return;
     }
-    if (conn->connected == ZC_FALSE) {
+    /*if (conn->connected == ZC_FALSE) {
         conn->p.handle_connected(conn);
         conn->connected = ZC_TRUE;
-    }
-    ZCDEBUG("try read data\n");
+    }*/
+    //ZCDEBUG("try read data\n");
     zcBuffer *rbuf = conn->rbuf;
     int rsize = 0;
     ret = zc_asynio_read_buffer(conn, rbuf);
-    ZCDEBUG("read data %d to rbuf", ret);
     if (ret < 0) //close
         return;
     rsize += ret;
 
-    ZCDEBUG("buffer used:%d", zc_buffer_used(rbuf));
+    ZCDEBUG("read data %d, buffer used:%d", ret, zc_buffer_used(rbuf));
     while (zc_buffer_used(rbuf) > 0) {
         ZCDEBUG("handle read %d", zc_buffer_used(rbuf));
         ret = conn->p.handle_read(conn);
@@ -390,6 +391,11 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     }
     if (conn->rbuf_auto_compact) {
         zc_buffer_compact(conn->rbuf);
+    }
+
+    if (conn->connected == ZC_FALSE) {
+        conn->p.handle_connected(conn);
+        conn->connected = ZC_TRUE;
     }
 
     if (zc_buffer_used(conn->wbuf) > 0) {
