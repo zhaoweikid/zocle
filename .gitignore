@@ -4,3 +4,6 @@
 *.dylib
 *.so
 .sconsign*
+*.swp
+*.so.*
+*.so

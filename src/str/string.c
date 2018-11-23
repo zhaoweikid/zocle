@@ -260,18 +260,22 @@ zc_str_init(zcString *s, int len)
 }
 
 void
-zc_str_init_stack(zcString *s, char *buf, int len)
+zc_str_init_stack(zcString *s, int size, char *buf, int len)
 {
     memset(s, 0, sizeof(zcString));
     s->_onstack = 1;
-    s->data = buf;
-    s->size = len;
+    s->size = size;
     s->__type = ZC_STRING;
-    s->data[0] = 0;
-    s->len = 0;
+
+    s->data = buf;
+    s->len = len;
+
+	if (len == 0) {
+		s->data[0] = 0;
+	}
 }
 
-void
+/*void
 zc_str_init_stack_exist(zcString *s, char *buf, int len)
 {
     memset(s, 0, sizeof(zcString));
@@ -280,7 +284,7 @@ zc_str_init_stack_exist(zcString *s, char *buf, int len)
     s->size = len;
     s->len  = len;
     s->__type = ZC_STRING;
-}
+}*/
 
 /**
  * @brief 释放字符串结构中占用的资源
