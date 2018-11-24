@@ -290,7 +290,7 @@ zc_asynio_read_buffer(zcAsynIO *conn, zcBuffer *buf)
         int ret = zc_socket_recv(conn->sock, buf->data+buf->end, 
                 zc_buffer_idle(buf)); 
         if (ret == 0 || (ret < 0 && ret != -EWOULDBLOCK && ret != -EAGAIN)) {
-            ZCNOTE("recv error:%d, close conn", ret);
+            ZCINFO("recv error:%d, close conn", ret);
             if (ret == 0) { // read close
                 conn->close = 1;
                 if (zc_buffer_used(buf) > 0) {
