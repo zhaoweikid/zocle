@@ -28,7 +28,7 @@ zc_mysqlcf_print(zcMySQLConf *cf)
     ZCINFO("write_timeout:\t%d\n", cf->write_timeout);
 }
 
-zcDBRec* 
+zcDBRec*
 zc_mysqlrec_new(void *stmt)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)zc_malloc(sizeof(zcMySQLRec));
@@ -41,7 +41,7 @@ zc_mysqlrec_new(void *stmt)
     mrec->_pos  = 0;
     mrec->row   = NULL;
     mrec->_get_row_next = 0;
-    mrec->fieldmap = zc_dict_new(8, 0);
+    mrec->fieldmap = zc_dict_new(8);
 
     if (stmt) {
         mrec->_fields = mysql_num_fields(mrec->res);
@@ -53,10 +53,10 @@ zc_mysqlrec_new(void *stmt)
         long i;
         for (i = 0; i < mrec->_fields; i++) {
             //mrec->fieldmap[fields[i].name] = i;
-            zc_dict_add(mrec->fieldmap, fields[i].name, 0, (void*)i); 
+            zc_dict_add(mrec->fieldmap, fields[i].name, 0, (void*)i);
         }
     }
-    
+
     mrec->del             = zc_mysqlrec_delete;
     mrec->reset           = zc_mysqlrec_reset;
     mrec->row_next        = zc_mysqlrec_row_next;
@@ -74,33 +74,33 @@ zc_mysqlrec_new(void *stmt)
 
     return (zcDBRec*)mrec;
 }
-void 
+void
 zc_mysqlrec_delete(void *rec)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
     if (mrec->res) {
         mysql_free_result(mrec->res);
-    } 
+    }
     zc_dict_delete(mrec->fieldmap);
     zc_free(mrec);
 }
 
-/*void 
+/*void
 zc_mysqlrec_close(zcDBRec *rec)
 {
     if (mrec->res) {
         mysql_free_result(mrec->res);
-    } 
+    }
     zc_dict_clear(mrec->fieldmap);
     mrec->res = NULL;
 }
 
-void 
+void
 zc_mysqlrec_clear(zcDBRec *rec)
 {
 }*/
 
-int  
+int
 zc_mysqlrec_reset(zcDBRec *rec)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -111,7 +111,7 @@ zc_mysqlrec_reset(zcDBRec *rec)
     return 0;
 }
 
-int  
+int
 zc_mysqlrec_row_next(zcDBRec *rec)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -125,7 +125,7 @@ zc_mysqlrec_row_next(zcDBRec *rec)
     return 0;
 }
 
-int  
+int
 zc_mysqlrec_field_int_pos(zcDBRec *rec, int pos, int defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -136,7 +136,7 @@ zc_mysqlrec_field_int_pos(zcDBRec *rec, int pos, int defv)
     return defv;
 }
 
-int  
+int
 zc_mysqlrec_field_int(zcDBRec *rec, const char *name, int defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -144,7 +144,7 @@ zc_mysqlrec_field_int(zcDBRec *rec, const char *name, int defv)
     return zc_mysqlrec_field_int_pos(rec, pos, defv);
 }
 
-int64_t 
+int64_t
 zc_mysqlrec_field_int64_pos(zcDBRec *rec, int pos, int64_t defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -152,10 +152,10 @@ zc_mysqlrec_field_int64_pos(zcDBRec *rec, int pos, int64_t defv)
         return defv;
     if (mrec->row[pos])
         return atoll(mrec->row[pos]);
-    return defv; 
+    return defv;
 }
 
-int64_t 
+int64_t
 zc_mysqlrec_field_int64(zcDBRec *rec, const char *name, int64_t defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -163,7 +163,7 @@ zc_mysqlrec_field_int64(zcDBRec *rec, const char *name, int64_t defv)
     return zc_mysqlrec_field_int64_pos(rec, pos, defv);
 }
 
-double  
+double
 zc_mysqlrec_field_float_pos(zcDBRec *rec, int pos, double defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -174,7 +174,7 @@ zc_mysqlrec_field_float_pos(zcDBRec *rec, int pos, double defv)
     return defv;
 }
 
-double  
+double
 zc_mysqlrec_field_float(zcDBRec *rec, const char *name, double defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -182,22 +182,22 @@ zc_mysqlrec_field_float(zcDBRec *rec, const char *name, double defv)
     return zc_mysqlrec_field_float_pos(rec, pos, defv);
 }
 
-const char* 
+const char*
 zc_mysqlrec_field_str_pos(zcDBRec *rec, int pos, const char *defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
     if (mrec->row == NULL || pos < 0 || pos >= mrec->_fields || mrec->row[pos] == NULL)
         return (char*)defv;
-    return mrec->row[pos]; 
+    return mrec->row[pos];
 }
-const char* 
+const char*
 zc_mysqlrec_field_str(zcDBRec *rec, const char *name, const char *defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
     long pos = (long)zc_dict_get(mrec->fieldmap, name, 0, (void*)-1);
     return zc_mysqlrec_field_str_pos(rec, pos, defv);
 }
-const char* 
+const char*
 zc_mysqlrec_field_blob_pos(zcDBRec *rec, int pos, int *len, const char *defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -205,9 +205,9 @@ zc_mysqlrec_field_blob_pos(zcDBRec *rec, int pos, int *len, const char *defv)
         return (char*)defv;
     unsigned long *lengths = mysql_fetch_lengths(mrec->res);
     *len = lengths[pos];
-    return mrec->row[pos]; 
+    return mrec->row[pos];
 }
-const char* 
+const char*
 zc_mysqlrec_field_blob(zcDBRec *rec, const char *name, int *len, const char *defv)
 {
     zcMySQLRec *mrec = (zcMySQLRec*)rec;
@@ -215,22 +215,22 @@ zc_mysqlrec_field_blob(zcDBRec *rec, const char *name, int *len, const char *def
     return zc_mysqlrec_field_blob_pos(rec, pos, len, defv);
 }
 
-int   
+int
 zc_mysqlrec_fetchone(zcDBRec *rec, const char *format, ...)
 {
     return ZC_OK;
 }
-int   
+int
 zc_mysqlrec_fetchall(zcDBRec *rec, const char *format)
 {
     return ZC_OK;
 }
-void* 
+void*
 zc_mysqlrec_get_pos(zcDBRec *rec, int rowid, int pos, void *defv)
 {
     return NULL;
 }
-void* 
+void*
 zc_mysqlrec_get(zcDBRec *rec, int rowid, char *name, void *defv)
 {
     return NULL;
@@ -238,20 +238,20 @@ zc_mysqlrec_get(zcDBRec *rec, int rowid, char *name, void *defv)
 
 // --- mysqldb
 
-zcDB*    
+zcDB*
 zc_mysqldb_new(zcMySQLConf *cf)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)zc_malloc(sizeof(zcMySQLDB));
     memset(mdb, 0, sizeof(zcMySQLDB));
-       
+
     memcpy(&mdb->conf, cf, sizeof(zcMySQLConf));
-    mdb->_mysql = mysql_init(NULL);  
+    mdb->_mysql = mysql_init(NULL);
     if (NULL == mdb->_mysql) {
         ZCERROR("mysql init error!\n");
         zc_free(mdb);
         return NULL;
-    }   
-    
+    }
+
     if (cf->conn_timeout > 0) {
         mysql_options(mdb->_mysql, MYSQL_OPT_CONNECT_TIMEOUT, (const void*)&cf->conn_timeout);
     }
@@ -261,7 +261,7 @@ zc_mysqldb_new(zcMySQLConf *cf)
     if (cf->write_timeout > 0) {
         mysql_options(mdb->_mysql, MYSQL_OPT_WRITE_TIMEOUT, (const void*)&cf->write_timeout);
     }
-    
+
     mdb->_isopen = 0;
 
     mdb->del   = zc_mysqldb_delete;
@@ -274,30 +274,30 @@ zc_mysqldb_new(zcMySQLConf *cf)
     mdb->last_insert_id = zc_mysqldb_last_insert_id;
 
     zc_mysqldb_open((zcDB*)mdb);
-    
+
     return (zcDB*)mdb;
 }
 
-void     
+void
 zc_mysqldb_delete(void *db)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)db;
-    mysql_close(mdb->_mysql); 
+    mysql_close(mdb->_mysql);
     zc_free(mdb);
 }
 
-int 
+int
 zc_mysqldb_open(zcDB *db)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)db;
-    ZCINFO("open host:%s:%d, db:%s, user:%s\n", 
+    ZCINFO("open host:%s:%d, db:%s, user:%s\n",
             mdb->conf.host, mdb->conf.port, mdb->conf.db, mdb->conf.user);
 
     if (mysql_real_connect(mdb->_mysql, mdb->conf.host, mdb->conf.user, \
             mdb->conf.pass, mdb->conf.db, mdb->conf.port, NULL, 0) == NULL) {
         int err = mysql_errno(mdb->_mysql);
         ZCERROR("mysql connect error: %u:%s\n", err, mysql_error(mdb->_mysql));
-        return -err; 
+        return -err;
     }
     mysql_autocommit(mdb->_mysql, 1);
     zc_mysqldb_exec(db, "set names utf8");
@@ -316,7 +316,7 @@ zc_mysqldb_close(zcDB *db)
     return 0;
 }
 
-int      
+int
 zc_mysqldb_exec(zcDB *db, const char *sql)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)db;
@@ -349,17 +349,17 @@ zc_mysqldb_exec(zcDB *db, const char *sql)
     return 0;
 }
 
-int      
+int
 zc_mysqldb_execf(zcDB *db, const char *sql, const char *format, ...)
 {
     return zc_mysqldb_exec(db, sql);
 }
 
-zcDBRec* 
+zcDBRec*
 zc_mysqldb_query(zcDB *db, const char *sql, const char *format, ...)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)db;
-    
+
     int ret = zc_mysqldb_exec(db, sql);
     if (ret < 0) {
         if (mdb->err)
@@ -370,20 +370,20 @@ zc_mysqldb_query(zcDB *db, const char *sql, const char *format, ...)
     return zc_mysqlrec_new(result);
 }
 
-int      
+int
 zc_mysqldb_start(zcDB *db)
 {
     return zc_mysqldb_exec(db, "BEGIN");
 }
 
-int      
+int
 zc_mysqldb_commit(zcDB *db)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)db;
     return mysql_commit(mdb->_mysql);
 }
 
-int      
+int
 zc_mysqldb_rollback(zcDB *db)
 {
     zcMySQLDB *mdb = (zcMySQLDB*)db;

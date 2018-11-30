@@ -9,18 +9,18 @@
 #endif
 
 #ifdef ZOCLE_WITH_TCMALLOC
-#include <google/tcmalloc.h>
+#include <gperftools/tcmalloc.h>
 #endif
 
 zcMemDbg    *_zc_mem_dbg;
 
 
-zcMemDbg*   
+zcMemDbg*
 zc_memdebug_new(unsigned int flags)
 {
     zcMemDbg *m = (zcMemDbg*)malloc(sizeof(zcMemDbg));
     memset(m, 0, sizeof(zcMemDbg));
-    m->flags = flags; 
+    m->flags = flags;
 
     if (flags & ZC_MEM_DBG_LEAK) {
         m->bunks = (zcMemDbgItem**)malloc(sizeof(zcMemDbgItem*) * ZC_MEM_DEBUG_BUNKS);
@@ -40,20 +40,20 @@ zc_memdebug_new(unsigned int flags)
 }
 
 unsigned int
-zc_memdebug_hash(char *str, int len) 
+zc_memdebug_hash(char *str, int len)
 {
     //BKDR Hash
-    unsigned int seed = 131; 
-    unsigned int hash = 0; 
+    unsigned int seed = 131;
+    unsigned int hash = 0;
     int i;
 
-    for (i = 0; i < len; i++) {    
+    for (i = 0; i < len; i++) {
         hash = hash * seed + (*str++);
-    }    
+    }
     return (hash & 0x7FFFFFFF) % ZC_MEM_DEBUG_BUNKS;
 }
 
-void 
+void
 zc_memdebug_delete(void *x)
 {
     zcMemDbg *m = (zcMemDbg*)x;
@@ -62,41 +62,41 @@ zc_memdebug_delete(void *x)
     free(m);
 }
 
-int 
+int
 zc_memdebug_add(zcMemDbg *m, void *key, const char *file, int line)
 {
     if (m->bunks == NULL) {
         ZCERROR("add bunks NULL\n");
         return ZC_FAILED;
     }
-    unsigned int h = zc_memdebug_hash((char*)&key, 4); 
-    zcMemDbgItem *newnode; 
-    
+    unsigned int h = zc_memdebug_hash((char*)&key, 4);
+    zcMemDbgItem *newnode;
+
     newnode = (zcMemDbgItem*)malloc(sizeof(zcMemDbgItem));
     memset(newnode, 0, sizeof(zcMemDbgItem));
     newnode->key = key;
     strncpy(newnode->file, file, 11);
     newnode->line = line;
 
-    pthread_mutex_lock(&m->lock); 
+    pthread_mutex_lock(&m->lock);
     m->seqid++;
     newnode->id = m->seqid;
     zcMemDbgItem *node = m->bunks[h];
     if (node) {
-        newnode->next = node;       
+        newnode->next = node;
     }
     m->bunks[h] = newnode;
-    pthread_mutex_unlock(&m->lock); 
+    pthread_mutex_unlock(&m->lock);
 
     return ZC_OK;
 }
 
-int 
+int
 zc_memdebug_remove(zcMemDbg *m, void *key)
 {
-    unsigned int h = zc_memdebug_hash((char*)&key, 4); 
-    
-    pthread_mutex_lock(&m->lock); 
+    unsigned int h = zc_memdebug_hash((char*)&key, 4);
+
+    pthread_mutex_lock(&m->lock);
     zcMemDbgItem *node = m->bunks[h];
     zcMemDbgItem *prev = NULL;
     while (node) {
@@ -112,17 +112,17 @@ zc_memdebug_remove(zcMemDbg *m, void *key)
         prev = node;
         node = node->next;
     }
-    pthread_mutex_unlock(&m->lock); 
+    pthread_mutex_unlock(&m->lock);
 
     return ZC_OK;
 }
 
-void 
+void
 zc_memdebug_clear(zcMemDbg *m)
 {
-    zcMemDbgItem    *node, *tmp; 
+    zcMemDbgItem    *node, *tmp;
     int             i;
-    
+
     for (i = 0; i < ZC_MEM_DEBUG_BUNKS; i++) {
         node = m->bunks[i];
         while (node) {
@@ -130,12 +130,12 @@ zc_memdebug_clear(zcMemDbg *m)
             node = node->next;
             free(tmp);
         }
-    } 
+    }
     memset(m->bunks, 0, ZC_MEM_DEBUG_BUNKS * sizeof(zcMemDbgItem*));
     return;
 }
 
-int 
+int
 zc_memdebug_count(zcMemDbg *m, unsigned int startid)
 {
     if ((m->flags & ZC_MEM_DBG_LEAK) == 0)
@@ -146,7 +146,7 @@ zc_memdebug_count(zcMemDbg *m, unsigned int startid)
 
     int i, count = 0;
     zcMemDbgItem    *node;
-        
+
     pthread_mutex_lock(&m->lock);
     for (i = 0; i < ZC_MEM_DEBUG_BUNKS; i++) {
         node = m->bunks[i];
@@ -162,26 +162,26 @@ zc_memdebug_count(zcMemDbg *m, unsigned int startid)
     return count;
 }
 
-int 
+int
 zc_memdebug_print_real(zcMemDbg *m, const char *file, int line)
 {
     if ((m->flags & ZC_MEM_DBG_LEAK) == 0)
         return 0;
-    
+
     zcMemDbgItem    *node;
     int is_overflow_check = _zc_mem_dbg->flags & ZC_MEM_DBG_OVERFLOW;
-    
+
     ZCINFO("==== mem print %d ====\n", m->count);
     int i;
     for (i = 0; i < ZC_MEM_DEBUG_BUNKS; i++) {
         node = m->bunks[i];
         while (node) {
             if (is_overflow_check) {
-                ZCINFO("mem %s:%d size:%u id:%u addr:%p\n", node->file, node->line, 
+                ZCINFO("mem %s:%d size:%u id:%u addr:%p\n", node->file, node->line,
                     *(unsigned int*)(node->key - 8), node->id, node->key);
                 zc_check_real(node->key, file, line);
             }else{
-                ZCINFO("mem %s:%d id:%u addr:%p\n", node->file, node->line, 
+                ZCINFO("mem %s:%d id:%u addr:%p\n", node->file, node->line,
                         node->id, node->key);
             }
             node = node->next;
@@ -190,7 +190,7 @@ zc_memdebug_print_real(zcMemDbg *m, const char *file, int line)
     return ZC_OK;
 }
 
-unsigned int 
+unsigned int
 zc_memdebug_check_point_real(zcMemDbg *m, unsigned int startid, const char *file, int line)
 {
     if ((m->flags & ZC_MEM_DBG_LEAK) == 0)
@@ -199,7 +199,7 @@ zc_memdebug_check_point_real(zcMemDbg *m, unsigned int startid, const char *file
     if (startid == 0) {
         int id;
         pthread_mutex_lock(&m->lock);
-        id = m->seqid;    
+        id = m->seqid;
         pthread_mutex_unlock(&m->lock);
         return id;
     }
@@ -207,14 +207,14 @@ zc_memdebug_check_point_real(zcMemDbg *m, unsigned int startid, const char *file
     int i, count = 0;
     zcMemDbgItem    *node;
     int is_overflow_check = _zc_mem_dbg->flags & ZC_MEM_DBG_OVERFLOW;
-        
+
     ZCINFO("==== mem check point start ====\n");
     pthread_mutex_lock(&m->lock);
     for (i = 0; i < ZC_MEM_DEBUG_BUNKS; i++) {
         node = m->bunks[i];
         while (node) {
             if (node->id > startid) {
-                ZCWARN("mem %s:%d size:%u id:%u addr:%p\n", node->file, node->line, 
+                ZCWARN("mem %s:%d size:%u id:%u addr:%p\n", node->file, node->line,
                         *(unsigned int*)(node->key - 8), node->id, node->key);
                 count++;
             }
@@ -269,7 +269,7 @@ malloc_real(size_t size)
 
 }
 
-void*	
+void*
 zc_malloc_real(size_t size, const char *file, int line)
 {
     void *ptr;
@@ -297,14 +297,14 @@ zc_malloc_real(size_t size, const char *file, int line)
         ptr += 8;
     }else{
         ptr = malloc_real(size);
-    
+
         if (NULL == ptr) {
             ZCFATAL("malloc return NULL %u %s:%d\n", (unsigned int)size, file, line);
         }
         if (_zc_mem_dbg != NULL)
             _zc_mem_dbg->size += size;
     }
-   
+
     if (flags & 0xf0) { // check overflow or leak
         pthread_mutex_lock(&_zc_mem_dbg->lock);
         _zc_mem_dbg->count++;
@@ -318,7 +318,7 @@ zc_malloc_real(size_t size, const char *file, int line)
     return ptr;
 }
 
-void*	
+void*
 zc_calloc_real(size_t size, const char *file, int line)
 {
     void *s = zc_malloc_real(size, file, line);
@@ -326,7 +326,7 @@ zc_calloc_real(size_t size, const char *file, int line)
     return s;
 }
 
-void*	
+void*
 zc_alloca_real(size_t size, const char *file, int line)
 {
     if (size >= 1048576) {
@@ -369,7 +369,7 @@ free_real(void *ptr)
 }
 
 
-void	
+void
 zc_free_real(void *ptr, const char *file, int line)
 {
     unsigned int flags;
@@ -383,7 +383,7 @@ zc_free_real(void *ptr, const char *file, int line)
         ZCERROR("free NULL pointer: %p %s:%d\n", ptr, file, line);
         return;
     }
-    void *mptr = ptr; 
+    void *mptr = ptr;
     //ZCINFO("free key:%p\n", ptr);
     if (flags & ZC_MEM_DBG_OVERFLOW) {
         zc_check_exit_real(ptr, file, line);
@@ -400,17 +400,17 @@ zc_free_real(void *ptr, const char *file, int line)
     free_real(ptr);
 }
 
-int	
+int
 zc_check_real(void *ptr, const char *file, int line)
 {
     int size = *((uint32_t *)(ptr - 8));
     if (*((uint32_t *)(ptr-4)) != 0x55555555) {
-        ZCERROR("[zc_check start failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d]\n", 
+        ZCERROR("[zc_check start failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d]\n",
                 ptr, size, *((uint32_t *)(ptr-4)), *((uint32_t *)(ptr+size)), file, line);
         return ZC_FAILED;
     }
     if (*((uint32_t *)(ptr + size)) != 0x55555555) {
-        ZCERROR("[zc_check end failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d]\n", 
+        ZCERROR("[zc_check end failed, %p size:%d, start:0x%x, end:0x%x file:%s line:%d]\n",
                 ptr, size, *((uint32_t *)(ptr-4)), *((uint32_t *)(ptr+size)), file, line);
         return ZC_FAILED;
     }
@@ -418,7 +418,7 @@ zc_check_real(void *ptr, const char *file, int line)
     return ZC_OK;
 }
 
-int	
+int
 zc_check_exit_real(void *ptr, const char *file, int line)
 {
     if (zc_check_real(ptr, file, line) != ZC_OK) {

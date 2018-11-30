@@ -2,28 +2,25 @@ import os, sys
 
 name		= 'zocle'
 version     = '2.0.1'
-includes	= ['include', '/usr/local/include', '/usr/local/opt/openssl/include/']
+includes	= ['include', '/usr/local/include']
 libs		= ['z']
-libpath		= ['.', '/usr/local/lib', '/usr/local/opt/openssl/lib/']
+libpath		= ['.', '/usr/local/lib']
 ldflags		= ''
 msys_home	= os.environ.get('MINGW_HOME', '')
 ccflags     = '-ggdb -std=gnu99 -Wall'
 
-#if sys.platform.startswith('linux'):
-#	ccflags += ' -Wl,-soname,lib%s.so.%s' % (name, version.split('.')[0])
-
 defs = ['_REENTRANT',
 		'_GNU_SOURCE',
-		#'ZOCLE_WITH_ICONV',
+		'ZOCLE_WITH_ICONV',
 		'ZOCLE_WITH_PCRE',
 		'ZOCLE_WITH_LIBEV',
-		#'ZOCLE_WITH_SSL',
-		#'ZOCLE_WITH_SQLITE',
-		#'ZOCLE_WITH_MYSQL',
+		'ZOCLE_WITH_SSL',
+		'ZOCLE_WITH_SQLITE',
+		'ZOCLE_WITH_MYSQL',
 		'ZOCLE_WITH_MSGPACK',
-		#'ASYNC_ONE_WATCHER',
-		#'ZOCLE_WITH_TCMALLOC',
-		'ZOCLE_WITH_MSGPACK',
+		# 'ASYNC_ONE_WATCHER',
+		# 'ZOCLE_WITH_TCMALLOC',
+		# 'ZOCLE_WITH_GC',
 		]
 
 files = []
@@ -52,6 +49,8 @@ if 'ZOCLE_WITH_SSL' in defs:
 			libpath.append('/usr/local/ssl/lib')
 	if os.path.isdir('/usr/local/opt/openssl'):
 		print('use ssl at /usr/local/opt/openssl/')
+		includes.append('/usr/local/opt/openssl/include')
+		libpath.append('/usr/local/opt/openssl/lib')
 	else:
 		print('no ssl dir, use system')
 	libs.append('ssl')
@@ -68,19 +67,8 @@ if 'ZOCLE_WITH_LIBEV' in defs:
 
 if 'ZOCLE_WITH_MYSQL' in defs:
 	libs.append('mysqlclient')
-	if os.path.isdir('/usr/local/mysql'):
-		includes.append('/usr/local/mysql/include')
-		libpath.append('/usr/local/mysql/lib')
-	elif os.path.isdir('/opt/mysql'):
-		includes.append('/opt/mysql/include')
-		libpath.append('/opt/mysql/lib')
-	elif os.path.isdir('/usr/include/mysql'):
-		includes.append('/usr/include/mysql')
-		libpath.append('/usr/lib')
-		libpath.append('/lib/x86_64-linux-gnu/')
 
 if 'ZOCLE_WITH_SQLITE' in defs:
-	includes.append('/usr/local/include')
 	libs.append('sqlite3')
 
 if 'ZOCLE_WITH_TCMALLOC' in defs:
@@ -93,7 +81,7 @@ os.system('rm -rf lib*.so*')
 env = None
 if sys.platform == 'win32':
 	libs += ['ws2_32', 'pthreadGC2', 'msvcrt', 'gdi32']
-	env = Environment(tools=['mingw'], CCFLAGS='-ggdb -std=gnu99 -Wall',
+	env = Environment(tools=['mingw'], CCFLAGS=ccflags,
 				CPPDEFINES=defs, CPPPATH=includes,
 				LIBPATH=libpath, LIBS=libs, LINKFLAGS=ldflags)
 else:

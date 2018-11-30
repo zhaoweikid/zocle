@@ -5,7 +5,7 @@
 
 #include <string.h>
 
-zcArray*   
+zcArray*
 zc_array_new(uint32_t n)
 {
     zcArray *v = zc_malloct(zcArray);
@@ -13,13 +13,13 @@ zc_array_new(uint32_t n)
     return v;
 }
 
-zcArray*   
+zcArray*
 zc_array_new_tail(uint32_t n)
 {
     if (n == 0) n = 32;
     zcArray *v = zc_malloc(sizeof(zcArray) + sizeof(void*)*n);
     memset(v, 0, sizeof(zcArray)+sizeof(void*)*n);
-    
+
     v->data = (void**)((char*)v+sizeof(zcArray));
     v->cap = n;
     v->data_tail = 1;
@@ -34,14 +34,14 @@ zc_array_delete(void *v)
     zc_free(v);
 }
 
-int 
+int
 zc_array_init(zcArray *v, uint32_t n)
 {
     memset(v, 0, sizeof(zcArray));
-    
+
     if (n == 0) n = 32;
     v->data = (void**)zc_malloc(sizeof(void*)*n);
-    memset(v->data, 0, sizeof(void*)*n); 
+    memset(v->data, 0, sizeof(void*)*n);
     v->cap = n;
     v->data_tail = 0;
 
@@ -68,51 +68,51 @@ zc_array_destroy(void *x)
 
 
 
-void*   
+void*
 zc_array_get(zcArray *v, uint32_t pos, void *defv)
 {
-    if (pos >= v->len) 
+    if (pos >= v->len)
         return defv;
-    
+
     void *x = v->data[pos];
     // FIXME: 0可能是正常值
-    v->data[pos] = 0; 
+    v->data[pos] = 0;
     return x;
 }
 
-void*   
+void*
 zc_array_at(zcArray *v, uint32_t pos, void *defv)
 {
-    if (pos >= v->len) 
+    if (pos >= v->len)
         return defv;
     return v->data[pos];
 }
 
-int 
+int
 zc_array_set(zcArray *v, uint32_t pos, void *val)
 {
-    if (pos >= v->len) 
+    if (pos >= v->len)
         return ZC_ERR;
-    
-    v->data[pos] = val; 
+
+    v->data[pos] = val;
     return ZC_OK;
 }
 
-int 
+int
 zc_array_set_many(zcArray *v, uint32_t len, void *val)
 {
     if (v->len + len > v->cap)
         return ZC_ERR;
     int i;
     for (i=0; i<len; i++) {
-        v->data[v->len+i] = val; 
+        v->data[v->len+i] = val;
     }
     v->len += len;
     return ZC_OK;
 }
 
 
-int 
+int
 zc_array_append(zcArray *v, void *val)
 {
     if (v->len == v->cap) {
@@ -135,13 +135,13 @@ zc_array_pop_back(zcArray *v, void *defv)
     return v->data[v->len];
 }
 
-int 
+int
 zc_array_resize(zcArray *v, uint32_t newsize)
 {
     if (newsize <= v->cap)
         return ZC_ERR;
     void *newdata = zc_calloc(sizeof(void*)*newsize);
-    memcpy(newdata, v->data, v->len*sizeof(void*)); 
+    memcpy(newdata, v->data, v->len*sizeof(void*));
     zc_free(v->data);
     v->data = newdata;
     return ZC_OK;

@@ -36,11 +36,11 @@ typedef struct zc_hashset_t
 typedef int (*zcHashSetWalkFunc)(zcHashSetNode *, void *userdata);
 
 zcHashSet* zc_hashset_new(int size);
-zcHashSet* zc_hashset_new_full(int size, zcFuncHash hash, zcFuncCmp cmp, 
+zcHashSet* zc_hashset_new_full(int size, zcFuncHash hash, zcFuncCmp cmp,
 								 zcFuncDel keydel, zcFuncDel2 nodedel);
 int        zc_hashset_new2(zcHashSet **, int size);
-int        zc_hashset_new2_full(zcHashSet **, int size, 
-                                zcFuncHash hash, zcFuncCmp cmp, 
+int        zc_hashset_new2_full(zcHashSet **, int size,
+                                zcFuncHash hash, zcFuncCmp cmp,
 								zcFuncDel keydel, zcFuncDel2 nodedel);
 void       zc_hashset_delete(void *);
 void       zc_hashset_clear(zcHashSet *);
@@ -58,7 +58,7 @@ zcHashSetNode*  zc_hashset_lookup_key(zcHashSet *h, char *key, int keylen);
 #define    zc_hashset_delete_null(x)    \
            do{zc_hashset_delete(x,NULL);x=NULL;}while(0)
 
-#define    zc_hashset_foreach(hset,hnode)   \
+#define    zc_hashset_foreach_start(hset,hnode)   \
            for (int _zc_hs_i = 0; _zc_hs_i < hset->size; _zc_hs_i++) {\
                hnode = (zcHashSetNode*)hset->bunks[_zc_hs_i];\
 			   for (;hnode;hnode = (zcHashSetNode*)hnode->next) {

@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <zocle/db/dbif.h>
 #include <zocle/ds/dict.h>
-#include <mysql.h>
+#include <mysql/mysql.h>
 
 typedef struct zc_mysqlconf_t
 {
