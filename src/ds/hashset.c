@@ -9,29 +9,28 @@
 zcHashSetNode*
 zc_hashset_node_new(char *key, int keylen)
 {
-    zcHashSetNode *node = (zcHashSetNode*)zc_malloc(sizeof(zcHashSetNode));  
+    zcHashSetNode *node = (zcHashSetNode*)zc_malloc(sizeof(zcHashSetNode));
     memset(node, 0, sizeof(zcHashSetNode));
     node->key = zc_strdup(key, 0);
     return node;
 }
 
 void
-zc_hashset_node_delete(void *n)
+zc_hashset_node_delete(void *h, void *n)
 {
     if (NULL == n) {
         ZCWARN("zc_hashset_node_destroy NULL pointer\n");
     }
-    //zcHashSet *h = (zcHashSet*)x;
+    zcHashSet *hs = (zcHashSet*)h;
     zcHashSetNode *node = (zcHashSetNode*)n;
 
-    /*if (h->keydel) {
-        h->keydel(n->key);
-    }*/
-    zc_free(node->key);
+    if (hs->keydel) {
+        hs->keydel(node->key);
+    }
     zc_free(node);
 }
 
-zcHashSet*  
+zcHashSet*
 zc_hashset_new(int size)
 {
     zcHashSet   *h;
@@ -42,7 +41,7 @@ zc_hashset_new(int size)
 }
 
 zcHashSet*
-zc_hashset_new_full(int size, zcFuncHash hash, zcFuncCmp cmp, 
+zc_hashset_new_full(int size, zcFuncHash hash, zcFuncCmp cmp,
                      zcFuncDel keydel, zcFuncDel2 nodedel)
 {
     zcHashSet   *h;
@@ -53,7 +52,7 @@ zc_hashset_new_full(int size, zcFuncHash hash, zcFuncCmp cmp,
     return h;
 }
 
-int 
+int
 zc_hashset_new2(zcHashSet **hash, int size)
 {
     zcHashSet   *h;
@@ -65,7 +64,7 @@ zc_hashset_new2(zcHashSet **hash, int size)
     h->hash  = zc_hash_bkdr;
     h->keydel  = zc_free_func;
     h->nodedel = zc_hashset_node_delete;
- 
+
     h->bunks = (void**)zc_malloc(sizeof(void*) * size);
     memset(h->bunks, 0, sizeof(zcHashSetNode*) * size);
 
@@ -74,7 +73,7 @@ zc_hashset_new2(zcHashSet **hash, int size)
 }
 
 int
-zc_hashset_new2_full(zcHashSet **h, int size, zcFuncHash hash, zcFuncCmp cmp, 
+zc_hashset_new2_full(zcHashSet **h, int size, zcFuncHash hash, zcFuncCmp cmp,
                       zcFuncDel keydel, zcFuncDel2 nodedel)
 {
     int ret = zc_hashset_new2(h, size);
@@ -97,7 +96,7 @@ zc_hashset_delete(void *h)
         return;
     }
     zcHashSet   *ha = (zcHashSet*)h;
-    zc_hashset_clear(ha); 
+    zc_hashset_clear(ha);
     zc_free(ha->bunks);
     zc_free(ha);
 }
@@ -116,15 +115,9 @@ zc_hashset_clear(zcHashSet *h)
             if (h->nodedel) {
                 h->nodedel(h, tmp);
             }
-            /*
-            if (h->keydel) {
-                h->keydel(tmp->key);
-            }
-            // FIXME: value 没释放
-            zc_free(tmp);
-            */
         }
     }
+    h->len = 0;
     memset(h->bunks, 0, sizeof(void*) * h->size);
 }
 
@@ -134,7 +127,7 @@ zc_hashset_print(zcHashSet *h)
     zcHashSetNode   *node;
     int i = 0;
     ZCINFO("====== hashset size:%d, len:%d, bunks:%p ======\n", h->size, h->len, h->bunks);
-    zc_hashset_foreach(h, node)
+    zc_hashset_foreach_start(h, node)
         ZCINFO("%p | %s\n", node, node->key);
         i++;
     zc_hashset_foreach_end
@@ -145,8 +138,8 @@ zcHashSetNode*
 zc_hashset_lookup_key(zcHashSet *h, char *key, int keylen)
 {
     uint32_t    hv = h->hash(key, keylen) % h->size;
-    zcHashSetNode  *root = h->bunks[hv];    
-    
+    zcHashSetNode  *root = h->bunks[hv];
+
     while (root) {
         if (h->cmp(root->key, key, 0) == 0) {
             return root;
@@ -156,14 +149,14 @@ zc_hashset_lookup_key(zcHashSet *h, char *key, int keylen)
     return NULL;
 }
 
-int     
+int
 zc_hashset_add_node(zcHashSet *h, zcHashSetNode *node)
 {
     if (NULL == node)
         return ZC_ERR_NULL;
-    
+
     uint32_t hv = h->hash(node->key, strlen(node->key)) % h->size;
-    zcHashSetNode *root = h->bunks[hv];    
+    zcHashSetNode *root = h->bunks[hv];
 
     node->next = root;
     while (root) {
@@ -172,48 +165,48 @@ zc_hashset_add_node(zcHashSet *h, zcHashSetNode *node)
         }
         root = (zcHashSetNode*)root->next;
     }
-    h->bunks[hv] = node; 
+    h->bunks[hv] = node;
     h->len++;
 
     return ZC_OK;
 }
 // must override
-int     
+int
 zc_hashset_add(zcHashSet *h, char *key, int keylen)
 {
     if (NULL == key)
         return ZC_ERR_NULL;
     if (keylen <= 0)
         keylen = strlen(key);
-    
+
     uint32_t hv = h->hash(key, keylen) % h->size;
-    zcHashSetNode *root = h->bunks[hv];    
-    
+    zcHashSetNode *root = h->bunks[hv];
+
     while (root) {
         if (h->cmp(root->key, key, 0) == 0) {
             return ZC_ERR_EXIST;
         }
         root = (zcHashSetNode*)root->next;
     }
-    
+
     zcHashSetNode *node = zc_hashset_node_new(key, keylen);
     node->next   = (zcHashSetNode*)h->bunks[hv];
-    h->bunks[hv] = node; 
+    h->bunks[hv] = node;
     h->len++;
 
     return ZC_OK;
 }
 
-int 
+int
 zc_hashset_rm(zcHashSet *h, char *key, int keylen)
 {
     if (NULL == key)
         return ZC_ERR_NULL;
     if (keylen <= 0)
         keylen = strlen(key);
-    
+
     uint32_t hv = h->hash(key, keylen) % h->size;
-    zcHashSetNode *root = h->bunks[hv];    
+    zcHashSetNode *root = h->bunks[hv];
     zcHashSetNode *prev = NULL;
 
     while (root) {
@@ -223,16 +216,8 @@ zc_hashset_rm(zcHashSet *h, char *key, int keylen)
             }else{
                 h->bunks[hv] = (zcHashSetNode*)root->next;
             }
-            //zc_hashset_delete_node(h, root);
             h->nodedel(h, root);
-            /*
-            if (h->keydel) {
-                h->keydel(root->key);
-            }
-            // FIXME: value为什么不删除呢？
-            zc_free(root);
             h->len--;
-            */
             return ZC_OK;
         }
         prev = root;
@@ -241,31 +226,31 @@ zc_hashset_rm(zcHashSet *h, char *key, int keylen)
     return ZC_ERR_NOT_FOUND;
 }
 
-int 
+int
 zc_hashset_haskey(zcHashSet *h, char *key, int keylen)
 {
     if (keylen < 0)
         keylen = strlen(key);
-    
+
     if (NULL == zc_hashset_lookup_key(h, key, keylen)) {
         return ZC_FALSE;
     }
     return ZC_TRUE;
 }
 
-int 
+int
 zc_hashset_resize(zcHashSet *h, int newsize)
 {
     void **newbunks = (void**)zc_malloc(sizeof(void*) * newsize);
     zcHashSetNode  *node, *nextnode;
-    int i; 
+    int i;
     for (i = 0; i < h->size; i++) {
-        node = (zcHashSetNode*)h->bunks[i]; 
+        node = (zcHashSetNode*)h->bunks[i];
         while (node) {
             nextnode = (zcHashSetNode*)node->next;
             uint32_t hv = h->hash(node->key, strlen(node->key)) % newsize;
-            zcHashSetNode  *root = (zcHashSetNode*)newbunks[hv];    
-            node->next = root; 
+            zcHashSetNode  *root = (zcHashSetNode*)newbunks[hv];
+            node->next = root;
             newbunks[hv] = node;
             node = nextnode;
         }
@@ -277,13 +262,13 @@ zc_hashset_resize(zcHashSet *h, int newsize)
     return ZC_OK;
 }
 
-uint32_t 
+uint32_t
 zc_hashset_size(zcHashSet *h)
 {
     return h->size;
 }
 
-uint32_t 
+uint32_t
 zc_hashset_len(zcHashSet *h)
 {
     return h->len;

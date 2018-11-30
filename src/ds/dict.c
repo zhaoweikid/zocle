@@ -7,7 +7,7 @@
 
 const char *ZC_KEY_DUMMY = "<DUMMY>";
 
-zcDictNode* 
+zcDictNode*
 zc_dict_node_init(zcDictNode *htn, char *key, int keylen, void *value)
 {
     memset(htn, 0, sizeof(zcDictNode));
@@ -37,13 +37,13 @@ zc_dict_node_destroy(void *hn, zcFuncDel keydel, zcFuncDel valdel)
  * @param reduce   bunk maybe reduce?
  */
 zcDict*
-zc_dict_new(int size) 
+zc_dict_new(int size)
 {
     return zc_dict_new_full(size, 0, zc_free_func, zc_nofree_func);
 }
 
 zcDict*
-zc_dict_new_full(int minsize, char reduce, zcFuncDel keydel, zcFuncDel valdel) 
+zc_dict_new_full(int minsize, char reduce, zcFuncDel keydel, zcFuncDel valdel)
 {
     if (minsize <= 0)
         minsize = 8;
@@ -53,7 +53,7 @@ zc_dict_new_full(int minsize, char reduce, zcFuncDel keydel, zcFuncDel valdel)
 
     int newsize;
     for(newsize=8; newsize<= minsize && newsize>0; newsize<<=1);
-    
+
     ht->__type = ZC_DICT;
     ht->size   = newsize;
     ht->reduce = reduce;
@@ -67,8 +67,8 @@ zc_dict_new_full(int minsize, char reduce, zcFuncDel keydel, zcFuncDel valdel)
     return ht;
 }
 
-void 
-zc_dict_delete(void *h) 
+void
+zc_dict_delete(void *h)
 {
     zcDict *ht = (zcDict*)h;
     zc_dict_clear(ht);
@@ -76,8 +76,8 @@ zc_dict_delete(void *h)
     zc_free(h);
 }
 
-static zcDictNode* 
-zc_dict_lookup_h(zcDict *ht, const char *key, uint32_t khash, int klen) 
+static zcDictNode*
+zc_dict_lookup_h(zcDict *ht, const char *key, uint32_t khash, int klen)
 {
     uint32_t i = khash & (ht->size-1);
     zcDictNode *node = &ht->table[i];
@@ -113,8 +113,8 @@ zc_dict_lookup_h(zcDict *ht, const char *key, uint32_t khash, int klen)
     return NULL;
 }
 
-static zcDictNode* 
-zc_dict_lookup(zcDict *ht, const char *key, int klen) 
+static zcDictNode*
+zc_dict_lookup(zcDict *ht, const char *key, int klen)
 {
     if (klen <= 0)
         klen = strlen(key);
@@ -123,7 +123,7 @@ zc_dict_lookup(zcDict *ht, const char *key, int klen)
 }
 
 
-void 
+void
 zc_dict_clear(zcDict *ht)
 {
     zcDictNode *node;
@@ -141,8 +141,8 @@ zc_dict_clear(zcDict *ht)
     ht->len = ht->filled = 0;
 }
 
-int 
-zc_dict_add(zcDict *ht, const char *key, int keylen, void *value) 
+int
+zc_dict_add(zcDict *ht, const char *key, int keylen, void *value)
 {
     zcDictNode *node = zc_dict_lookup(ht, key, keylen);
     if (NULL == node)
@@ -165,8 +165,8 @@ zc_dict_add(zcDict *ht, const char *key, int keylen, void *value)
 }
 
 
-int 
-zc_dict_set(zcDict *ht, const char *key, int keylen, void *value) 
+int
+zc_dict_set(zcDict *ht, const char *key, int keylen, void *value)
 {
     if (keylen <= 0)
         keylen = strlen(key);
@@ -215,8 +215,8 @@ zc_dict_set(zcDict *ht, const char *key, int keylen, void *value)
     */
 }
 
-void* 
-zc_dict_get(zcDict *ht, const char *key, int keylen, void *defv) 
+void*
+zc_dict_get(zcDict *ht, const char *key, int keylen, void *defv)
 {
     zcDictNode *node = zc_dict_lookup(ht, key, keylen);
     if (node == NULL || node->key == NULL || node->key == ZC_KEY_DUMMY) {
@@ -226,8 +226,8 @@ zc_dict_get(zcDict *ht, const char *key, int keylen, void *defv)
 }
 
 
-int 
-zc_dict_rm(zcDict *ht, const char *key, int keylen) 
+int
+zc_dict_rm(zcDict *ht, const char *key, int keylen)
 {
     zcDictNode *node = zc_dict_lookup(ht, key, keylen);
     if (node != NULL && node->key != NULL && node->key != ZC_KEY_DUMMY) {
@@ -244,8 +244,8 @@ zc_dict_rm(zcDict *ht, const char *key, int keylen)
     return ZC_OK;
 }
 
-int 
-zc_dict_haskey(zcDict *ht, const char *key, int keylen) 
+int
+zc_dict_haskey(zcDict *ht, const char *key, int keylen)
 {
     zcDictNode *node = zc_dict_lookup(ht, key, keylen);
     if (node != NULL && node->key != NULL && node->key != ZC_KEY_DUMMY) {
@@ -255,8 +255,8 @@ zc_dict_haskey(zcDict *ht, const char *key, int keylen)
 }
 
 
-int 
-zc_dict_resize(zcDict *ht, uint32_t minsize) 
+int
+zc_dict_resize(zcDict *ht, uint32_t minsize)
 {
     // minsize default = 0
     uint32_t newsize;
@@ -265,7 +265,7 @@ zc_dict_resize(zcDict *ht, uint32_t minsize)
         minsize = (ht->len > 50000 ? 2 : 4)*ht->size;
     }
     for(newsize=8; newsize<= minsize && newsize>0; newsize<<=1);
-        
+
     //ZCINFO("newsize:%d\n", newsize);
     if (newsize == ht->size)
         return ZC_OK;
@@ -303,8 +303,8 @@ zc_dict_resize(zcDict *ht, uint32_t minsize)
     return ZC_OK;
 }
 
-int 
-zc_dict_walk(zcDict *ht, zcDictWalkFunc walkfunc, void *userdata) 
+int
+zc_dict_walk(zcDict *ht, zcDictWalkFunc walkfunc, void *userdata)
 {
     zcDictNode *node;
     int n = ht->len;
@@ -318,7 +318,7 @@ zc_dict_walk(zcDict *ht, zcDictWalkFunc walkfunc, void *userdata)
     return ZC_OK;
 }
 
-void 
+void
 zc_dict_print(zcDict *ht)
 {
     zcDictNode *node;

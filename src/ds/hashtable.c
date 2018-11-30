@@ -11,7 +11,7 @@ static zcHashTableNode*
 zc_hashtable_node_new(char *key, int klen, void *value)
 {
     zcHashTableNode   *node;
-    node = (zcHashTableNode*)zc_malloc(sizeof(zcHashTableNode));  
+    node = (zcHashTableNode*)zc_malloc(sizeof(zcHashTableNode));
     memset(node, 0, sizeof(zcHashTableNode));
     node->key   = zc_strdup(key, klen);
     node->value = value;
@@ -26,7 +26,7 @@ zc_hashtable_node_delete(void *h, void *n)
     }
     zcHashTable     *ht   = (zcHashTable*)h;
     zcHashTableNode *node = (zcHashTableNode*)n;
-    
+
     if (ht->keydel) {
         ht->keydel(node->key);
     }
@@ -34,18 +34,9 @@ zc_hashtable_node_delete(void *h, void *n)
         ht->valdel(node->value);
     }
     zc_free(node);
-    
-    /*
-    zcHashTableNode *node = (zcHashTableNode*)h;
-    if (node->key) {
-        zc_free(node->key);
-    }
-    // FIXME: value 为什么不释放？
-    zc_free(node);
-    */
 }
 
-zcHashTable*  
+zcHashTable*
 zc_hashtable_new(int size)
 {
     zcHashTable   *ht;
@@ -55,7 +46,7 @@ zc_hashtable_new(int size)
 }
 
 zcHashTable*
-zc_hashtable_new_full(int size, zcFuncHash hash, zcFuncCmp cmp, 
+zc_hashtable_new_full(int size, zcFuncHash hash, zcFuncCmp cmp,
                       zcFuncDel kdel, zcFuncDel vdel, zcFuncDel2 ndel)
 {
     zcHashTable   *ht;
@@ -64,7 +55,7 @@ zc_hashtable_new_full(int size, zcFuncHash hash, zcFuncCmp cmp,
     return ht;
 }
 
-int 
+int
 zc_hashtable_new2(zcHashTable **ht, int size)
 {
     zcHashTable   *h;
@@ -77,7 +68,7 @@ zc_hashtable_new2(zcHashTable **ht, int size)
     h->keydel = zc_free_func;
     h->valdel = NULL;
     h->nodedel = zc_hashtable_node_delete;
- 
+
     h->bunks = (void**)zc_malloc(sizeof(void*) * size);
     memset(h->bunks, 0, sizeof(void*) * size);
 
@@ -86,7 +77,7 @@ zc_hashtable_new2(zcHashTable **ht, int size)
 }
 
 int
-zc_hashtable_new2_full(zcHashTable **ht, int size, zcFuncHash hash, zcFuncCmp cmp, 
+zc_hashtable_new2_full(zcHashTable **ht, int size, zcFuncHash hash, zcFuncCmp cmp,
                        zcFuncDel kdel, zcFuncDel vdel, zcFuncDel2 ndel)
 {
     int ret = zc_hashtable_new2(ht, size);
@@ -98,7 +89,7 @@ zc_hashtable_new2_full(zcHashTable **ht, int size, zcFuncHash hash, zcFuncCmp cm
     (*ht)->keydel = kdel;
     (*ht)->valdel = vdel;
     (*ht)->nodedel = ndel;
-    
+
     return ZC_OK;
 }
 
@@ -110,7 +101,7 @@ zc_hashtable_delete(void *h)
         ZCERROR("zc_hashtable_destroy NULL pointer:%p\n", ht);
         return;
     }
-    zc_hashtable_clear(ht); 
+    zc_hashtable_clear(ht);
     zc_free(ht->bunks);
     zc_free(ht);
 }
@@ -118,7 +109,6 @@ zc_hashtable_delete(void *h)
 void
 zc_hashtable_clear(zcHashTable *ht)
 {
-    //Fixme: value not free ?
     return zc_hashset_clear((zcHashSet*)ht);
 }
 
@@ -141,13 +131,13 @@ zc_hashtable_lookup_key(zcHashTable *ht, char *key, int keylen)
     return (zcHashTableNode*)zc_hashset_lookup_key((zcHashSet*)ht, key, keylen);
 }
 
-int     
+int
 zc_hashtable_add_node(zcHashTable *ht, zcHashTableNode *node)
 {
     return zc_hashset_add_node((zcHashSet*)ht, (zcHashSetNode*)node);
 }
 
-int     
+int
 zc_hashtable_add(zcHashTable *ht, char *key, int klen, void *value)
 {
     zcHashTableNode *node = zc_hashtable_node_new(key, klen, value);
@@ -158,7 +148,7 @@ zc_hashtable_add(zcHashTable *ht, char *key, int klen, void *value)
     return ret;
 }
 
-int 
+int
 zc_hashtable_rm(zcHashTable *ht, char *key, int keylen)
 {
     return zc_hashset_rm((zcHashSet*)ht, key, keylen);
@@ -187,37 +177,37 @@ zc_hashtable_get(zcHashTable *ht, char *key, int keylen, void *defv)
     return v->value;
 }
 
-int 
+int
 zc_hashtable_haskey(zcHashTable *ht, char *key, int keylen)
 {
     return zc_hashset_haskey((zcHashSet*)ht, key, keylen);
 }
 
-int 
+int
 zc_hashtable_resize(zcHashTable *ht, int newsize)
 {
     return zc_hashset_resize((zcHashSet*)ht, newsize);
 }
 
-/*int 
+/*int
 zc_hashtable_set_hash(zcHashTable *ht, zcFuncHash hash)
 {
     return zc_hashset_set_hash((zcHashSet*)ht, hash);
 }
 
-int 
+int
 zc_hashtable_set_cmp(zcHashTable *ht, zcFuncCmp cmp)
 {
     return zc_hashset_set_cmp((zcHashSet*)ht, cmp);
 }
 
-int 
+int
 zc_hashtable_set_keydel(zcHashTable *ht, zcFuncDel del)
 {
     return zc_hashset_set_keydel((zcHashSet*)ht, del);
 }
 
-int 
+int
 zc_hashtable_set_valdel(zcHashTable *ht, zcFuncDel del)
 {
     if (NULL == del)
@@ -227,19 +217,19 @@ zc_hashtable_set_valdel(zcHashTable *ht, zcFuncDel del)
     return ZC_OK;
 }
 
-int 
+int
 zc_hashtable_set_nodedel(zcHashTable *ht, zcFuncDel2 del)
 {
     return zc_hashset_set_nodedel((zcHashSet*)ht, del);
 }*/
 
-uint32_t 
+uint32_t
 zc_hashtable_size(zcHashTable *ht)
 {
     return zc_hashset_size((zcHashSet*)ht);
 }
 
-uint32_t 
+uint32_t
 zc_hashtable_len(zcHashTable *ht)
 {
     return zc_hashset_len((zcHashSet*)ht);

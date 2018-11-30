@@ -6,19 +6,19 @@ int test1()
 {
     zcMySQLConf conf;
 
-    zc_mysqlcf_init(&conf, "127.0.0.1", 3306, "root", "123456", "test", "utf8");
+    zc_mysqlcf_init(&conf, "127.0.0.1", 3306, "root", "", "test", "utf8");
     zc_mysqlcf_print(&conf);
 
     zcDB *db = zc_mysqldb_new(&conf);
     assert(db != NULL);
 
-    
+
     zcDBRec *rec = zc_mysqldb_query(db, "select now();", NULL);
     assert(rec != NULL);
 
     zc_mysqlrec_row_next(rec);
     ZCINFO("query:%s\n", zc_mysqlrec_field_str_pos(rec, 0, ""));
-    
+
     zc_mysqldb_delete(db);
 
     return 0;
@@ -28,13 +28,13 @@ int test2()
 {
     zcMySQLConf conf;
 
-    zc_mysqlcf_init(&conf, "127.0.0.1", 3306, "root", "123456", "test", "utf8");
+    zc_mysqlcf_init(&conf, "127.0.0.1", 3306, "root", "", "test", "utf8");
     zc_mysqlcf_print(&conf);
 
     zcDB *db = zc_mysqldb_new(&conf);
     assert(db != NULL);
 
-    
+
     zcDBRec *rec = db->query(db, "select now();", NULL);
     assert(rec != NULL);
 
