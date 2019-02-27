@@ -357,10 +357,10 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
         conn->p.handle_accept(conn);
         return;
     }
-    if (conn->connected == ZC_FALSE) {
+    /*if (conn->connected == ZC_FALSE) {
         conn->p.handle_connected(conn);
         conn->connected = ZC_TRUE;
-    }
+    }*/
     ZCDEBUG("try read data\n");
     zcBuffer *rbuf = conn->rbuf;
     int rsize = 0;
@@ -369,6 +369,13 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     if (ret < 0) //close
         return;
     rsize += ret;
+
+    if (conn->connected == ZC_FALSE) {
+        conn->p.handle_connected(conn);
+        conn->connected = ZC_TRUE;
+    }
+
+
 
     ZCDEBUG("buffer used:%d", zc_buffer_used(rbuf));
     while (zc_buffer_used(rbuf) > 0) {
