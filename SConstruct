@@ -67,6 +67,11 @@ if 'ZOCLE_WITH_LIBEV' in defs:
 
 if 'ZOCLE_WITH_MYSQL' in defs:
 	libs.append('mysqlclient')
+	if os.path.isdir('/usr/local/mysql'):
+		includes.append('/usr/local/mysql/include')
+		libpath.append('/usr/local/mysql/lib')
+	elif os.path.isdir('/usr/include/mysql'):
+		includes.append('/usr/include/mysql')
 
 if 'ZOCLE_WITH_SQLITE' in defs:
 	libs.append('sqlite3')
