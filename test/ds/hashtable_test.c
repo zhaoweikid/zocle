@@ -26,7 +26,7 @@ int test_hashtable1()
 
     ht->keydel = zc_free_func;
     ht->valdel = zc_free_func;
-    
+
     int  i;
     int  ret;
     char key[64];
@@ -42,7 +42,7 @@ int test_hashtable1()
     }
 
     /*char *k, *v;
-    zc_hashtable_foreach(ht,  k, v) 
+    zc_hashtable_foreach(ht,  k, v)
         ZCINFO("key:%s, val:%s\n", k, v);
     zc_hashtable_foreach_end*/
 
@@ -51,7 +51,7 @@ int test_hashtable1()
         //ZCINFO("haskey:%s\n", key);
         assert(zc_hashtable_haskey(ht, key, 0) == ZC_TRUE);
     }
- 
+
     for (i = count; i < count + 200; i++) {
         sprintf(key, "k%d", i);
         assert(zc_hashtable_haskey(ht, key, 0) != ZC_TRUE);
@@ -85,7 +85,7 @@ int test_hashtable1()
         sprintf(key, "k%d", i);
         assert(zc_hashtable_haskey(ht, key, 0) == ZC_TRUE);
     }
- 
+
     int oldsize, oldlen;
     oldsize = ht->size;
     oldlen  = ht->len;
@@ -94,7 +94,7 @@ int test_hashtable1()
     assert(zc_hashtable_resize(ht, 10000) == ZC_OK);
     zc_check(ht);
     //zc_check(ht->table);
-    
+
     check_key(ht);
 
     assert(ht->size >= 10000);
@@ -104,7 +104,7 @@ int test_hashtable1()
         sprintf(key, "k%d", i);
         assert(zc_hashtable_haskey(ht, key, 0) == ZC_TRUE);
     }
-   
+
     //zc_hashtable_print(ht);
     zc_hashtable_delete(ht);
 
@@ -114,9 +114,9 @@ int test_hashtable1()
 
 int main()
 {
-    zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW); 
+    zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW);
     zc_log_new("stdout", ZC_LOG_ALL);
-    
+
     test_hashtable1();
 
     return 0;

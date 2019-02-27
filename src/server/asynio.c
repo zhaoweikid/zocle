@@ -290,13 +290,15 @@ zc_asynio_read_buffer(zcAsynIO *conn, zcBuffer *buf)
         int ret = zc_socket_recv(conn->sock, buf->data+buf->end, 
                 zc_buffer_idle(buf)); 
         if (ret == 0 || (ret < 0 && ret != -EWOULDBLOCK && ret != -EAGAIN)) {
-            ZCNOTE("recv error:%d, close conn", ret);
+            ZCINFO("recv error:%d, close conn", ret);
             if (ret == 0) { // read close
                 conn->close = 1;
                 if (zc_buffer_used(buf) > 0) {
                     conn->p.handle_read(conn);
                 }
-            }
+            }else{
+				conn->p.handle_error(conn, ret);
+			}
             conn->p.handle_close(conn);
             //zc_asynio_safedel(conn);
             zc_asynio_delete_delay(conn);
@@ -365,7 +367,6 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     zcBuffer *rbuf = conn->rbuf;
     int rsize = 0;
     ret = zc_asynio_read_buffer(conn, rbuf);
-    ZCDEBUG("read data %d to rbuf", ret);
     if (ret < 0) //close
         return;
     rsize += ret;
@@ -397,6 +398,11 @@ zc_asynio_ev_read(struct ev_loop *loop, ev_io *r, int events)
     }
     if (conn->rbuf_auto_compact) {
         zc_buffer_compact(conn->rbuf);
+    }
+
+    if (conn->connected == ZC_FALSE) {
+        conn->p.handle_connected(conn);
+        conn->connected = ZC_TRUE;
     }
 
     if (zc_buffer_used(conn->wbuf) > 0) {

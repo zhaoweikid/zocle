@@ -5,7 +5,7 @@
 #include <string.h>
 #include <zocle/log/logfile.h>
 
-zcDBRec* 
+zcDBRec*
 zc_sqliterec_new(void *stmt)
 {
     zcSQLiteRec *rec = (zcSQLiteRec*)zc_malloc(sizeof(zcSQLiteRec));
@@ -15,7 +15,7 @@ zc_sqliterec_new(void *stmt)
     rec->fields = rec->rows = 0;
     memset(rec->field_types, 0, sizeof(rec->field_types));
 
-    rec->field_names = zc_dict_new(8, 0);
+    rec->field_names = zc_dict_new(8);
     //rec->field_names->valdel = NULL;
     rec->data = NULL;
 
@@ -37,7 +37,7 @@ zc_sqliterec_new(void *stmt)
     return (zcDBRec*)rec;
 }
 
-void 
+void
 zc_sqliterec_delete(void *rec)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -54,7 +54,7 @@ zc_sqliterec_delete(void *rec)
     zc_free(rec);
 }
 
-/*void 
+/*void
 zc_sqliterec_close(zcDBRec *rec)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -64,7 +64,7 @@ zc_sqliterec_close(zcDBRec *rec)
     srec->stmt = NULL;
 }
 
-void 
+void
 zc_sqliterec_clear(zcDBRec *rec)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -81,7 +81,7 @@ zc_sqliterec_clear(zcDBRec *rec)
     }
 }*/
 
-int  
+int
 zc_sqliterec_reset(zcDBRec *rec)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -93,7 +93,7 @@ zc_sqliterec_reset(zcDBRec *rec)
     return ZC_OK;
 }
 
-int  
+int
 zc_sqliterec_row_next(zcDBRec *rec)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -115,7 +115,7 @@ zc_sqliterec_row_next(zcDBRec *rec)
                 int coltype = sqlite3_column_type(srec->stmt, i);
                 srec->field_types[i] = coltype;
                 //srec->field_names->set(sqlite3_column_name(srec->stmt, i), i);
-                zc_dict_set(srec->field_names, sqlite3_column_name(srec->stmt, i), 0, (void*)i); 
+                zc_dict_set(srec->field_names, sqlite3_column_name(srec->stmt, i), 0, (void*)i);
             }
         }
         return 1;
@@ -126,7 +126,7 @@ zc_sqliterec_row_next(zcDBRec *rec)
     return ZC_ERR;
 }
 
-int  
+int
 zc_sqliterec_field_int_pos(zcDBRec *rec, int pos, int defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -135,7 +135,7 @@ zc_sqliterec_field_int_pos(zcDBRec *rec, int pos, int defv)
     return sqlite3_column_int(srec->stmt, pos);
 }
 
-int  
+int
 zc_sqliterec_field_int(zcDBRec *rec, const char *name, int defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -146,7 +146,7 @@ zc_sqliterec_field_int(zcDBRec *rec, const char *name, int defv)
     return zc_sqliterec_field_int_pos(rec, pos, defv);
 }
 
-int64_t 
+int64_t
 zc_sqliterec_field_int64_pos(zcDBRec *rec, int pos, int64_t defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -155,7 +155,7 @@ zc_sqliterec_field_int64_pos(zcDBRec *rec, int pos, int64_t defv)
     return sqlite3_column_int64(srec->stmt, pos);
 }
 
-int64_t 
+int64_t
 zc_sqliterec_field_int64(zcDBRec *rec, const char *name, int64_t defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -165,7 +165,7 @@ zc_sqliterec_field_int64(zcDBRec *rec, const char *name, int64_t defv)
     return zc_sqliterec_field_int64_pos(rec, pos, defv);
 }
 
-double  
+double
 zc_sqliterec_field_float_pos(zcDBRec *rec, int pos, double defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -174,7 +174,7 @@ zc_sqliterec_field_float_pos(zcDBRec *rec, int pos, double defv)
     return sqlite3_column_double(srec->stmt, pos);
 }
 
-double  
+double
 zc_sqliterec_field_float(zcDBRec *rec, const char *name, double defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -184,7 +184,7 @@ zc_sqliterec_field_float(zcDBRec *rec, const char *name, double defv)
     return zc_sqliterec_field_float_pos(rec, pos, defv);
 }
 
-const char* 
+const char*
 zc_sqliterec_field_str_pos(zcDBRec *rec, int pos, const char *defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -193,7 +193,7 @@ zc_sqliterec_field_str_pos(zcDBRec *rec, int pos, const char *defv)
     return (const char*)sqlite3_column_text(srec->stmt, pos);
 }
 
-const char* 
+const char*
 zc_sqliterec_field_str(zcDBRec *rec, const char *name, const char *defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -203,7 +203,7 @@ zc_sqliterec_field_str(zcDBRec *rec, const char *name, const char *defv)
     return zc_sqliterec_field_str_pos(rec, pos, defv);
 }
 
-const char* 
+const char*
 zc_sqliterec_field_blob_pos(zcDBRec *rec, int pos, int *len, const char *defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -213,7 +213,7 @@ zc_sqliterec_field_blob_pos(zcDBRec *rec, int pos, int *len, const char *defv)
     return (const char*)sqlite3_column_blob(srec->stmt, pos);
 }
 
-const char* 
+const char*
 zc_sqliterec_field_blob(zcDBRec *rec, const char *name, int *len, const char *defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -223,7 +223,7 @@ zc_sqliterec_field_blob(zcDBRec *rec, const char *name, int *len, const char *de
     return zc_sqliterec_field_blob_pos(rec, pos, len, defv);
 }
 
-int   
+int
 zc_sqliterec_fetchone(zcDBRec *rec, const char *format, ...)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -267,7 +267,7 @@ zc_sqliterec_fetchone(zcDBRec *rec, const char *format, ...)
     return 0;
 }
 
-/*int   
+/*int
 zc_sqliterec_fetchall(zcDBRec *rec, const char *format)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -386,7 +386,7 @@ zc_sqliterec_fetchall(zcDBRec *rec, const char *format)
     return srec->rows;
 }
 
-void* 
+void*
 zc_sqliterec_get_pos(zcDBRec *rec, int rowid, int pos, void *defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -401,7 +401,7 @@ zc_sqliterec_get_pos(zcDBRec *rec, int rowid, int pos, void *defv)
     return &row[head[pos+1]];
 }
 
-void* 
+void*
 zc_sqliterec_get(zcDBRec *rec, int rowid, char *name, void *defv)
 {
     zcSQLiteRec *srec = (zcSQLiteRec*)rec;
@@ -413,7 +413,7 @@ zc_sqliterec_get(zcDBRec *rec, int rowid, char *name, void *defv)
 
 
 // ----- zcSQLiteDB
-zcDB*    
+zcDB*
 zc_sqlitedb_new(const char *path)
 {
     zcSQLiteDB *sdb = (zcSQLiteDB*)zc_malloc(sizeof(zcSQLiteDB));
@@ -426,7 +426,7 @@ zc_sqlitedb_new(const char *path)
         zc_free(sdb);
         return NULL;
     }
-    
+
     sdb->del   = zc_sqlitedb_delete;
     sdb->exec  = zc_sqlitedb_exec;
     sdb->execf = zc_sqlitedb_execf;
@@ -438,36 +438,36 @@ zc_sqlitedb_new(const char *path)
 
     return (zcDB*)sdb;
 }
-void     
+void
 zc_sqlitedb_delete(void *db)
 {
     zcSQLiteDB *sdb = (zcSQLiteDB*)db;
     if (sdb->db) {
         sqlite3_close(sdb->db);
-    } 
+    }
     zc_free(sdb);
 }
 
-int      
+int
 zc_sqlitedb_exec(zcDB *db, const char *sql)
 {
-    zcSQLiteDB *sdb = (zcSQLiteDB*)db; 
+    zcSQLiteDB *sdb = (zcSQLiteDB*)db;
     int ret;
     char *errmsg;
-    
+
     ret = sqlite3_exec(sdb->db, sql, NULL, NULL, &errmsg);
     if (ret != SQLITE_OK) {
         ZCWARN("sqlite exec err:%s\n", errmsg);
         sqlite3_free(errmsg);
         return -ret;
-    }   
+    }
     return 0;
 }
 
-int      
+int
 zc_sqlitedb_execf(zcDB *db, const char *sql, const char *format, ...)
 {
-    zcSQLiteDB *sdb = (zcSQLiteDB*)db; 
+    zcSQLiteDB *sdb = (zcSQLiteDB*)db;
     sqlite3_stmt *stmt;
     va_list arg;
     int ret;
@@ -514,10 +514,10 @@ zc_sqlitedb_execf(zcDB *db, const char *sql, const char *format, ...)
     return ZC_OK;
 }
 
-zcDBRec* 
+zcDBRec*
 zc_sqlitedb_query(zcDB *db, const char *sql, const char *format, ...)
 {
-    zcSQLiteDB *sdb = (zcSQLiteDB*)db; 
+    zcSQLiteDB *sdb = (zcSQLiteDB*)db;
     sqlite3_stmt *stmt;
     va_list arg;
     int ret;
@@ -567,19 +567,19 @@ zc_sqlitedb_query(zcDB *db, const char *sql, const char *format, ...)
     return (zcDBRec*)zc_sqliterec_new(stmt);
 }
 
-int      
+int
 zc_sqlitedb_start(zcDB *db)
 {
     return zc_sqlitedb_exec(db, "START");
 }
 
-int      
+int
 zc_sqlitedb_commit(zcDB *db)
 {
     return zc_sqlitedb_exec(db, "COMMIT");
 }
 
-int      
+int
 zc_sqlitedb_rollback(zcDB *db)
 {
     return zc_sqlitedb_exec(db, "ROLLBACK");
@@ -588,7 +588,7 @@ zc_sqlitedb_rollback(zcDB *db)
 int64_t
 zc_sqlitedb_last_insert_id(zcDB *db)
 {
-    zcSQLiteDB *sdb = (zcSQLiteDB*)db; 
+    zcSQLiteDB *sdb = (zcSQLiteDB*)db;
     return sqlite3_last_insert_rowid(sdb->db);
 }
 

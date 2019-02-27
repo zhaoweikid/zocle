@@ -21,17 +21,17 @@ int test_dict1()
 {
     zcDict   *ht;
 
-    ht = zc_dict_new(1000, 0);
+    ht = zc_dict_new(100);
     assert(ht != NULL);
 
     ht->keydel = zc_free_func;
     ht->valdel = zc_free_func;
-    
+
     int  i;
     int  ret;
     char key[64];
     char val[64];
-    int  count = 1000;
+    int  count = 100;
 
     for (i = 0; i < count; i++) {
         sprintf(key, "k%d", i);
@@ -41,17 +41,17 @@ int test_dict1()
         assert(ret == ZC_OK);
     }
 
-    /*char *k, *v;
-    zc_dict_foreach(ht,  k, v) 
+    char *k, *v;
+    zc_dict_foreach_start(ht,  k, v)
         ZCINFO("key:%s, val:%s\n", k, v);
-    zc_dict_foreach_end*/
+    zc_dict_foreach_end
 
     for (i = 0; i < count; i++) {
         sprintf(key, "k%d", i);
         //ZCINFO("haskey:%s\n", key);
         assert(zc_dict_haskey(ht, key, 0) == ZC_TRUE);
     }
- 
+
     for (i = count; i < count + 200; i++) {
         sprintf(key, "k%d", i);
         assert(zc_dict_haskey(ht, key, 0) != ZC_TRUE);
@@ -85,7 +85,7 @@ int test_dict1()
         sprintf(key, "k%d", i);
         assert(zc_dict_haskey(ht, key, 0) == ZC_TRUE);
     }
- 
+
     int oldsize, oldlen;
     oldsize = ht->size;
     oldlen  = ht->len;
@@ -94,7 +94,7 @@ int test_dict1()
     assert(zc_dict_resize(ht, 10000) == ZC_OK);
     zc_check(ht);
     //zc_check(ht->table);
-    
+
     check_key(ht);
 
     assert(ht->size >= 10000);
@@ -104,7 +104,7 @@ int test_dict1()
         sprintf(key, "k%d", i);
         assert(zc_dict_haskey(ht, key, 0) == ZC_TRUE);
     }
-   
+
     //zc_dict_print(ht);
     zc_dict_delete(ht);
 
@@ -114,9 +114,9 @@ int test_dict1()
 
 int main()
 {
-    zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW); 
+    zc_mem_init(ZC_MEM_GLIBC|ZC_MEM_DBG_OVERFLOW);
     zc_log_new("stdout", ZC_LOG_ALL);
-    
+
     test_dict1();
 
     return 0;
