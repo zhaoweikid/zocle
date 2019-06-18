@@ -1,5 +1,16 @@
 import os, sys
 
+debug = int(ARGUMENTS.get('debug', 0))
+iconv = ARGUMENTS.get('iconv', 'no')
+pcre  = ARGUMENTS.get('pcre', 'no')
+ssl   = ARGUMENTS.get('ssl', 'no')
+sqlite= ARGUMENTS.get('sqlite', 'no')
+mysql = ARGUMENTS.get('mysql', 'no')
+msgpack  = ARGUMENTS.get('msgpack', 'no')
+tcmalloc = ARGUMENTS.get('tcmalloc', 'no')
+gc = ARGUMENTS.get('gc', 'no')
+all = ARGUMENTS.get('gc', 'no')
+
 name		= 'zocle'
 version     = '2.0.1'
 includes	= ['include', '/usr/local/include']
@@ -7,21 +18,36 @@ libs		= ['z']
 libpath		= ['.', '/usr/local/lib']
 ldflags		= ''
 msys_home	= os.environ.get('MINGW_HOME', '')
-ccflags     = '-ggdb -std=gnu99 -Wall'
+ccflags     = '-std=gnu99 -Wall'
 
-defs = ['_REENTRANT',
-		'_GNU_SOURCE',
-		'ZOCLE_WITH_ICONV',
-		'ZOCLE_WITH_PCRE',
-		'ZOCLE_WITH_LIBEV',
-		'ZOCLE_WITH_SSL',
-		'ZOCLE_WITH_SQLITE',
-		'ZOCLE_WITH_MYSQL',
-		'ZOCLE_WITH_MSGPACK',
-		# 'ASYNC_ONE_WATCHER',
-		# 'ZOCLE_WITH_TCMALLOC',
-		# 'ZOCLE_WITH_GC',
-		]
+if debug:
+	ccflags += ' -ggdb'
+
+# defs: 'ASYNC_ONE_WATCHER'
+defs = [
+	'_REENTRANT',
+	'_GNU_SOURCE',
+	'ZOCLE_WITH_LIBEV',
+]
+
+if iconv == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_ICONV')
+if pcre == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_PCRE')
+if ssl == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_SSL')
+if sqlite == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_SQLITE')
+if mysql == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_MYSQL')
+if msgpack == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_MSGPACK')
+if tcmalloc == 'yes' or all == 'yes':
+	defs.append('ZOCLE_WITH_TCMALLOC')
+if gc == 'yes':
+	defs.append('ZOCLE_WITH_GC')
+
+
 
 files = []
 for root,dirs,fs in os.walk('src'):

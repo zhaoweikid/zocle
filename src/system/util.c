@@ -143,6 +143,7 @@ int zc_signal_set_default(void (*signal_exit_handler)(int))
 
     sigaction(SIGTERM, &sigact, NULL);
     sigaction(SIGQUIT, &sigact, NULL);
+    sigaction(SIGINT, &sigact, NULL);
     sigaction(SIGILL , &sigact, NULL);
     sigaction(SIGABRT, &sigact, NULL);
     sigaction(SIGFPE , &sigact, NULL);
